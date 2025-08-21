@@ -133,7 +133,6 @@ find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs highgui videoio c
 find_package(z5 REQUIRED)
 
 add_library(vc_core
-        core/src/DiskBasedObjectBaseClass.cpp
         core/src/Metadata.cpp
         core/src/Volume.cpp
         core/src/Segmentation.cpp

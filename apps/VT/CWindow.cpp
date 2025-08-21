@@ -452,7 +452,7 @@ void CWindow::CreateWidgets(void)
     volSelect = ui.volSelect;
     connect(
         volSelect, &QComboBox::currentIndexChanged, [this](const int& index) {
-            Volume::Pointer newVolume;
+            std::shared_ptr<Volume> newVolume;
             try {
                 newVolume = fVpkg->volume(volSelect->currentData().toString().toStdString());
             } catch (const std::out_of_range& e) {

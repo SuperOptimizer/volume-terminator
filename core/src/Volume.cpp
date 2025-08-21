@@ -20,126 +20,76 @@
 
 #include "xtensor/containers/xarray.hpp"
 
+static const std::filesystem::path CONFIG_FILE = "meta.json";
 
 
 // Load a Volume from disk
-Volume::Volume(std::filesystem::path path) : DiskBasedObjectBaseClass(std::move(path))
+Volume::Volume(std::filesystem::path path)
 {
-    if (metadata_.get<std::string>("type") != "vol") {
-        throw std::runtime_error("File not of type: vol");
-    }
-
-    width_ = metadata_.get<int>("width");
-    height_ = metadata_.get<int>("height");
-    slices_ = metadata_.get<int>("slices");
-    numSliceCharacters_ = std::to_string(slices_).size();
-
-    std::vector<std::mutex> init_mutexes(slices_);
-
-    slice_mutexes_.swap(init_mutexes);
-    
+    _path = path;
+    _uuid = path.stem();
+    _name = path.stem();
+    _metadata = Metadata(path / CONFIG_FILE);
     zarrOpen();
 }
 
 // Setup a Volume from a folder of slices
 Volume::Volume(std::filesystem::path path, std::string uuid, std::string name)
-    : DiskBasedObjectBaseClass(
-          std::move(path), std::move(uuid), std::move(name)),
-          slice_mutexes_(slices_)
 {
-    metadata_.set("type", "vol");
-    metadata_.set("width", width_);
-    metadata_.set("height", height_);
-    metadata_.set("slices", slices_);
-    metadata_.set("voxelsize", double{});
-    metadata_.set("min", double{});
-    metadata_.set("max", double{});    
-
+    _path = path;
+    _uuid = uuid;
+    _name = name;
     zarrOpen();
 }
 
 void Volume::zarrOpen()
 {
-    if (!metadata_.hasKey("format") || metadata_.get<std::string>("format") != "zarr")
-        return;
 
-    isZarr = true;
-    zarrFile_ = new z5::filesystem::handle::File(path_);
-    z5::filesystem::handle::Group group(path_, z5::FileMode::FileMode::r);
-    z5::readAttributes(group, zarrGroup_);
+    _zarrFile = new z5::filesystem::handle::File(_path);
+    z5::filesystem::handle::Group group(_path, z5::FileMode::FileMode::r);
+    z5::readAttributes(group, _zarrGroup);
     
     std::vector<std::string> groups;
-    zarrFile_->keys(groups);
+    _zarrFile->keys(groups);
     std::sort(groups.begin(), groups.end());
     
     //FIXME hardcoded assumption that groups correspond to power-2 scaledowns ...
     for(auto name : groups) {
-        z5::filesystem::handle::Dataset ds_handle(group, name, nlohmann::json::parse(std::ifstream(path_/name/".zarray")).value<std::string>("dimension_separator","."));
+        z5::filesystem::handle::Dataset ds_handle(group, name, nlohmann::json::parse(std::ifstream(_path/name/".zarray")).value<std::string>("dimension_separator","."));
 
-        zarrDs_.push_back(z5::filesystem::openDataset(ds_handle));
-        if (zarrDs_.back()->getDtype() != z5::types::Datatype::uint8 && zarrDs_.back()->getDtype() != z5::types::Datatype::uint16)
-            throw std::runtime_error("only uint8 & uint16 is currently supported for zarr datasets incompatible type found in "+path_.string()+" / " +name);
+        _zarrDs.push_back(z5::filesystem::openDataset(ds_handle));
+        if (_zarrDs.back()->getDtype() != z5::types::Datatype::uint8 && _zarrDs.back()->getDtype() != z5::types::Datatype::uint16)
+            throw std::runtime_error("only uint8 & uint16 is currently supported for zarr datasets incompatible type found in "+_path.string()+" / " +name);
     }
 }
 
 // Load a Volume from disk, return a pointer
-auto Volume::New(std::filesystem::path path) -> Volume::Pointer
+auto Volume::New(std::filesystem::path path) -> std::shared_ptr<Volume>
 {
     return std::make_shared<Volume>(path);
 }
 
 // Set a Volume from a folder of slices, return a pointer
 auto Volume::New(std::filesystem::path path, std::string uuid, std::string name)
-    -> Volume::Pointer
+    -> std::shared_ptr<Volume>
 {
     return std::make_shared<Volume>(path, uuid, name);
 }
 
-auto Volume::sliceWidth() const -> int { return width_; }
-auto Volume::sliceHeight() const -> int { return height_; }
-auto Volume::numSlices() const -> int { return slices_; }
-auto Volume::voxelSize() const -> double
-{
-    return metadata_.get<double>("voxelsize");
-}
-auto Volume::min() const -> double { return metadata_.get<double>("min"); }
-auto Volume::max() const -> double { return metadata_.get<double>("max"); }
+auto Volume::sliceWidth() const -> int { return _width; }
+auto Volume::sliceHeight() const -> int { return _height; }
+auto Volume::numSlices() const -> int { return _slices; }
+auto Volume::voxelSize() const -> double { return 1.0; }
+auto Volume::min() const -> double { return 0.0; }
+auto Volume::max() const -> double { return 65536.0; }
 
-void Volume::setSliceWidth(int w)
-{
-    width_ = w;
-    metadata_.set("width", w);
-}
 
-void Volume::setSliceHeight(int h)
-{
-    height_ = h;
-    metadata_.set("height", h);
-}
 
-void Volume::setNumberOfSlices(std::size_t numSlices)
-{
-    slices_ = numSlices;
-    numSliceCharacters_ = std::to_string(numSlices).size();
-    metadata_.set("slices", numSlices);
-}
-
-void Volume::setVoxelSize(double s) { metadata_.set("voxelsize", s); }
-void Volume::setMin(double m) { metadata_.set("min", m); }
-void Volume::setMax(double m) { metadata_.set("max", m); }
-
-auto Volume::bounds() const -> Volume::Bounds
-{
-    return {
-        {0, 0, 0},
-        {static_cast<double>(width_), static_cast<double>(height_),
-         static_cast<double>(slices_)}};
-}
 
 auto Volume::isInBounds(double x, double y, double z) const -> bool
 {
-    return x >= 0 && x < width_ && y >= 0 && y < height_ && z >= 0 &&
-           z < slices_;
+    return x >= 0 && x < _width && y >= 0 && y < _height && z >= 0 &&
+           z < _slices;
 }
 
 auto Volume::isInBounds(const cv::Vec3d& v) const -> bool
@@ -164,13 +114,77 @@ std::ostream& operator<< (std::ostream& out, const xt::xarray<uint8_t>::shape_ty
 
 z5::Dataset *Volume::zarrDataset(int level)
 {
-    if (level >= zarrDs_.size())
+    if (level >= _zarrDs.size())
         return nullptr;
 
-    return zarrDs_[level].get();
+    return _zarrDs[level].get();
 }
+#pragma once
+
+/** @file */
+
+#include <cstddef>
+#include <iostream>
+#include <map>
+
+#include <filesystem>
+#include "Metadata.hpp"
+#include "Segmentation.hpp"
+#include "Volume.hpp"
+
+class VolumePkg
+{
+public:
+
+    VolumePkg(std::filesystem::path fileLocation, int version);
+    explicit VolumePkg(const std::filesystem::path& fileLocation);
+    static std::shared_ptr<VolumePkg> New(std::filesystem::path fileLocation, int version);
+    static std::shared_ptr<VolumePkg> New(std::filesystem::path fileLocation);
+    [[nodiscard]] std::string name() const;
+    [[nodiscard]] int version() const;
+    [[nodiscard]] double materialThickness() const;
+    [[nodiscard]] Metadata metadata() const;
+    void saveMetadata();
+    void saveMetadata(const std::filesystem::path& filePath);
+    bool hasVolumes() const;
+    [[nodiscard]] bool hasVolume(const std::string& id) const;
+    std::size_t numberOfVolumes() const;
+    [[nodiscard]]  std::vector<std::string> volumeIDs() const;
+    [[nodiscard]] std::vector<std::string> volumeNames() const;
+    std::shared_ptr<Volume> newVolume(std::string name = "");
+    [[nodiscard]] const std::shared_ptr<Volume> volume() const;
+    std::shared_ptr<Volume> volume();
+    [[nodiscard]] const std::shared_ptr<Volume> volume(const std::string& id) const;
+    std::shared_ptr<Volume> volume(const std::string& id);
+    bool hasSegmentations() const;
+    std::size_t numberOfSegmentations() const;
+    [[nodiscard]] std::vector<std::string> segmentationIDs() const;
+    [[nodiscard]] std::vector<std::string> segmentationNames() const;
+    [[nodiscard]] const std::shared_ptr<Segmentation> segmentation(const std::string& id) const;
+    std::vector<std::filesystem::path> segmentationFiles();
+    std::shared_ptr<Segmentation> segmentation(const std::string& id);
+    void removeSegmentation(const std::string& id);
+    void setSegmentationDirectory(const std::string& dirName);
+    [[nodiscard]] std::string getSegmentationDirectory() const;
+    [[nodiscard]] std::vector<std::string> getAvailableSegmentationDirectories() const;
+
+    void refreshSegmentations();
+
+
+private:
+    Metadata _metadata;
+    std::filesystem::path _rootdir;
+    std::map<std::string, std::shared_ptr<Volume>> _volumes;
+    std::map<std::string, std::shared_ptr<Segmentation>> _segmentations;
+    std::vector<std::filesystem::path> _segmentation_files;
+    std::string _currentSegmentationDir = "paths";
+    std::map<std::string, std::string> _segmentationDirectories;
+
+    void loadSegmentationsFromDirectory(const std::string& dirName);
+};
+
 
 size_t Volume::numScales()
 {
-    return zarrDs_.size();
+    return _zarrDs.size();
 }

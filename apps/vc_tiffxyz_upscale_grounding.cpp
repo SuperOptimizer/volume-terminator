@@ -1,6 +1,5 @@
 #include "Slicing.hpp"
 #include "Surface.hpp"
-#include "SurfaceModeling.hpp"
 #include "ChunkedTensor.hpp"
 
 #include "z5/factory.hxx"

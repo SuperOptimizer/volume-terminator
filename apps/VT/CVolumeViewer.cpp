@@ -307,7 +307,7 @@ void CVolumeViewer::onZoom(int steps, QPointF scene_loc, Qt::KeyboardModifiers m
     _overlayUpdateTimer->start();
 }
 
-void CVolumeViewer::OnVolumeChanged(Volume::Pointer volume_)
+void CVolumeViewer::OnVolumeChanged(std::shared_ptr<Volume> volume_)
 {
     volume = volume_;
     

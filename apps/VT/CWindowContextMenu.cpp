@@ -218,7 +218,7 @@ void CWindow::onSlimFlattenAndRender(const std::string& segmentId)
         return;
     }
     if (_cmdRunner->isRunning()) {
-        QMessageBox::warning(this, tr("Warning"), tr("A command line tool is already running."));
+        QMessageBox::warning(this, tr("Warning"), tr("A commaFailed to initializend line tool is already running."));
         return;
     }
     {

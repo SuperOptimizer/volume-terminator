@@ -1,7 +1,7 @@
 #include "Slicing.hpp"
 #include "Surface.hpp"
-#include "SurfaceModeling.hpp"
 #include "ChunkedTensor.hpp"
+#include "SurfaceHelpers.hpp"
 
 #include "z5/factory.hxx"
 #include <nlohmann/json.hpp>
