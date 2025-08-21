@@ -12,17 +12,11 @@
 #include <QPointer>
 #include <opencv2/core.hpp>
 #include <memory>
+
+#include "CSurfaceCollection.hpp"
 #include "PathData.hpp"
 #include "VCCollection.hpp"
-
-    class Volume;
-    class VolumePkg;
-
-
-class ChunkCache;
-
-
-class CSurfaceCollection;
+#include "VolumePkg.hpp"
 
 class SeedingWidget : public QWidget {
     Q_OBJECT

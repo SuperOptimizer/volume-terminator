@@ -1,7 +1,6 @@
 #include "CommandLineToolRunner.hpp"
 
 #include <QClipboard>
-
 #include "CWindow.hpp"
 #include <QDir>
 #include <QFileInfo>

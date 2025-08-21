@@ -3,10 +3,9 @@
 #include <QObject>
 #include <opencv2/core.hpp>
 
-class Surface;
+#include "Surface.hpp"
 
 
-    
 struct POI
 {
     cv::Vec3f p = {0,0,0};

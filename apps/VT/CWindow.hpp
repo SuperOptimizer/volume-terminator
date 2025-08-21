@@ -5,46 +5,35 @@
 
 #include <opencv2/core.hpp>
 #include <QComboBox>
+#include <QMdiArea>
+
 #include "ui_VCMain.h"
 
-#include "CommandLineToolRunner.hpp"
 #include "VCCollection.hpp"
 
 #include <QShortcut>
 
+#include "CPointCollectionWidget.hpp"
+#include "CSurfaceCollection.hpp"
+#include "CVolumeViewer.hpp"
+#include "DrawingWidget.hpp"
+#include "OpChain.hpp"
+#include "OpsList.hpp"
+#include "OpsSettings.hpp"
+#include "SeedingWidget.hpp"
+#include "Surface.hpp"
+#include "Volume.hpp"
+#include "VolumePkg.hpp"
+
 #define MAX_RECENT_VOLPKG 10
+
+// CommandLineToolRunner needs cwindow and vice versa so forward declare here and let commandlinetoolrunner.cpp include CWindow.hpp
+class CommandLineToolRunner;
 
 // Volpkg version required by this app
 static constexpr int VOLPKG_MIN_VERSION = 6;
 static constexpr int VOLPKG_SLICE_MIN_INDEX = 0;
 
-// Our own forward declarations
-class ChunkCache;
-class Surface;
-class QuadSurface;
-class SurfaceMeta;
-class OpChain;
-
-    class Volume;
-    class VolumePkg;
-
-
-// Qt related forward declaration
-class QMdiArea;
-class OpsList;
-class OpsSettings;
-class SurfaceTreeWidget;
-class SurfaceTreeWidgetItem;
-
-
-
-class CVolumeViewer;
-class CSurfaceCollection;
-class POI;
-class CPointCollectionWidget;
-class CSegmentationEditorWindow;
-class SeedingWidget;
-class DrawingWidget;
 
 class CWindow : public QMainWindow
 {

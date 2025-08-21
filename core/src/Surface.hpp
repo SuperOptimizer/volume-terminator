@@ -6,10 +6,10 @@
 #include <nlohmann/json_fwd.hpp>
 #include <z5/dataset.hxx>
 
+#include "Slicing.hpp"
+
 #define Z_DBG_GEN_PREFIX "auto_grown_"
 
-class QuadSurface;
-class ChunkCache;
 
 struct Rect3D {
     cv::Vec3f low = {0,0,0};
@@ -19,11 +19,6 @@ struct Rect3D {
 bool intersect(const Rect3D &a, const Rect3D &b);
 Rect3D expand_rect(const Rect3D &a, const cv::Vec3f &p);
 
-QuadSurface *load_quad_from_obj(const std::string &path);
-QuadSurface *load_quad_from_tifxyz(const std::string &path);
-QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *cache, cv::Vec3f origin, int generations = 100, float step = 10, const std::string &cache_root = "", float voxelsize = 1.0);
-QuadSurface *regularized_local_quad(QuadSurface *src, const cv::Vec3f &ptr, int w, int h, int step_search = 100, int step_out = 5);
-QuadSurface *smooth_vc_segmentation(QuadSurface *src);
 
 cv::Vec3f vx_from_orig_norm(const cv::Vec3f &o, const cv::Vec3f &n);
 cv::Vec3f vy_from_orig_norm(const cv::Vec3f &o, const cv::Vec3f &n);
@@ -228,3 +223,10 @@ float pointTo(cv::Vec2f &loc, const cv::Mat_<cv::Vec3f> &points, const cv::Vec3f
 
 void write_overlapping_json(const std::filesystem::path& seg_path, const std::set<std::string>& overlapping_names);
 std::set<std::string> read_overlapping_json(const std::filesystem::path& seg_path);
+
+
+QuadSurface *load_quad_from_obj(const std::string &path);
+QuadSurface *load_quad_from_tifxyz(const std::string &path);
+QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *cache, cv::Vec3f origin, int generations = 100, float step = 10, const std::string &cache_root = "", float voxelsize = 1.0);
+QuadSurface *regularized_local_quad(QuadSurface *src, const cv::Vec3f &ptr, int w, int h, int step_search = 100, int step_out = 5);
+QuadSurface *smooth_vc_segmentation(QuadSurface *src);

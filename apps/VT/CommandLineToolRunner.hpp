@@ -6,10 +6,8 @@
 
 #include "ProgressUtil.hpp"
 #include "ConsoleOutputWidget.hpp"
+#include "CWindow.hpp"
 
-
-// Forward declaration
-class CWindow;
 
 /**
  * @brief Class to manage execution of command-line tools

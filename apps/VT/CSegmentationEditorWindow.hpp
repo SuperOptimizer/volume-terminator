@@ -7,9 +7,8 @@
 #include <QLabel>
 #include <opencv2/core/core.hpp>
 
-
-class CVolumeViewer;
-class CSurfaceCollection;
+#include "CSurfaceCollection.hpp"
+#include "CVolumeViewer.hpp"
 
 class CSegmentationEditorWindow : public QMainWindow
 {

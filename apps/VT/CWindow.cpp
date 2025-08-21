@@ -24,6 +24,8 @@
 #include <QMenuBar>
 #include <QDesktopServices>
 #include <QClipboard>
+#include <QStatusBar>
+#include <QStatusBar>
 
 #include <atomic>
 #include <omp.h>
@@ -50,6 +52,7 @@
 #include "Surface.hpp"
 #include "Slicing.hpp"
 #include "SurfaceVoxelizer.hpp"
+#include "CommandLineToolRunner.hpp"
 
 #include <QGuiApplication>
 

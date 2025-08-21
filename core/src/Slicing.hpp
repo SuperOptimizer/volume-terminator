@@ -4,11 +4,8 @@
 #include <opencv2/core.hpp>
 
 #include <shared_mutex>
+#include <z5/dataset.hxx>
 
-namespace z5
-{
-    class Dataset;
-}
 
 struct vec4i_hash {
     size_t operator()(cv::Vec4i p) const

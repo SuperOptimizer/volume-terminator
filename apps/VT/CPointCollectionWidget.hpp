@@ -14,7 +14,6 @@
 
 
 
-class VCCollection;
 
 class CPointCollectionWidget : public QDockWidget
 {
