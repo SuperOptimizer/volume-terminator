@@ -31,17 +31,6 @@ static std::ostream& operator<< (std::ostream& out, const std::vector<int> &v) {
     return out;
 }
 
-template <size_t N>
-static std::ostream& operator<< (std::ostream& out, const std::array<size_t,N> &v) {
-    if ( !v.empty() ) {
-        out << '[';
-        for(auto &v : v)
-            out << v << ",";
-        out << "\b]"; // use ANSI backspace character '\b' to overwrite final ", "
-    }
-    return out;
-}
-
 static std::ostream& operator<< (std::ostream& out, const xt::svector<size_t> &v) {
     if ( !v.empty() ) {
         out << '[';
@@ -56,7 +45,7 @@ namespace z5 {
     namespace multiarray {
 
         template<typename T>
-        inline xt::xarray<T> *readChunk(const Dataset & ds,
+        xt::xarray<T> *readChunk(const Dataset & ds,
                             types::ShapeType chunkId)
         {
             if (!ds.chunkExists(chunkId)) {
@@ -308,7 +297,141 @@ void speculativeLoadNeighbors(z5::Dataset *ds, ChunkCache *cache, int group_idx,
         }
     }
 }
+// Helper function to retrieve a single value from cache
+static uint8_t retrieveSingleValueCached(z5::Dataset *ds, ChunkCache *cache, int group_idx,
+                                   int ox, int oy, int oz,
+                                   int cw, int ch, int cd) {
+    std::shared_ptr<xt::xarray<uint8_t>> chunk_ref;
+    xt::xarray<uint8_t> *chunk = nullptr;
 
+    int ix = int(ox)/cw;
+    int iy = int(oy)/ch;
+    int iz = int(oz)/cd;
+
+    cv::Vec4i idx = {group_idx,ix,iy,iz};
+
+    cache->mutex.lock();
+
+    if (!cache->has(idx)) {
+        cache->mutex.unlock();
+        chunk = z5::multiarray::readChunk<uint8_t>(*ds,
+            {size_t(ix),size_t(iy),size_t(iz)});
+        cache->mutex.lock();
+        cache->put(idx, chunk);
+        chunk_ref = cache->get(idx);
+    } else {
+        chunk_ref = cache->get(idx);
+        chunk = chunk_ref.get();
+    }
+    cache->mutex.unlock();
+
+    if (!chunk)
+        return 0;
+
+    int lx = ox-ix*cw;
+    int ly = oy-iy*ch;
+    int lz = oz-iz*cd;
+
+    return chunk->operator()(lx,ly,lz);
+}
+
+// Structure to hold interpolation values
+struct InterpolationValues {
+    float c000, c100, c010, c110, c001, c101, c011, c111;
+};
+
+// Function to gather interpolation values
+static InterpolationValues gatherInterpolationValues(xt::xarray<uint8_t> *chunk,
+                                               int lx, int ly, int lz,
+                                               int cw, int ch, int cd,
+                                               int ox, int oy, int oz,
+                                               z5::Dataset *ds, ChunkCache *cache, int group_idx) {
+    InterpolationValues vals;
+
+    vals.c000 = chunk->operator()(lx,ly,lz);
+
+    // Handle edge cases for interpolation
+    if (lx+1 >= cw || ly+1 >= ch || lz+1 >= cd) {
+        if (lx+1>=cw)
+            vals.c100 = retrieveSingleValueCached(ds, cache, group_idx, ox+1,oy,oz, cw,ch,cd);
+        else
+            vals.c100 = chunk->operator()(lx+1,ly,lz);
+
+        if (ly+1 >= ch)
+            vals.c010 = retrieveSingleValueCached(ds, cache, group_idx, ox,oy+1,oz, cw,ch,cd);
+        else
+            vals.c010 = chunk->operator()(lx,ly+1,lz);
+
+        if (lz+1 >= cd)
+            vals.c001 = retrieveSingleValueCached(ds, cache, group_idx, ox,oy,oz+1, cw,ch,cd);
+        else
+            vals.c001 = chunk->operator()(lx,ly,lz+1);
+
+        vals.c110 = retrieveSingleValueCached(ds, cache, group_idx, ox+1,oy+1,oz, cw,ch,cd);
+        vals.c101 = retrieveSingleValueCached(ds, cache, group_idx, ox+1,oy,oz+1, cw,ch,cd);
+        vals.c011 = retrieveSingleValueCached(ds, cache, group_idx, ox,oy+1,oz+1, cw,ch,cd);
+        vals.c111 = retrieveSingleValueCached(ds, cache, group_idx, ox+1,oy+1,oz+1, cw,ch,cd);
+    } else {
+        vals.c100 = chunk->operator()(lx+1,ly,lz);
+        vals.c010 = chunk->operator()(lx,ly+1,lz);
+        vals.c110 = chunk->operator()(lx+1,ly+1,lz);
+        vals.c001 = chunk->operator()(lx,ly,lz+1);
+        vals.c101 = chunk->operator()(lx+1,ly,lz+1);
+        vals.c011 = chunk->operator()(lx,ly+1,lz+1);
+        vals.c111 = chunk->operator()(lx+1,ly+1,lz+1);
+    }
+
+    return vals;
+}
+
+// Function to perform trilinear interpolation
+static uint8_t performTrilinearInterpolation(const InterpolationValues &vals,
+                                       float ox, float oy, float oz) {
+    // Trilinear interpolation
+    float fx = ox-int(ox);
+    float fy = oy-int(oy);
+    float fz = oz-int(oz);
+
+    float c00 = (1-fz)*vals.c000 + fz*vals.c001;
+    float c01 = (1-fz)*vals.c010 + fz*vals.c011;
+    float c10 = (1-fz)*vals.c100 + fz*vals.c101;
+    float c11 = (1-fz)*vals.c110 + fz*vals.c111;
+
+    float c0 = (1-fy)*c00 + fy*c01;
+    float c1 = (1-fy)*c10 + fy*c11;
+
+    float c = (1-fx)*c0 + fx*c1;
+
+    return static_cast<uint8_t>(c);
+}
+
+// Function to load or get chunk from cache
+static std::pair<std::shared_ptr<xt::xarray<uint8_t>>, xt::xarray<uint8_t>*>
+loadOrGetChunk(z5::Dataset *ds, ChunkCache *cache, cv::Vec4i idx,
+               int ix, int iy, int iz) {
+    std::shared_ptr<xt::xarray<uint8_t>> chunk_ref;
+    xt::xarray<uint8_t> *chunk = nullptr;
+
+    cache->mutex.lock();
+
+    if (!cache->has(idx)) {
+        cache->mutex.unlock();
+        chunk = z5::multiarray::readChunk<uint8_t>(*ds,
+            {size_t(ix),size_t(iy),size_t(iz)});
+        cache->mutex.lock();
+        cache->put(idx, chunk);
+        chunk_ref = cache->get(idx);
+        cache->mutex.unlock();
+        return {chunk_ref, chunk_ref.get()};
+    } else {
+        chunk_ref = cache->get(idx);
+        chunk = chunk_ref.get();
+        cache->mutex.unlock();
+        return {chunk_ref, chunk};
+    }
+}
+
+// Main refactored function
 void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
                         const cv::Mat_<cv::Vec3f> &coords, ChunkCache *cache) {
     out = cv::Mat_<uint8_t>(coords.size(), 0);
@@ -328,44 +451,6 @@ void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
     int h = coords.rows;
 
     std::shared_mutex mutex;
-
-    // Lambda for retrieving single values (unchanged)
-    auto retrieve_single_value_cached = [&cw,&ch,&cd,&mutex,&cache,&group_idx,&ds](
-            int ox, int oy, int oz) -> uint8_t {
-        std::shared_ptr<xt::xarray<uint8_t>> chunk_ref;
-        xt::xarray<uint8_t> *chunk = nullptr;
-
-        int ix = int(ox)/cw;
-        int iy = int(oy)/ch;
-        int iz = int(oz)/cd;
-
-        cv::Vec4i idx = {group_idx,ix,iy,iz};
-
-        cache->mutex.lock();
-
-        if (!cache->has(idx)) {
-            cache->mutex.unlock();
-            chunk = z5::multiarray::readChunk<uint8_t>(*ds,
-                {size_t(ix),size_t(iy),size_t(iz)});
-            cache->mutex.lock();
-            cache->put(idx, chunk);
-            chunk_ref = cache->get(idx);
-        } else {
-            chunk_ref = cache->get(idx);
-            chunk = chunk_ref.get();
-        }
-        cache->mutex.unlock();
-
-        if (!chunk)
-            return 0;
-
-        int lx = ox-ix*cw;
-        int ly = oy-iy*ch;
-        int lz = oz-iz*cd;
-
-        return chunk->operator()(lx,ly,lz);
-    };
-
     size_t done = 0;
 
     // Track which chunks we've already speculatively loaded
@@ -411,18 +496,12 @@ void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
                 if (idx != last_idx) {
                     last_idx = idx;
 
-                    cache->mutex.lock();
+                    auto [new_chunk_ref, new_chunk] = loadOrGetChunk(ds, cache, idx, ix, iy, iz);
+                    chunk_ref = new_chunk_ref;
+                    chunk = new_chunk;
 
-                    if (!cache->has(idx)) {
-                        cache->mutex.unlock();
-                        chunk = z5::multiarray::readChunk<uint8_t>(*ds,
-                            {size_t(ix),size_t(iy),size_t(iz)});
-                        cache->mutex.lock();
-                        cache->put(idx, chunk);
-                        chunk_ref = cache->get(idx);
-                        cache->mutex.unlock();
-
-                        // Speculatively load neighbors for this new chunk
+                    // Check if this is a newly loaded chunk that needs speculative loading
+                    if (chunk) {
                         bool should_speculate = false;
                         speculative_mutex.lock();
                         if (speculatively_loaded.find(idx) == speculatively_loaded.end()) {
@@ -439,10 +518,6 @@ void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
                                                        ix, iy, iz);
                             }
                         }
-                    } else {
-                        chunk_ref = cache->get(idx);
-                        chunk = chunk_ref.get();
-                        cache->mutex.unlock();
                     }
                 } else if (!chunk_ref) {
                     // Re-acquire the chunk reference if we don't have it
@@ -457,55 +532,13 @@ void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
                     int ly = oy-iy*ch;
                     int lz = oz-iz*cd;
 
-                    float c000 = chunk->operator()(lx,ly,lz);
-                    float c100, c010, c110, c001, c101, c011, c111;
+                    // Gather interpolation values
+                    InterpolationValues vals = gatherInterpolationValues(
+                        chunk, lx, ly, lz, cw, ch, cd,
+                        ox, oy, oz, ds, cache, group_idx);
 
-                    // Handle edge cases for interpolation
-                    if (lx+1 >= cw || ly+1 >= ch || lz+1 >= cd) {
-                        if (lx+1>=cw)
-                            c100 = retrieve_single_value_cached(ox+1,oy,oz);
-                        else
-                            c100 = chunk->operator()(lx+1,ly,lz);
-
-                        if (ly+1 >= ch)
-                            c010 = retrieve_single_value_cached(ox,oy+1,oz);
-                        else
-                            c010 = chunk->operator()(lx,ly+1,lz);
-                        if (lz+1 >= cd)
-                            c001 = retrieve_single_value_cached(ox,oy,oz+1);
-                        else
-                            c001 = chunk->operator()(lx,ly,lz+1);
-
-                        c110 = retrieve_single_value_cached(ox+1,oy+1,oz);
-                        c101 = retrieve_single_value_cached(ox+1,oy,oz+1);
-                        c011 = retrieve_single_value_cached(ox,oy+1,oz+1);
-                        c111 = retrieve_single_value_cached(ox+1,oy+1,oz+1);
-                    } else {
-                        c100 = chunk->operator()(lx+1,ly,lz);
-                        c010 = chunk->operator()(lx,ly+1,lz);
-                        c110 = chunk->operator()(lx+1,ly+1,lz);
-                        c001 = chunk->operator()(lx,ly,lz+1);
-                        c101 = chunk->operator()(lx+1,ly,lz+1);
-                        c011 = chunk->operator()(lx,ly+1,lz+1);
-                        c111 = chunk->operator()(lx+1,ly+1,lz+1);
-                    }
-
-                    // Trilinear interpolation
-                    float fx = ox-int(ox);
-                    float fy = oy-int(oy);
-                    float fz = oz-int(oz);
-
-                    float c00 = (1-fz)*c000 + fz*c001;
-                    float c01 = (1-fz)*c010 + fz*c011;
-                    float c10 = (1-fz)*c100 + fz*c101;
-                    float c11 = (1-fz)*c110 + fz*c111;
-
-                    float c0 = (1-fy)*c00 + fy*c01;
-                    float c1 = (1-fy)*c10 + fy*c11;
-
-                    float c = (1-fx)*c0 + fx*c1;
-
-                    out(y,x) = c;
+                    // Perform interpolation
+                    out(y,x) = performTrilinearInterpolation(vals, ox, oy, oz);
                 }
             }
         }
@@ -516,7 +549,7 @@ void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
 
 
 //somehow opencvs functions are pretty slow 
-static inline cv::Vec3f normed(const cv::Vec3f v)
+static cv::Vec3f normed(const cv::Vec3f v)
 {
     return v/sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
 }
@@ -639,24 +672,6 @@ static void min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f
     }
 }
 
-static float tdist(const cv::Vec3f &a, const cv::Vec3f &b, float t_dist)
-{
-    cv::Vec3f d = a-b;
-    float l = sqrt(d.dot(d));
-    
-    return abs(l-t_dist);
-}
-
-static float tdist_sum(const cv::Vec3f &v, const std::vector<cv::Vec3f> &tgts, const std::vector<float> &tds)
-{
-    float sum = 0;
-    for(int i=0;i<tgts.size();i++) {
-        float d = tdist(v, tgts[i], tds[i]);
-        sum += d*d;
-    }
-    
-    return sum;
-}
 
 //this works surprisingly well, though some artifacts where original there was a lot of skew
 cv::Mat_<cv::Vec3f> smooth_vc_segmentation(const cv::Mat_<cv::Vec3f> &points)

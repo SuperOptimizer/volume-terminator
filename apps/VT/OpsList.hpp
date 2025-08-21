@@ -32,7 +32,6 @@ signals:
     void sendOpChainChanged(OpChain *chain);
 
 private:
-    OpsList* ui;
     QTreeWidget *_tree;
     QComboBox *_add_sel;
     OpChain *_op_chain = nullptr;

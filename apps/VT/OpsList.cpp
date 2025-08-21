@@ -41,7 +41,7 @@ OpsList::OpsList(QWidget* parent) : QWidget(parent)
     connect(appendButton, &QPushButton::clicked, this, &OpsList::onAppendOpClicked);
 }
 
-OpsList::~OpsList() { delete ui; }
+OpsList::~OpsList() {  }
 
 void OpsList::onOpChainSelected(OpChain *ops)
 {
