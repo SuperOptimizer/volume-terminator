@@ -1133,6 +1133,7 @@ void CWindow::LoadSurfaces(bool reload)
             auto seg = fVpkg->segmentation(to_load[i].first);
             try {
                 QuadSurface *qs = new QuadSurface(seg->path());
+                qs->ensureLoaded();
                 qs->readOverlapping();
                 to_load[i].second = qs;
             } catch (const std::exception& e) {

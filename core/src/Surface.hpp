@@ -148,9 +148,9 @@ public:
 
 
 
-protected:
     void ensureLoaded() const;
     void initFromPoints();  // Common initialization after points are set
+protected:
 
     cv::Mat_<cv::Vec3f>* _points = nullptr;
     cv::Rect _bounds;

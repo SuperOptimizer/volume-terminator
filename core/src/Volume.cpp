@@ -22,6 +22,9 @@ Volume::Volume(std::filesystem::path path)
     _uuid = path.stem();
     _name = path.stem();
     _metadata = Metadata(path / CONFIG_FILE);
+    _width = _metadata.get<int>("width");
+    _height = _metadata.get<int>("height");
+    _slices = _metadata.get<int>("slices");
     zarrOpen();
 }
 
