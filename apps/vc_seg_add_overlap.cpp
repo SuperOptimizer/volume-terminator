@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     int search_iters = 10;
     srand(clock());
 
-    SurfaceMeta current(seg_dir);
+    QuadSurface current(seg_dir);
 
     // Read existing overlapping data for current segment
     std::set<std::string> current_overlapping = read_overlapping_json(current.path);
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
             if (meta.value("format","NONE") != "tifxyz")
                 continue;
 
-            SurfaceMeta other = SurfaceMeta(entry.path(), meta);
+            QuadSurface other = QuadSurface(entry.path());
             other.readOverlapping();
 
             if (overlap(current, other, search_iters)) {

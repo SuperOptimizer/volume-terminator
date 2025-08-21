@@ -1499,49 +1499,58 @@ Rect3D rect_from_json(const nlohmann::json &json)
     return {{json[0][0],json[0][1],json[0][2]},{json[1][0],json[1][1],json[1][2]}};
 }
 
-bool overlap(SurfaceMeta &a, SurfaceMeta &b, int max_iters)
+// Replace the overlap/contains functions (around line 1475-1520) with:
+
+bool overlap(Surface &a, Surface &b, int max_iters)
 {
-    if (!intersect(a.bbox, b.bbox))
+    if (!intersect(a.bbox(), b.bbox()))
         return false;
 
-    cv::Mat_<cv::Vec3f> points = a.surface()->rawPoints();
+    // Check if 'a' is a QuadSurface to access rawPoints
+    QuadSurface* quad_a = dynamic_cast<QuadSurface*>(&a);
+    if (!quad_a) {
+        // For non-quad surfaces, we could implement a different strategy
+        // For now, return false or implement point sampling
+        return false;
+    }
+
+    cv::Mat_<cv::Vec3f> points = quad_a->rawPoints();
     for(int r=0; r<std::max(10, max_iters/10); r++) {
         cv::Vec2f p = {rand() % points.cols, rand() % points.rows};
         cv::Vec3f loc = points(p[1], p[0]);
         if (loc[0] == -1)
             continue;
 
-        cv::Vec3f ptr = b.surface()->pointer();
-        if (b.surface()->pointTo(ptr, loc, 2.0, max_iters) <= 2.0) {
+        cv::Vec3f ptr = b.pointer();
+        if (b.pointTo(ptr, loc, 2.0, max_iters) <= 2.0) {
             return true;
         }
     }
     return false;
 }
 
-
-bool contains(SurfaceMeta &a, const cv::Vec3f &loc, int max_iters)
+bool contains(Surface &a, const cv::Vec3f &loc, int max_iters)
 {
-    if (!intersect(a.bbox, {loc,loc}))
+    if (!intersect(a.bbox(), {loc,loc}))
         return false;
 
-    cv::Vec3f ptr = a.surface()->pointer();
-    if (a.surface()->pointTo(ptr, loc, 2.0, max_iters) <= 2.0) {
+    cv::Vec3f ptr = a.pointer();
+    if (a.pointTo(ptr, loc, 2.0, max_iters) <= 2.0) {
         return true;
     }
     return false;
 }
 
-bool contains(SurfaceMeta &a, const std::vector<cv::Vec3f> &locs)
+bool contains(Surface &a, const std::vector<cv::Vec3f> &locs)
 {
     for(auto &p : locs)
         if (!contains(a, p))
             return false;
-    
+
     return true;
 }
 
-bool contains_any(SurfaceMeta &a, const std::vector<cv::Vec3f> &locs)
+bool contains_any(Surface &a, const std::vector<cv::Vec3f> &locs)
 {
     for(auto &p : locs)
         if (contains(a, p))
@@ -1550,86 +1559,128 @@ bool contains_any(SurfaceMeta &a, const std::vector<cv::Vec3f> &locs)
     return false;
 }
 
-SurfaceMeta::SurfaceMeta(const std::filesystem::path &path_, const nlohmann::json &json) : path(path_)
-{
-    if (json.contains("bbox"))
-        bbox = rect_from_json(json["bbox"]);
-    meta = new nlohmann::json;
-    *meta = json;
-}
+// Add these Surface member function implementations (replace the commented ones at the bottom):
 
-SurfaceMeta::SurfaceMeta(const std::filesystem::path &path_) : path(path_)
-{
-    std::ifstream meta_f(path_/"meta.json");
-    if (!meta_f.is_open() || !meta_f.good()) {
-        throw std::runtime_error("Cannot open meta.json file at: " + path_.string());
-    }
-    
-    meta = new nlohmann::json;
-    try {
-        *meta = nlohmann::json::parse(meta_f);
-    } catch (const nlohmann::json::parse_error& e) {
-        delete meta;
-        meta = nullptr;
-        throw std::runtime_error("Invalid JSON in meta.json at: " + path_.string() + " - " + e.what());
-    }
-    
-    if (meta->contains("bbox"))
-        bbox = rect_from_json((*meta)["bbox"]);
-}
-
-SurfaceMeta::~SurfaceMeta()
-{
-    if (_surf) {
-        delete _surf;
-    }
-
-    if (meta) {
-        delete meta;
-    }
-}
-
-void SurfaceMeta::readOverlapping()
-{
-    if (std::filesystem::exists(path / "overlapping")) {
-        throw std::runtime_error(
-            "Found overlapping directory at: " + (path / "overlapping").string() +
-            "\nPlease run overlapping_to_json.py on " +  path.parent_path().string() + " to convert it to JSON format"
-        );
-    }
-    overlapping_str = read_overlapping_json(path);
-}
-
-QuadSurface *SurfaceMeta::surface()
-{
-    if (!_surf)
-        _surf = load_quad_from_tifxyz(path);
-    return _surf;
-}
-
-void SurfaceMeta::setSurface(QuadSurface *surf)
-{
-    _surf = surf;
-}
-
-std::string SurfaceMeta::name()
-{
-    return path.filename();
-}
-
-/*
 std::string Surface::name() const {
-    return path.filename();
+    if (!path.empty())
+        return path.filename().string();
+    return id.empty() ? "unnamed_surface" : id;
 }
 
-void Surface::readOverlapping() {
-    if (std::filesystem::exists(path / "overlapping")) {
-        throw std::runtime_error(
-            "Found overlapping directory at: " + (path / "overlapping").string() +
-            "\nPlease run overlapping_to_json.py on " + path.parent_path().string() +
-            " to convert it to JSON format"
-        );
+void QuadSurface::readOverlapping() {
+    if (!path.empty()) {
+        if (std::filesystem::exists(path / "overlapping")) {
+            throw std::runtime_error(
+                "Found overlapping directory at: " + (path / "overlapping").string() +
+                "\nPlease run overlapping_to_json.py on " + path.parent_path().string() +
+                " to convert it to JSON format"
+            );
+        }
+        overlapping_str = read_overlapping_json(path);
     }
-    overlapping_str = read_overlapping_json(path);
 }
-*/
+
+QuadSurface::QuadSurface(const std::filesystem::path &filepath) : _scale({1.0f, 1.0f})
+{
+    path = filepath;
+
+    // Load metadata to get scale and bbox
+    std::ifstream meta_f(path/"meta.json");
+    if (!meta_f.is_open()) {
+        throw std::runtime_error("Cannot open meta.json at: " + path.string());
+    }
+
+    meta = new nlohmann::json(nlohmann::json::parse(meta_f));
+
+    if ((*meta).contains("scale")) {
+        _scale = {(*meta)["scale"][0].get<float>(), (*meta)["scale"][1].get<float>()};
+    }
+
+    if ((*meta).contains("bbox")) {
+        _bbox = rect_from_json((*meta)["bbox"]);
+    }
+
+    if ((*meta).contains("uuid")) {
+        id = (*meta)["uuid"];
+    }
+
+    // Don't load points yet - lazy loading
+    _points = nullptr;
+}
+
+void QuadSurface::load()
+{
+    if (_loading) return;  // Prevent recursive loads
+    if (_points != nullptr) return;  // Already loaded
+
+    _loading = true;
+
+    std::vector<cv::Mat_<float>> xyz = {
+        cv::imread((path/"x.tif").string(), cv::IMREAD_UNCHANGED),
+        cv::imread((path/"y.tif").string(), cv::IMREAD_UNCHANGED),
+        cv::imread((path/"z.tif").string(), cv::IMREAD_UNCHANGED)
+    };
+
+    _points = new cv::Mat_<cv::Vec3f>;
+    cv::merge(xyz, *_points);
+
+    // Fix invalid points
+    for(int j=0; j<_points->rows; j++)
+        for(int i=0; i<_points->cols; i++)
+            if ((*_points)(j,i)[2] <= 0) {
+                (*_points)(j,i) = {-1,-1,-1};
+            }
+
+    // Apply mask if it exists
+    if (std::filesystem::exists(path/"mask.tif")) {
+        std::vector<cv::Mat> layers;
+        cv::imreadmulti((path/"mask.tif").string(), layers, cv::IMREAD_GRAYSCALE);
+        cv::Mat_<uint8_t> mask = layers[0];
+        cv::resize(mask, mask, _points->size(), cv::INTER_NEAREST);
+        for(int j=0; j<_points->rows; j++)
+            for(int i=0; i<_points->cols; i++)
+                if (!mask(j,i))
+                    (*_points)(j,i) = {-1,-1,-1};
+    }
+
+    initFromPoints();
+    _loading = false;
+}
+
+void QuadSurface::unload()
+{
+    if (_points) {
+        delete _points;
+        _points = nullptr;
+    }
+}
+
+void QuadSurface::ensureLoaded() const
+{
+    if (!_points && !path.empty()) {
+        const_cast<QuadSurface*>(this)->load();
+    }
+}
+
+void QuadSurface::initFromPoints()
+{
+    if (!_points) return;
+
+    _bounds = {0, 0, _points->cols-1, _points->rows-1};
+    _center = {_points->cols/2.0f/_scale[0], _points->rows/2.0f/_scale[1], 0};
+}
+
+cv::Mat_<cv::Vec3f> QuadSurface::rawPoints()
+{
+    ensureLoaded();
+    if (!_points) {
+        throw std::runtime_error("QuadSurface points not loaded");
+    }
+    return *_points;
+}
+
+cv::Mat_<cv::Vec3f>* QuadSurface::rawPointsPtr()
+{
+    ensureLoaded();
+    return _points;
+}

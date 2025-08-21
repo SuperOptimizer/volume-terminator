@@ -67,7 +67,7 @@ bool check_existing_segments(const std::filesystem::path& tgt_dir, const cv::Vec
             continue;
         }
 
-        SurfaceMeta other(entry.path(), meta);
+        QuadSurface other(entry.path());
         if (contains(other, origin, search_effort)) {
             std::cout << "Found overlapping segment at location: " << entry.path() << std::endl;
             return true;
@@ -129,9 +129,9 @@ int main(int argc, char *argv[])
     std::cout << "min_area_cm: " << min_area_cm << std::endl;
     std::cout << "tgt_overlap_count: " << tgt_overlap_count << std::endl;
 
-    std::unordered_map<std::string,SurfaceMeta*> surfs;
-    std::vector<SurfaceMeta*> surfs_v;
-    SurfaceMeta *src;
+    std::unordered_map<std::string,QuadSurface*> surfs;
+    std::vector<QuadSurface*> surfs_v;
+    QuadSurface *src;
 
     //expansion mode
     int count_overlap = 0;
@@ -167,11 +167,11 @@ int main(int argc, char *argv[])
                 if (meta.value("format","NONE") != "tifxyz")
                     continue;
 
-                SurfaceMeta *sm = new SurfaceMeta(entry.path(), meta);
-                sm->readOverlapping();
+                QuadSurface *qs = new QuadSurface(entry.path());
+                qs->readOverlapping();
 
-                surfs[name] = sm;
-                surfs_v.push_back(sm);
+                surfs[name] = qs;
+                surfs_v.push_back(qs);
             }
             
         if (!surfs.size()) {
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 
         for(auto &it : surfs_v) {
             src = it;
-            cv::Mat_<cv::Vec3f> points = src->surface()->rawPoints();
+            cv::Mat_<cv::Vec3f> points = src->rawPoints();
             int w = points.cols;
             int h = points.rows;
 
@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
     std::cout << "saving " << seg_dir << std::endl;
     surf->save(seg_dir, uuid);
 
-    SurfaceMeta current;
+    QuadSurface current;
 
     if (mode == "expansion") {
         current.path = seg_dir;
@@ -381,7 +381,7 @@ int main(int argc, char *argv[])
                 if (meta.value("format","NONE") != "tifxyz")
                     continue;
 
-                SurfaceMeta other = SurfaceMeta(entry.path(), meta);
+                QuadSurface other = QuadSurface(entry.path());
                 other.readOverlapping();
 
                 if (overlap(current, other, search_effort)) {
@@ -398,8 +398,8 @@ int main(int argc, char *argv[])
     }
 
     delete surf;
-    for (auto sm : surfs_v) {
-        delete sm;
+    for (auto qs : surfs_v) {
+        delete qs;
     }
 
     return EXIT_SUCCESS;

@@ -1474,8 +1474,8 @@ int main(int argc, char *argv[])
     //     surf_hr->save(seg_dir, uuid);
     // }
 
-    for (auto sm : surfs) {
-        delete sm;
+    for (auto qs : surfs) {
+        delete qs;
     }
     
     return EXIT_SUCCESS;

@@ -1113,7 +1113,7 @@ void CWindow::LoadSurfaces(bool reload)
     std::vector<std::string> seg_ids = fVpkg->segmentationIDs();
     
     // Only load surfaces that haven't been loaded yet
-    std::vector<std::pair<std::string,SurfaceMeta*>> to_load;
+    std::vector<std::pair<std::string,QuadSurface*>> to_load;
     for (const auto& seg_id : seg_ids) {
         if (_vol_qsurfs.find(seg_id) == _vol_qsurfs.end()) {
             // Not loaded yet
@@ -1132,10 +1132,9 @@ void CWindow::LoadSurfaces(bool reload)
         for(int i = 0; i < to_load.size(); i++) {
             auto seg = fVpkg->segmentation(to_load[i].first);
             try {
-                SurfaceMeta *sm = new SurfaceMeta(seg->path());
-                sm->surface();
-                sm->readOverlapping();
-                to_load[i].second = sm;
+                QuadSurface *qs = new QuadSurface(seg->path());
+                qs->readOverlapping();
+                to_load[i].second = qs;
             } catch (const std::exception& e) {
                 std::cerr << "Failed to load surface " << to_load[i].first << ": " << e.what() << std::endl;
                 to_load[i].second = nullptr;
@@ -1146,7 +1145,7 @@ void CWindow::LoadSurfaces(bool reload)
         for(auto &pair : to_load) {
             if (pair.second) {
                 _vol_qsurfs[pair.first] = pair.second;
-                _surf_col->setSurface(pair.first, pair.second->surface(), true);
+                _surf_col->setSurface(pair.first, pair.second, true);
             } else {
                 std::cout << "Skipping surface " << pair.first << " due to invalid metadata" << std::endl;
             }
@@ -1385,7 +1384,7 @@ void CWindow::onTagChanged(void)
         if (_opchains.count(id) && _opchains[id]) {
             surf = _opchains[id]->src();
         } else if (_vol_qsurfs.count(id) && _vol_qsurfs[id]) {
-            surf = _vol_qsurfs[id]->surface();
+            surf = _vol_qsurfs[id];
         }
         
         if (!surf || !surf->meta) {
@@ -1444,15 +1443,15 @@ void CWindow::onTagChanged(void)
         
         // If reviewed was just added, mark overlapping segmentations with partial_review
         if (reviewedJustAdded && _vol_qsurfs.count(id)) {
-            SurfaceMeta* surfMeta = _vol_qsurfs[id];
+            QuadSurface* surfMeta = _vol_qsurfs[id];
             
             std::cout << "Marking partial review for overlaps of " << id << ", found " << surfMeta->overlapping_str.size() << " overlaps" << std::endl;
             
             // Iterate through overlapping surfaces
             for (const std::string& overlapId : surfMeta->overlapping_str) {
                 if (_vol_qsurfs.count(overlapId)) {
-                    SurfaceMeta* overlapMeta = _vol_qsurfs[overlapId];
-                    QuadSurface* overlapSurf = overlapMeta->surface();
+                    QuadSurface* overlapMeta = _vol_qsurfs[overlapId];
+                    QuadSurface* overlapSurf = overlapMeta;
                     
                     if (overlapSurf && overlapSurf->meta) {
                         // Don't mark as partial_review if it's already reviewed
@@ -1523,7 +1522,7 @@ void CWindow::onSurfaceSelected()
 
     if (!_opchains.count(_surfID)) {
         if (_vol_qsurfs.count(_surfID)) {
-            _opchains[_surfID] = new OpChain(_vol_qsurfs[_surfID]->surface());
+            _opchains[_surfID] = new OpChain(_vol_qsurfs[_surfID]);
         }
         else {
             auto seg = fVpkg->segmentation(_surfID);
@@ -1616,10 +1615,10 @@ void CWindow::UpdateSurfaceTreeIcon(SurfaceTreeWidgetItem *item)
     std::string id = item->data(SURFACE_ID_COLUMN, Qt::UserRole).toString().toStdString();
 
     // Approved / defective icon
-    if (_vol_qsurfs[id]->surface()->meta) {
+    if (_vol_qsurfs[id]->meta) {
         item->updateItemIcon(
-            _vol_qsurfs[id]->surface()->meta->value("tags", nlohmann::json::object_t()).count("approved"),
-            _vol_qsurfs[id]->surface()->meta->value("tags", nlohmann::json::object_t()).count("defective"));
+            _vol_qsurfs[id]->meta->value("tags", nlohmann::json::object_t()).count("approved"),
+            _vol_qsurfs[id]->meta->value("tags", nlohmann::json::object_t()).count("defective"));
     }
 }
 
@@ -1740,7 +1739,7 @@ void CWindow::onSegFilterChanged(int index)
 
             // Filter by unreviewed
             if (chkFilterUnreviewed->isChecked()) {
-                auto* surface = _vol_qsurfs[id]->surface();
+                auto* surface = _vol_qsurfs[id];
                 if (surface && surface->meta) {
                     auto tags = surface->meta->value("tags", nlohmann::json::object_t());
                     show = show && !tags.count("reviewed");
@@ -1751,7 +1750,7 @@ void CWindow::onSegFilterChanged(int index)
 
             // Filter by revisit
             if (chkFilterRevisit->isChecked()) {
-                auto* surface = _vol_qsurfs[id]->surface();
+                auto* surface = _vol_qsurfs[id];
                 if (surface && surface->meta) {
                     auto tags = surface->meta->value("tags", nlohmann::json::object_t());
                     show = show && (tags.count("revisit") > 0);
@@ -1762,7 +1761,7 @@ void CWindow::onSegFilterChanged(int index)
 
             // Filter out expansion
             if (chkFilterNoExpansion->isChecked()) {
-                auto* surface = _vol_qsurfs[id]->surface();
+                auto* surface = _vol_qsurfs[id];
                 if (surface && surface->meta) {
                     if (surface->meta->contains("vc_gsfs_mode")) {
                         std::string mode = surface->meta->value("vc_gsfs_mode", "");
@@ -1777,7 +1776,7 @@ void CWindow::onSegFilterChanged(int index)
 
             // Filter out defective
             if (chkFilterNoDefective->isChecked()) {
-                auto* surface = _vol_qsurfs[id]->surface();
+                auto* surface = _vol_qsurfs[id];
                 if (surface && surface->meta) {
                     auto tags = surface->meta->value("tags", nlohmann::json::object_t());
                     show = show && !tags.count("defective");
@@ -1788,7 +1787,7 @@ void CWindow::onSegFilterChanged(int index)
 
             // Filter out partial review
             if (chkFilterPartialReview->isChecked()) {
-                auto* surface = _vol_qsurfs[id]->surface();
+                auto* surface = _vol_qsurfs[id];
                 if (surface && surface->meta) {
                     auto tags = surface->meta->value("tags", nlohmann::json::object_t());
                     show = show && !tags.count("partial_review");
@@ -1798,7 +1797,7 @@ void CWindow::onSegFilterChanged(int index)
             }
 
             if (chkFilterHideUnapproved->isChecked()) {
-                auto* surface = _vol_qsurfs[id]->surface();
+                auto* surface = _vol_qsurfs[id];
                 if (surface && surface->meta) {
                     auto tags = surface->meta->value("tags", nlohmann::json::object_t());
                     show = show && (tags.count("approved") > 0);
@@ -2116,23 +2115,23 @@ void CWindow::AddSingleSegmentation(const std::string& segId)
     try {
         auto seg = fVpkg->segmentation(segId);
         if (seg->metadata().hasKey("format") && seg->metadata().get<std::string>("format") == "tifxyz") {
-            SurfaceMeta *sm = new SurfaceMeta(seg->path());
-            sm->surface();
-            sm->readOverlapping();
+            QuadSurface *qs = new QuadSurface(seg->path());
+            qs;
+            qs->readOverlapping();
             
             // Add to collections
-            _vol_qsurfs[segId] = sm;
-            _surf_col->setSurface(segId, sm->surface(), true);
+            _vol_qsurfs[segId] = qs;
+            _surf_col->setSurface(segId, qs, true);
             
             // Add to tree widget
             auto* item = new SurfaceTreeWidgetItem(treeWidgetSurfaces);
             item->setText(SURFACE_ID_COLUMN, QString(segId.c_str()));
             item->setData(SURFACE_ID_COLUMN, Qt::UserRole, QVariant(segId.c_str()));
-            double size = sm->meta->value("area_cm2", -1.f);
+            double size = qs->meta->value("area_cm2", -1.f);
             item->setText(2, QString::number(size, 'f', 3));
-            double cost = sm->meta->value("avg_cost", -1.f);
+            double cost = qs->meta->value("avg_cost", -1.f);
             item->setText(3, QString::number(cost, 'f', 3));
-            item->setText(4, QString::number(sm->overlapping_str.size()));
+            item->setText(4, QString::number(qs->overlapping_str.size()));
             UpdateSurfaceTreeIcon(item);
         }
     } catch (const std::exception& e) {
@@ -2269,13 +2268,13 @@ void CWindow::onGenerateReviewReport()
     
     // Iterate through all surfaces
     for (const auto& pair : _vol_qsurfs) {
-        SurfaceMeta* surfMeta = pair.second;
+        QuadSurface* surfMeta = pair.second;
         
-        if (!surfMeta || !surfMeta->surface() || !surfMeta->surface()->meta) {
+        if (!surfMeta || !surfMeta || !surfMeta->meta) {
             continue;
         }
         
-        nlohmann::json* meta = surfMeta->surface()->meta;
+        nlohmann::json* meta = surfMeta->meta;
         
         // Check if surface has reviewed tag
         if (!meta->contains("tags") || !meta->at("tags").contains("reviewed")) {
@@ -2382,8 +2381,8 @@ void CWindow::onVoxelizePaths()
     std::map<std::string, QuadSurface*> surfacesToVoxelize;
     for (const auto& [id, surfMeta] : _vol_qsurfs) {
         // Only include surfaces from current segmentation directory
-        if (surfMeta && surfMeta->surface()) {
-            surfacesToVoxelize[id] = surfMeta->surface();
+        if (surfMeta && surfMeta) {
+            surfacesToVoxelize[id] = surfMeta;
         }
     }
     
