@@ -3,7 +3,6 @@
 #include <QPen>
 #include <QBrush>
 
-namespace ChaoVis {
 
 COutlinedTextItem::COutlinedTextItem(QGraphicsItem *parent)
     : QGraphicsTextItem(parent)
@@ -52,4 +51,3 @@ QPainterPath COutlinedTextItem::shape() const
     return stroker.createStroke(path).united(path);
 }
 
-} // namespace ChaoVis

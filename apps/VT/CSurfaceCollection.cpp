@@ -1,9 +1,8 @@
 #include "CSurfaceCollection.hpp"
 
-#include "vc/core/util/Slicing.hpp"
-#include "vc/core/util/Surface.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
 
-using namespace ChaoVis;
 
 CSurfaceCollection::~CSurfaceCollection()
 {

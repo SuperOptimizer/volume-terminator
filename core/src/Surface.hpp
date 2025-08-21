@@ -5,8 +5,6 @@
 #include <opencv2/core.hpp> 
 #include <nlohmann/json_fwd.hpp>
 
-#include "SurfaceDef.hpp"
-
 #define Z_DBG_GEN_PREFIX "auto_grown_"
 
 class QuadSurface;
@@ -24,7 +22,6 @@ struct Rect3D {
 bool intersect(const Rect3D &a, const Rect3D &b);
 Rect3D expand_rect(const Rect3D &a, const cv::Vec3f &p);
 
-QuadSurface *load_quad_from_vcps(const std::string &path);
 QuadSurface *load_quad_from_obj(const std::string &path);
 QuadSurface *load_quad_from_tifxyz(const std::string &path);
 QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *cache, cv::Vec3f origin, int generations = 100, float step = 10, const std::string &cache_root = "", float voxelsize = 1.0);
@@ -58,7 +55,7 @@ public:
     virtual void gen(cv::Mat_<cv::Vec3f> *coords, cv::Mat_<cv::Vec3f> *normals, cv::Size size, const cv::Vec3f &ptr, float scale, const cv::Vec3f &offset) = 0;
     nlohmann::json *meta = nullptr;
     std::filesystem::path path;
-    SurfaceID id;
+    std::string id;
 };
 
 class PlaneSurface : public Surface

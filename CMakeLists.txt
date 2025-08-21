@@ -120,6 +120,8 @@ else()
     add_library(OpenMP::OpenMP_C ALIAS openmp_stub)
 endif()
 
+include_directories(core/src)
+
 find_package(Qt6  REQUIRED COMPONENTS Widgets Gui Core Network)
 find_package(xtensor REQUIRED)
 find_package(spdlog  REQUIRED)
@@ -127,37 +129,39 @@ find_package(CURL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system program_options)
 find_package(Ceres REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs highgui videoio calib3d)
 find_package(z5 REQUIRED)
 
 add_library(vc_core
         core/src/DiskBasedObjectBaseClass.cpp
         core/src/Metadata.cpp
-        core/src/Segmentation.cpp
         core/src/Volume.cpp
+        core/src/Segmentation.cpp
         core/src/VolumePkg.cpp
         core/src/Logging.cpp
         core/src/Slicing.cpp
         core/src/Surface.cpp
         core/src/SurfaceHelpers.cpp
-        core/src/ChunkedTensor.cpp
         core/src/SurfaceVoxelizer.cpp
-        core/src/VCCollection.cpp
-        core/src/surface_metrics.cpp
 )
 
-
 target_link_libraries(vc_core
-        opencv_core
-        opencv_imgproc
-        opencv_imgcodecs
+        ${OpenCV_LIBS}
         spdlog::spdlog
         nlohmann_json::nlohmann_json
         z5
         CURL::libcurl
         OpenMP::OpenMP_CXX
+        Eigen3::Eigen
+        Ceres::ceres
 )
 
+add_library(vcui
+        core/src/surface_metrics.cpp
+        core/src/VCCollection.cpp
+)
+
+target_link_libraries(vcui vc_core Qt6::Core Qt6::Gui Qt6::Widgets)
 
 add_executable(VT
         apps/VT/VCAppMain.cpp
@@ -195,52 +199,55 @@ add_executable(VT
         apps/VT/COutlinedTextItem.hpp
         apps/VT/COutlinedTextItem.cpp)
 
+target_include_directories(VT PUBLIC apps/VT)
+
 target_link_libraries(VT
         vc_core
+        vcui
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
         z5
         OpenMP::OpenMP_CXX
+        Ceres::ceres
 )
 
 
 add_executable(vc_render_video apps/vc_render_video.cpp)
-target_link_libraries(vc_render_video z5 opencv_core vc_core)
+target_link_libraries(vc_render_video vc_core)
 
 add_executable(vc_render_tifxyz apps/vc_render_tifxyz.cpp)
-target_link_libraries(vc_render_tifxyz z5 opencv_core vc_core Boost::program_options)
+target_link_libraries(vc_render_tifxyz vc_core Boost::program_options)
 
 add_executable(vc_objrefine apps/vc_objrefine.cpp)
-target_link_libraries(vc_objrefine z5 opencv_highgui vc_core)
+target_link_libraries(vc_objrefine vc_core)
 
 add_executable(vc_grow_seg_from_seed apps/vc_grow_seg_from_seed.cpp)
-target_link_libraries(vc_grow_seg_from_seed z5 opencv_highgui vc_core)
+target_link_libraries(vc_grow_seg_from_seed vc_core)
 
 add_executable(vc_seg_add_overlap apps/vc_seg_add_overlap.cpp)
-target_link_libraries(vc_seg_add_overlap z5 opencv_highgui vc_core)
+target_link_libraries(vc_seg_add_overlap vc_core)
 
 add_executable(vc_grow_seg_from_segments apps/vc_grow_seg_from_segments.cpp)
-target_link_libraries(vc_grow_seg_from_segments z5 opencv_highgui vc_core)
+target_link_libraries(vc_grow_seg_from_segments vc_core)
 
 add_executable(vc_tifxyz2obj apps/vc_tifxyz2obj.cpp)
-target_link_libraries(vc_tifxyz2obj opencv_highgui vc_core)
+target_link_libraries(vc_tifxyz2obj vc_core)
 
 add_executable(vc_obj2tifxyz apps/vc_obj2tifxyz.cpp)
-target_link_libraries(vc_obj2tifxyz opencv_highgui vc_core)
+target_link_libraries(vc_obj2tifxyz vc_core)
 
 add_executable(vc_tifxyz_inp_mask apps/vc_tifxyz_inp_mask.cpp)
-target_link_libraries(vc_tifxyz_inp_mask opencv_highgui vc_core)
+target_link_libraries(vc_tifxyz_inp_mask vc_core)
 
 add_executable(vc_tifxyz_winding apps/vc_tifxyz_winding.cpp)
-target_link_libraries(vc_tifxyz_winding opencv_highgui vc_core
-)
+target_link_libraries(vc_tifxyz_winding vc_core)
 
 add_executable(vc_fill_quadmesh apps/vc_fill_quadmesh.cpp)
-target_link_libraries(vc_fill_quadmesh opencv_highgui vc_core Ceres::ceres)
+target_link_libraries(vc_fill_quadmesh vc_core)
 
 add_executable(vc_tiffxyz_upscale_grounding apps/vc_tiffxyz_upscale_grounding.cpp)
-target_link_libraries(vc_tiffxyz_upscale_grounding opencv_highgui vc_core Ceres::ceres)
+target_link_libraries(vc_tiffxyz_upscale_grounding vc_core)
 
 add_executable(vc_calc_surface_metrics apps/vc_calc_surface_metrics.cpp)
-target_link_libraries(vc_calc_surface_metrics vc_core Boost::program_options)
+target_link_libraries(vc_calc_surface_metrics vc_core vcui Boost::program_options)

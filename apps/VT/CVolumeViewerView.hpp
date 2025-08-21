@@ -2,8 +2,7 @@
 // Chao Du 2015 April
 #include <QGraphicsView>
 
-namespace ChaoVis
-{
+
 
 class CVolumeViewerView : public QGraphicsView
 {
@@ -51,4 +50,4 @@ protected:
     double m_vx = 32.0, m_vy = 32.0;
 };
 
-}
+

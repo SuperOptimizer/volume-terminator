@@ -1,7 +1,7 @@
-#include "vc/core/util/Slicing.hpp"
-#include "vc/core/util/Surface.hpp"
-#include "vc/core/util/SurfaceModeling.hpp"
-#include "vc/core/types/ChunkedTensor.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
+#include "SurfaceModeling.hpp"
+#include "ChunkedTensor.hpp"
 
 #include "z5/factory.hxx"
 #include <nlohmann/json.hpp>
@@ -10,7 +10,6 @@
 #include <opencv2/imgproc.hpp>
 #include <omp.h>
 
-namespace fs = std::filesystem;
 
 using json = nlohmann::json;
 
@@ -355,12 +354,12 @@ int main(int argc, char *argv[])
     {
         cv::Mat_<cv::Vec3f> points_hr = points_hr_grounding(wind_lr, points_lr, winds, surf_points, scale_factor);
         QuadSurface *surf_hr = new QuadSurface(points_hr, surfs[0]->_scale);
-        fs::path tgt_dir = "./";
+        std::filesystem::path tgt_dir = "./";
         surf_hr->meta = new nlohmann::json;
         (*surf_hr->meta)["vc_tiffxyz_upscale_grounding_scale_factor"] = scale_factor;
         std::string name_prefix = "grounding_hr_";
         std::string uuid = name_prefix + time_str();
-        fs::path seg_dir = tgt_dir / uuid;
+        std::filesystem::path seg_dir = tgt_dir / uuid;
         std::cout << "saving " << seg_dir << std::endl;
         surf_hr->save(seg_dir, uuid);
         delete surf_hr;

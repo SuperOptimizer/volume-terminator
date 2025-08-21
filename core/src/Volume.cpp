@@ -1,4 +1,4 @@
-#include "vc/core/types/Volume.hpp"
+#include "Volume.hpp"
 
 #include <iomanip>
 #include <sstream>
@@ -18,15 +18,12 @@
 #include "z5/factory.hxx"
 #include "z5/multiarray/xtensor_access.hxx"
 
-#include "vc/core/util/xtensor_include.hpp"
-#include XTENSORINCLUDE(containers, xarray.hpp)
+#include "xtensor/containers/xarray.hpp"
 
-namespace fs = std::filesystem;
 
-using namespace volcart;
 
 // Load a Volume from disk
-Volume::Volume(fs::path path) : DiskBasedObjectBaseClass(std::move(path))
+Volume::Volume(std::filesystem::path path) : DiskBasedObjectBaseClass(std::move(path))
 {
     if (metadata_.get<std::string>("type") != "vol") {
         throw std::runtime_error("File not of type: vol");
@@ -45,7 +42,7 @@ Volume::Volume(fs::path path) : DiskBasedObjectBaseClass(std::move(path))
 }
 
 // Setup a Volume from a folder of slices
-Volume::Volume(fs::path path, std::string uuid, std::string name)
+Volume::Volume(std::filesystem::path path, std::string uuid, std::string name)
     : DiskBasedObjectBaseClass(
           std::move(path), std::move(uuid), std::move(name)),
           slice_mutexes_(slices_)
@@ -86,13 +83,13 @@ void Volume::zarrOpen()
 }
 
 // Load a Volume from disk, return a pointer
-auto Volume::New(fs::path path) -> Volume::Pointer
+auto Volume::New(std::filesystem::path path) -> Volume::Pointer
 {
     return std::make_shared<Volume>(path);
 }
 
 // Set a Volume from a folder of slices, return a pointer
-auto Volume::New(fs::path path, std::string uuid, std::string name)
+auto Volume::New(std::filesystem::path path, std::string uuid, std::string name)
     -> Volume::Pointer
 {
     return std::make_shared<Volume>(path, uuid, name);
@@ -150,7 +147,7 @@ auto Volume::isInBounds(const cv::Vec3d& v) const -> bool
     return isInBounds(v(0), v(1), v(2));
 }
 
-void throw_run_path(const fs::path &path, const std::string msg)
+void throw_run_path(const std::filesystem::path &path, const std::string msg)
 {
     throw std::runtime_error(msg + " for " + path.string());
 }

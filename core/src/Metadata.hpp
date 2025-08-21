@@ -9,10 +9,8 @@
 #include <opencv2/core.hpp>
 
 #include <filesystem>
-#include "vc/core/util/Json.hpp"
 
-namespace volcart
-{
+
 /**
  * @class Metadata
  * @author Sean Karlage, Seth Parker
@@ -36,7 +34,7 @@ public:
     /**
      * @brief Read a metadata file from disk
      *
-     * @throws volcart::IOException
+     * @throws std::runtime_error
      */
     explicit Metadata(std::filesystem::path fileLocation);
     /**@}*/
@@ -51,7 +49,7 @@ public:
     /**
      * @brief Save the metadata file to the stored path
      *
-     * @throws volcart::IOException 
+     * @throws std::runtime_error
      */
     void save() { save(path_); }
 
@@ -112,4 +110,4 @@ protected:
     /** Location where the JSON file will be stored*/
     std::filesystem::path path_;
 };
-}  // namespace volcart
+

@@ -3,7 +3,6 @@
 #include <QGraphicsTextItem>
 #include <QPainter>
 
-namespace ChaoVis {
 
 class COutlinedTextItem : public QGraphicsTextItem
 {
@@ -14,4 +13,3 @@ public:
     QPainterPath shape() const override;
 };
 
-}

@@ -8,8 +8,7 @@
 #include "ui_VCMain.h"
 
 #include "CommandLineToolRunner.hpp"
-#include "vc/core/util/SurfaceDef.hpp"
-#include "vc/core/util/VCCollection.hpp"
+#include "VCCollection.hpp"
 
 #include <QShortcut>
 
@@ -26,10 +25,9 @@ class QuadSurface;
 class SurfaceMeta;
 class OpChain;
 
-namespace volcart {
     class Volume;
     class VolumePkg;
-}
+
 
 // Qt related forward declaration
 class QMdiArea;
@@ -38,8 +36,7 @@ class OpsSettings;
 class SurfaceTreeWidget;
 class SurfaceTreeWidgetItem;
 
-namespace ChaoVis
-{
+
 
 class CVolumeViewer;
 class CSurfaceCollection;
@@ -60,7 +57,7 @@ public:
 
 signals:
     void sendLocChanged(int x, int y, int z);
-    void sendVolumeChanged(std::shared_ptr<volcart::Volume> vol, const std::string& volumeId);
+    void sendVolumeChanged(std::shared_ptr<Volume> vol, const std::string& volumeId);
     void sendSliceChanged(std::string,Surface*);
     void sendOpChainSelected(OpChain*);
     void sendSurfacesLoaded();
@@ -74,14 +71,14 @@ public slots:
     void onOpChainChanged(OpChain *chain);
     void onTagChanged(void);
     void onSurfaceContextMenuRequested(const QPoint& pos);
-    void onRenderSegment(const SurfaceID& segmentId);
-    void onGrowSegmentFromSegment(const SurfaceID& segmentId);
-    void onAddOverlap(const SurfaceID& segmentId);
-    void onConvertToObj(const SurfaceID& segmentId);
-    void onSlimFlattenAndRender(const SurfaceID& segmentId);
-    void onGrowSeeds(const SurfaceID& segmentId, bool isExpand, bool isRandomSeed = false);
+    void onRenderSegment(const std::string& segmentId);
+    void onGrowSegmentFromSegment(const std::string& segmentId);
+    void onAddOverlap(const std::string& segmentId);
+    void onConvertToObj(const std::string& segmentId);
+    void onSlimFlattenAndRender(const std::string& segmentId);
+    void onGrowSeeds(const std::string& segmentId, bool isExpand, bool isRandomSeed = false);
     void onToggleConsoleOutput();
-    void onDeleteSegments(const std::vector<SurfaceID>& segmentIds);
+    void onDeleteSegments(const std::vector<std::string>& segmentIds);
     void onVoxelizePaths();
    void onFocusPOIChanged(std::string name, POI* poi);
     void onPointDoubleClicked(uint64_t pointId);
@@ -121,7 +118,7 @@ private:
     void setWidgetsEnabled(bool state);
 
     bool InitializeVolumePkg(const std::string& nVpkgPath);
-    void setDefaultWindowWidth(std::shared_ptr<volcart::Volume> volume);
+    void setDefaultWindowWidth(std::shared_ptr<Volume> volume);
 
     void OpenVolume(const QString& path);
     void CloseVolume(void);
@@ -140,7 +137,7 @@ private:
     static void audio_callback(void *user_data, uint8_t *raw_buffer, int bytes);
     void playPing();
 
-    void setVolume(std::shared_ptr<volcart::Volume> newvol);
+    void setVolume(std::shared_ptr<Volume> newvol);
 
 private slots:
     void Open(void);
@@ -163,12 +160,12 @@ private slots:
 
 private:
     bool appInitComplete{false};
-    std::shared_ptr<volcart::VolumePkg> fVpkg;
+    std::shared_ptr<VolumePkg> fVpkg;
     Surface *_seg_surf;
     QString fVpkgPath;
     std::string fVpkgName;
 
-    std::shared_ptr<volcart::Volume> currentVolume;
+    std::shared_ptr<Volume> currentVolume;
     std::string currentVolumeId;
     int loc[3] = {0,0,0};
 
@@ -214,7 +211,7 @@ private:
     QCheckBox* _chkReviewed;
     QCheckBox* _chkRevisit;
     QuadSurface *_surf;
-    SurfaceID _surfID;
+    std::string _surfID;
     
   
     SeedingWidget* _seedingWidget;
@@ -260,4 +257,3 @@ private:
 
 };  // class CWindow
 
-}  // namespace ChaoVis

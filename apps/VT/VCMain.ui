@@ -1331,7 +1331,7 @@
   <customwidget>
    <class>SurfaceTreeWidget</class>
    <extends>QTreeWidget</extends>
-   <header>../../../../../apps/VC3D/SurfaceTreeWidget.hpp</header>
+   <header>SurfaceTreeWidget.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>

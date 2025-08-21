@@ -1,7 +1,7 @@
 #include "OpChain.hpp"
 
-#include "vc/core/util/Slicing.hpp"
-#include "vc/core/util/Surface.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
 
 void OpChain::append(DeltaSurface *op)
 {

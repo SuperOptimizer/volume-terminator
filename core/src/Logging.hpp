@@ -11,11 +11,10 @@
 #include <filesystem>
 
 /**
- * @namespace volcart::logging
+ * @namespace logging
  * @brief Logging utilities
  */
-namespace volcart
-{
+
 namespace logging
 {
 /**
@@ -32,4 +31,4 @@ void SetLogLevel(const std::string& s);
 /** @brief Volume Cartographer global logger */
 auto Logger() -> std::shared_ptr<spdlog::logger>;
 
-}  // namespace volcart
+

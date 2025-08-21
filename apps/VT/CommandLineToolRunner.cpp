@@ -8,7 +8,6 @@
 #include <QDateTime>
 #include <QTextStream>
 
-namespace ChaoVis {
 
 CommandLineToolRunner::CommandLineToolRunner(QStatusBar* statusBar, CWindow* mainWindow, QObject* parent)
     : QObject(parent)
@@ -523,4 +522,3 @@ QString CommandLineToolRunner::getOutputPath() const
     return outputInfo.dir().path();
 }
 
-} // namespace ChaoVis

@@ -8,8 +8,7 @@
 
 #include "UDataManipulateUtils.hpp"
 
-namespace ChaoVis
-{
+
 
 // Convert from QImage to cv::Mat
 auto QImage2Mat(const QImage& nSrc) -> cv::Mat
@@ -35,4 +34,3 @@ auto Mat2QImage(const cv::Mat& nSrc) -> QImage
     return result;
 }
 
-}  // namespace ChaoVis

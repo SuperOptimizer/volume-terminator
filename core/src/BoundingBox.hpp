@@ -1,13 +1,10 @@
 #pragma once
 
-/** @file */
-
 #include <type_traits>
 
 #include <opencv2/core.hpp>
 
-namespace volcart
-{
+
 
 /**
  * @class BoundingBox
@@ -101,4 +98,3 @@ private:
     /** Upper bound */
     Point p1_{0, 0, 0};
 };
-}  // namespace volcart

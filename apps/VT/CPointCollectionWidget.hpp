@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QDockWidget>
-#include "vc/core/util/VCCollection.hpp"
+#include "VCCollection.hpp"
 #include <QTreeView>
 #include <QStandardItemModel>
 #include <QVBoxLayout>
@@ -15,7 +15,6 @@
 #include <QDoubleSpinBox>
 
 
-namespace ChaoVis {
 
 class VCCollection;
 
@@ -89,4 +88,4 @@ private slots:
     QDoubleSpinBox* _winding_spinbox;
 };
 
-}
+

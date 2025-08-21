@@ -7,7 +7,7 @@
 
 #include <set>
 #include "PathData.hpp"
-#include "vc/core/util/VCCollection.hpp"
+#include "VCCollection.hpp"
 #include "COutlinedTextItem.hpp"
 
 class ChunkCache;
@@ -16,12 +16,10 @@ class SurfacePointer;
 
 class QGraphicsScene;
 
-namespace volcart {
-    class Volume;
-}
+class Volume;
 
-namespace ChaoVis
-{
+
+
 
 class CVolumeViewerView;
 class CSurfaceCollection;
@@ -78,7 +76,7 @@ public:
     CVolumeViewerView* fGraphicsView;
 
 public slots:
-    void OnVolumeChanged(std::shared_ptr<volcart::Volume> vol);
+    void OnVolumeChanged(std::shared_ptr<Volume> vol);
     void onVolumeClicked(QPointF scene_loc,Qt::MouseButton buttons, Qt::KeyboardModifiers modifiers);
     void onPanRelease(Qt::MouseButton buttons, Qt::KeyboardModifiers modifiers);
     void onPanStart(Qt::MouseButton buttons, Qt::KeyboardModifiers modifiers);
@@ -139,7 +137,7 @@ protected:
 
     QGraphicsPixmapItem* fBaseImageItem;
     
-    std::shared_ptr<volcart::Volume> volume = nullptr;
+    std::shared_ptr<Volume> volume = nullptr;
     Surface *_surf = nullptr;
     cv::Vec3f _ptr = cv::Vec3f(0,0,0);
     cv::Vec2f _vis_center = {0,0};
@@ -213,4 +211,3 @@ protected:
 
 };  // class CVolumeViewer
 
-}  // namespace ChaoVis

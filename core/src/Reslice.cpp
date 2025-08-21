@@ -4,7 +4,6 @@
 
 #define BGR_MAGENTA cv::Scalar(0xFF, 0, 0xFF)
 
-using namespace volcart;
 
 auto Reslice::draw() const -> cv::Mat
 {

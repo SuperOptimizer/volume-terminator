@@ -3,10 +3,9 @@
 /** @file */
 
 #include <filesystem>
-#include "vc/core/types/Metadata.hpp"
+#include "Metadata.hpp"
 
-namespace volcart
-{
+
 /**
  * @class DiskBasedObjectBaseClass
  * @author Seth Parker
@@ -62,9 +61,9 @@ protected:
         std::filesystem::path path, Identifier uuid, std::string name);
 
     /** Metadata */
-    volcart::Metadata metadata_;
+    Metadata metadata_;
 
     /** Location for the object on disk */
     std::filesystem::path path_;
 };
-}  // namespace volcart
+

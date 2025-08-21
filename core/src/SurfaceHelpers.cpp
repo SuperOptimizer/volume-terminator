@@ -7,15 +7,13 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/video/tracking.hpp>
 
-#include "vc/core/util/Slicing.hpp"
-#include "vc/core/util/Surface.hpp"
-#include "vc/core/util/SurfaceModeling.hpp"
-#include "vc/core/types/ChunkedTensor.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
+#include "SurfaceModeling.hpp"
+#include "ChunkedTensor.hpp"
 
 
-#include "vc/core/util/xtensor_include.hpp"
-#include XTENSORINCLUDE(views, xview.hpp)
-
+#include "xtensor/views/xview.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -26,6 +24,12 @@ extern float sliding_w_scale;
 extern float z_loc_loss_w;
 extern float dist_loss_2d_w;
 extern float dist_loss_3d_w;
+
+void print_accessor_stats()
+{
+    std::cout << "acc miss/total " << miss << " " << total << " " << double(miss)/total << std::endl;
+    std::cout << "chunk compute overhead/total " << chunk_compute_collisions << " " << chunk_compute_total << " " << double(chunk_compute_collisions)/chunk_compute_total << std::endl;
+}
 
 class ALifeTime
 {

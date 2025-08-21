@@ -1,6 +1,6 @@
-#include "vc/core/util/Slicing.hpp"
-#include "vc/core/util/Surface.hpp"
-#include "vc/core/types/ChunkedTensor.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
+#include "ChunkedTensor.hpp"
 
 #include "z5/factory.hxx"
 #include <nlohmann/json.hpp>
@@ -11,7 +11,6 @@
 #include <sstream>
 #include <boost/program_options.hpp>
 
-namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 using json = nlohmann::json;
@@ -406,9 +405,9 @@ int main(int argc, char *argv[])
     }
 
     // Extract parsed arguments
-    fs::path vol_path = parsed["volume"].as<std::string>();
+    std::filesystem::path vol_path = parsed["volume"].as<std::string>();
     std::string tgt_ptn = parsed["output"].as<std::string>();
-    fs::path seg_path = parsed["segmentation"].as<std::string>();
+    std::filesystem::path seg_path = parsed["segmentation"].as<std::string>();
     float tgt_scale = parsed["scale"].as<float>();
     int group_idx = parsed["group-idx"].as<int>();
     int num_slices = parsed["num-slices"].as<int>();
@@ -448,8 +447,8 @@ int main(int argc, char *argv[])
         std::cout << "Flip: " << (flip_axis == 0 ? "Vertical" : flip_axis == 1 ? "Horizontal" : "Both") << std::endl;
     }
 
-    fs::path output_path(tgt_ptn);
-    fs::create_directories(output_path.parent_path());
+    std::filesystem::path output_path(tgt_ptn);
+    std::filesystem::create_directories(output_path.parent_path());
     
     ChunkCache chunk_cache(16e9);
 

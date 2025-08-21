@@ -9,9 +9,8 @@
 #include <QKeyEvent>
 #include <QMessageBox>
  
-#include "vc/core/util/VCCollection.hpp"
+#include "VCCollection.hpp"
  
-namespace ChaoVis {
 
 CPointCollectionWidget::CPointCollectionWidget(VCCollection *collection, QWidget *parent)
     : QDockWidget("Point Collections", parent), _point_collection(collection)
@@ -573,4 +572,4 @@ void CPointCollectionWidget::keyPressEvent(QKeyEvent *event)
     }
 }
 
-}
+

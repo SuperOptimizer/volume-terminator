@@ -20,18 +20,15 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 
-#include "vc/core/types/Volume.hpp"
-#include "vc/core/types/VolumePkg.hpp"
-#include "vc/core/util/Slicing.hpp"
-#include "vc/core/util/Logging.hpp"
+#include "Volume.hpp"
+#include "VolumePkg.hpp"
+#include "Slicing.hpp"
+#include "Logging.hpp"
 
 #include <filesystem>
 #include <fstream>
 
-namespace fs = std::filesystem;
-namespace vc = volcart;
 
-namespace ChaoVis {
 
 DrawingWidget::DrawingWidget(QWidget* parent)
     : QWidget(parent)
@@ -197,13 +194,13 @@ void DrawingWidget::setupUI()
     
 }
 
-void DrawingWidget::setVolumePkg(std::shared_ptr<volcart::VolumePkg> vpkg)
+void DrawingWidget::setVolumePkg(std::shared_ptr<VolumePkg> vpkg)
 {
     fVpkg = vpkg;
     updateUI();
 }
 
-void DrawingWidget::setCurrentVolume(std::shared_ptr<volcart::Volume> volume)
+void DrawingWidget::setCurrentVolume(std::shared_ptr<Volume> volume)
 {
     currentVolume = volume;
     updateUI();
@@ -214,12 +211,12 @@ void DrawingWidget::setCache(ChunkCache* cache)
     chunkCache = cache;
 }
 
-void DrawingWidget::onVolumeChanged(std::shared_ptr<volcart::Volume> vol)
+void DrawingWidget::onVolumeChanged(std::shared_ptr<Volume> vol)
 {
     setCurrentVolume(vol);
 }
 
-void DrawingWidget::onVolumeChanged(std::shared_ptr<volcart::Volume> vol, const std::string& volumeId)
+void DrawingWidget::onVolumeChanged(std::shared_ptr<Volume> vol, const std::string& volumeId)
 {
     currentVolume = vol;
     currentVolumeId = volumeId;
@@ -752,4 +749,3 @@ QList<PathData> DrawingWidget::processPathsWithErasers(const QList<PathData>& ra
     return processedPaths;
 }
 
-} // namespace ChaoVis

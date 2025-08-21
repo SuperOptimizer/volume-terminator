@@ -15,9 +15,7 @@
 
 #include "ProgressUtil.hpp"
 #include "ConsoleOutputWidget.hpp"
-#include "vc/core/util/SurfaceDef.hpp"
 
-namespace ChaoVis {
 
 // Forward declaration
 class CWindow;
@@ -115,4 +113,3 @@ private:
     QTextStream* _logStream;
 };
 
-} // namespace ChaoVis

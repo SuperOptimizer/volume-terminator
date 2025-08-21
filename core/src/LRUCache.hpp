@@ -9,10 +9,9 @@
 #include <unordered_map>
 #include <mutex>
 
-#include "vc/core/types/Cache.hpp"
+#include "Cache.hpp"
 
-namespace volcart
-{
+
 /**
  * @class LRUCache
  * @brief Least Recently Used Cache
@@ -177,4 +176,4 @@ private:
     /** Shared mutex for thread-safe access */
     mutable std::shared_mutex cache_mutex_;
 };
-}  // namespace volcart
+

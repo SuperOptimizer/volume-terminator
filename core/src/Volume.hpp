@@ -7,11 +7,10 @@
 #include <mutex>
 
 #include <filesystem>
-#include "vc/core/types/BoundingBox.hpp"
-#include "vc/core/types/Cache.hpp"
-#include "vc/core/types/DiskBasedObjectBaseClass.hpp"
-#include "vc/core/types/LRUCache.hpp"
-#include "vc/core/types/Reslice.hpp"
+#include "BoundingBox.hpp"
+#include "DiskBasedObjectBaseClass.hpp"
+#include "LRUCache.hpp"
+#include "Reslice.hpp"
 
 #include "z5/types/types.hxx"
 
@@ -29,8 +28,7 @@ namespace z5
 }
 
 
-namespace volcart
-{
+
     struct KeyHasher {
         // Taken from https://stackoverflow.com/a/72073933
         std::size_t operator()(z5::types::ShapeType const& vec) const
@@ -53,7 +51,7 @@ namespace volcart
  * @brief Volumetric image data
  *
  * Provides access to a volumetric dataset, such as a CT scan. By default,
- * slices are cached in memory using volcart::LRUCache.
+ * slices are cached in memory using LRUCache.
  *
  * @ingroup Types
  */
@@ -281,4 +279,4 @@ protected:
     mutable std::shared_mutex print_mutex_;
     void zarrOpen();
 };
-}  // namespace volcart
+

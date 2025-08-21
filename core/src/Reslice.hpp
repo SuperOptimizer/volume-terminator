@@ -4,8 +4,7 @@
 
 #include <opencv2/core.hpp>
 
-namespace volcart
-{
+
 
 /**
  * @class Reslice
@@ -68,4 +67,3 @@ private:
     /** Vector defining the direction of the Reslice Y-axis */
     cv::Vec3d yvec_;
 };
-}  // namespace volcart

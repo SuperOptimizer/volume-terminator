@@ -1,6 +1,6 @@
-#include "vc/core/util/surface_metrics.hpp"
-#include "vc/core/util/VCCollection.hpp"
-#include "vc/core/util/Surface.hpp"
+#include "surface_metrics.hpp"
+#include "VCCollection.hpp"
+#include "Surface.hpp"
 #include <opencv2/imgcodecs.hpp>
 #include <boost/program_options.hpp>
 #include <nlohmann/json.hpp>
@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     std::string winding_path = vm["winding"].as<std::string>();
     std::string output_path = vm["output"].as<std::string>();
 
-    ChaoVis::VCCollection collection;
+    VCCollection collection;
     if (!collection.loadFromJSON(collection_path)) {
         std::cerr << "Error: Failed to load point collection from " << collection_path << std::endl;
         return 1;
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    nlohmann::json metrics = vc::apps::calc_point_metrics(collection, surface, winding);
+    nlohmann::json metrics = apps::calc_point_metrics(collection, surface, winding);
 
     delete surface;
 

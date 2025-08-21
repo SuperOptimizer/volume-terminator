@@ -8,18 +8,17 @@
 
 #include "CVolumeViewerView.hpp"
 #include "CSurfaceCollection.hpp"
-#include "vc/core/util/VCCollection.hpp"
+#include "VCCollection.hpp"
 #include "COutlinedTextItem.hpp"
 
-#include "vc/core/types/VolumePkg.hpp"
-#include "vc/core/util/Surface.hpp"
-#include "vc/core/util/Slicing.hpp"
+#include "VolumePkg.hpp"
+#include "Surface.hpp"
+#include "Slicing.hpp"
 
 #include <omp.h>
 
 #include "OpChain.hpp"
 
-using namespace ChaoVis;
 using qga = QGuiApplication;
 
 #define BGND_RECT_MARGIN 8
@@ -308,7 +307,7 @@ void CVolumeViewer::onZoom(int steps, QPointF scene_loc, Qt::KeyboardModifiers m
     _overlayUpdateTimer->start();
 }
 
-void CVolumeViewer::OnVolumeChanged(volcart::Volume::Pointer volume_)
+void CVolumeViewer::OnVolumeChanged(Volume::Pointer volume_)
 {
     volume = volume_;
     

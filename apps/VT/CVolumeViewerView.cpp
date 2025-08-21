@@ -13,7 +13,6 @@
 #include <QPainter>
 #include <QCursor>
 
-using namespace ChaoVis;
 
 double CVolumeViewerView::chooseNiceLength(double nominal) const
 {

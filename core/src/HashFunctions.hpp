@@ -6,8 +6,7 @@
 
 #include <opencv2/core.hpp>
 
-namespace volcart
-{
+
 
 /**
  * Hash for 3D vector types. Must support []-operator. It's designed for integer
@@ -38,4 +37,4 @@ struct Vec3Hash {
 /** Hash for cv::Vec3i */
 using Vec3iHash = Vec3Hash<cv::Vec3i>;
 
-}  // namespace volcart
+

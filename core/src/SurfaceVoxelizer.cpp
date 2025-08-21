@@ -1,5 +1,5 @@
-#include "vc/core/util/SurfaceVoxelizer.hpp"
-#include "vc/core/util/Surface.hpp"
+#include "SurfaceVoxelizer.hpp"
+#include "Surface.hpp"
 #include <z5/factory.hxx>
 #include <z5/filesystem/handle.hxx>
 #include <z5/multiarray/xtensor_access.hxx>
@@ -14,7 +14,6 @@
 #include <sstream>
 #include <omp.h>
 
-using namespace volcart;
 
 void SurfaceVoxelizer::voxelizeSurfaces(
     const std::string& outputPath,

@@ -6,7 +6,6 @@
 #include <QMessageBox>
 #include <QToolTip>
 
-using namespace ChaoVis;
 
 SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent)
 {

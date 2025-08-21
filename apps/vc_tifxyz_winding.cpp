@@ -1,6 +1,6 @@
-#include "vc/core/util/Slicing.hpp"
-#include "vc/core/util/Surface.hpp"
-#include "vc/core/types/ChunkedTensor.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
+#include "ChunkedTensor.hpp"
 
 #include "z5/factory.hxx"
 #include <nlohmann/json.hpp>
@@ -9,7 +9,6 @@
 #include <opencv2/imgproc.hpp>
 #include <omp.h>
 
-namespace fs = std::filesystem;
 
 using json = nlohmann::json;
 
@@ -280,7 +279,7 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
     
-    fs::path seg_path = argv[1];
+    std::filesystem::path seg_path = argv[1];
     
     QuadSurface *surf = nullptr;
     try {

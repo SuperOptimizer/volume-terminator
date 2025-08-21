@@ -3,9 +3,8 @@
 #include <string>
 #include <map>
 #include <opencv2/core.hpp>
-#include "vc/core/util/xtensor_include.hpp"
-#include XTENSORINCLUDE(containers, xarray.hpp)
-#include "vc/core/util/Surface.hpp"
+#include "xtensor/containers/xarray.hpp"
+#include "Surface.hpp"
 
 namespace z5 {
 namespace filesystem {
@@ -15,7 +14,6 @@ class File;
 }
 }
 
-namespace volcart {
 
 /**
  * @brief Voxelizes quadmesh surfaces into a multi-resolution zarr array
@@ -115,4 +113,3 @@ private:
     );
 };
 
-} // namespace volcart

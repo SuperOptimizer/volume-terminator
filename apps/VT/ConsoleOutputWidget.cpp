@@ -4,7 +4,6 @@
 #include <QScrollBar>
 #include <QFontDatabase>
 
-namespace ChaoVis {
 
 ConsoleOutputWidget::ConsoleOutputWidget(QWidget* parent)
     : QWidget(parent)
@@ -70,4 +69,3 @@ void ConsoleOutputWidget::setTitle(const QString& title)
     _titleLabel->setText(title);
 }
 
-} // namespace ChaoVis
