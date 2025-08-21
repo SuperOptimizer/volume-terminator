@@ -1,0 +1,246 @@
+cmake_minimum_required(VERSION 3.22 FATAL_ERROR)
+
+
+list(PREPEND CMAKE_PREFIX_PATH "$ENV{HOME}/vc-dependencies")
+
+project(VT VERSION 1.0)
+
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
+option(VC_USE_OPENMP "Enable OpenMP support" ON)
+set(CHUNK_CACHE_SIZE_GB "10" CACHE STRING "size of the chunk cache in gigabytes")
+add_definitions(-DCHUNK_CACHE_SIZE_GB=${CHUNK_CACHE_SIZE_GB})
+
+set(CMAKE_CXX_FLAGS " -Wno-narrowing -std=c++23 -DWITH_BLOSC=1 -DWITH_ZLIB=1 -g3 -gdwarf-5 -funwind-tables -fasynchronous-unwind-tables" )
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -g3 -gdwarf-5 -rdynamic")
+
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Setting build type to 'Release' as none was specified.")
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -O0")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3  -flto")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto ")
+elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -flto")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto ")
+elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os  -flto")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto ")
+endif()
+
+
+option(VC_ENABLE_ASAN "Enable AddressSanitizer for memory error detection" OFF)
+option(VC_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(VC_ENABLE_TSAN "Enable ThreadSanitizer for data race detection" OFF)
+option(VC_ENABLE_LSAN "Enable LeakSanitizer for memory leak detection (standalone)" OFF)
+
+if(VC_ENABLE_ASAN AND VC_ENABLE_TSAN)
+    message(FATAL_ERROR "AddressSanitizer and ThreadSanitizer cannot be used together")
+endif()
+
+if(VC_ENABLE_LSAN AND VC_ENABLE_ASAN)
+    message(WARNING "LeakSanitizer is already included with AddressSanitizer. Disabling standalone LeakSanitizer.")
+    set(VC_ENABLE_LSAN OFF)
+endif()
+
+if(VC_ENABLE_LSAN AND VC_ENABLE_TSAN)
+    message(FATAL_ERROR "LeakSanitizer and ThreadSanitizer cannot be used together")
+endif()
+
+if(VC_ENABLE_ASAN)
+    message(STATUS "AddressSanitizer enabled")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DADDRESS_SANITIZER")
+endif()
+
+if(VC_ENABLE_UBSAN)
+    message(STATUS "UndefinedBehaviorSanitizer enabled")
+    set(UBSAN_FLAGS "-fsanitize=undefined -fno-sanitize-recover=all")
+
+    set(UBSAN_FLAGS "${UBSAN_FLAGS} -fsanitize=float-divide-by-zero")
+    set(UBSAN_FLAGS "${UBSAN_FLAGS} -fsanitize=float-cast-overflow")
+    set(UBSAN_FLAGS "${UBSAN_FLAGS} -fsanitize=nullability")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${UBSAN_FLAGS} -fno-omit-frame-pointer")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${UBSAN_FLAGS} -fno-omit-frame-pointer")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${UBSAN_FLAGS}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${UBSAN_FLAGS}")
+endif()
+
+if(VC_ENABLE_TSAN)
+    message(STATUS "ThreadSanitizer enabled")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread -fno-omit-frame-pointer")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=thread -fno-omit-frame-pointer")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=thread")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=thread")
+
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
+if(VC_ENABLE_LSAN)
+    message(STATUS "LeakSanitizer enabled (standalone)")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak -fno-omit-frame-pointer")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak -fno-omit-frame-pointer")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=leak")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=leak")
+endif()
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+set(XTENSOR_USE_XSIMD 1)
+
+option(VC_WITH_CUDA_SPARSE "use cudss" ON)
+if (VC_WITH_CUDA_SPARSE)
+    add_definitions(-DVC_USE_CUDA_SPARSE=1)
+endif()
+
+if(VC_USE_OPENMP)
+    message(STATUS "OpenMP support enabled")
+
+    find_package(OpenMP REQUIRED)
+    set(XTENSOR_USE_OPENMP 1)
+else()
+    message(STATUS "OpenMP support disabled")
+
+    set(XTENSOR_USE_OPENMP 0)
+    include_directories(${CMAKE_SOURCE_DIR}/core/openmp_stub)
+    add_library(openmp_stub INTERFACE)
+    add_library(OpenMP::OpenMP_CXX ALIAS openmp_stub)
+    add_library(OpenMP::OpenMP_C ALIAS openmp_stub)
+endif()
+
+find_package(Qt6  REQUIRED COMPONENTS Widgets Gui Core Network)
+find_package(xtensor REQUIRED)
+find_package(spdlog  REQUIRED)
+find_package(CURL REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system program_options)
+find_package(Ceres REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(z5 REQUIRED)
+
+add_library(vc_core
+        core/src/DiskBasedObjectBaseClass.cpp
+        core/src/Metadata.cpp
+        core/src/Segmentation.cpp
+        core/src/Volume.cpp
+        core/src/VolumePkg.cpp
+        core/src/Logging.cpp
+        core/src/Slicing.cpp
+        core/src/Surface.cpp
+        core/src/SurfaceHelpers.cpp
+        core/src/ChunkedTensor.cpp
+        core/src/SurfaceVoxelizer.cpp
+        core/src/VCCollection.cpp
+        core/src/surface_metrics.cpp
+)
+
+
+target_link_libraries(vc_core
+        opencv_core
+        opencv_imgproc
+        opencv_imgcodecs
+        spdlog::spdlog
+        nlohmann_json::nlohmann_json
+        z5
+        CURL::libcurl
+        OpenMP::OpenMP_CXX
+)
+
+
+add_executable(VT
+        apps/VT/VCAppMain.cpp
+        apps/VT/CWindow.cpp
+        apps/VT/CWindowContextMenu.cpp
+        apps/VT/UDataManipulateUtils.cpp
+        apps/VT/CVolumeViewer.cpp
+        apps/VT/CVolumeViewerView.cpp
+        apps/VT/ColorFrame.hpp
+        apps/VT/SettingsDialog.cpp
+        apps/VT/CSurfaceCollection.cpp
+        apps/VT/OpChain.cpp
+        apps/VT/OpsList.cpp
+        apps/VT/OpsSettings.cpp
+        apps/VT/formsetsrc.cpp
+        apps/VT/SurfaceTreeWidget.hpp
+        apps/VT/SurfaceTreeWidget.cpp
+        apps/VT/SeedingWidget.cpp
+        apps/VT/SeedingWidget.hpp
+        apps/VT/DrawingWidget.cpp
+        apps/VT/DrawingWidget.hpp
+        apps/VT/PathData.cpp
+        apps/VT/PathData.hpp
+        apps/VT/CSegmentationEditorWindow.cpp
+        apps/VT/CSegmentationEditorWindow.hpp
+        apps/VT/SegmentRenderThread.cpp
+        apps/VT/SegmentRenderThread.hpp
+        apps/VT/ProgressUtil.cpp
+        apps/VT/ProgressUtil.hpp
+        apps/VT/CommandLineToolRunner.cpp
+        apps/VT/CommandLineToolRunner.hpp
+        apps/VT/ConsoleOutputWidget.cpp
+        apps/VT/ConsoleOutputWidget.hpp
+        apps/VT/CPointCollectionWidget.cpp
+        apps/VT/COutlinedTextItem.hpp
+        apps/VT/COutlinedTextItem.cpp)
+
+target_link_libraries(VT
+        vc_core
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
+        z5
+        OpenMP::OpenMP_CXX
+)
+
+
+add_executable(vc_render_video apps/vc_render_video.cpp)
+target_link_libraries(vc_render_video z5 opencv_core vc_core)
+
+add_executable(vc_render_tifxyz apps/vc_render_tifxyz.cpp)
+target_link_libraries(vc_render_tifxyz z5 opencv_core vc_core Boost::program_options)
+
+add_executable(vc_objrefine apps/vc_objrefine.cpp)
+target_link_libraries(vc_objrefine z5 opencv_highgui vc_core)
+
+add_executable(vc_grow_seg_from_seed apps/vc_grow_seg_from_seed.cpp)
+target_link_libraries(vc_grow_seg_from_seed z5 opencv_highgui vc_core)
+
+add_executable(vc_seg_add_overlap apps/vc_seg_add_overlap.cpp)
+target_link_libraries(vc_seg_add_overlap z5 opencv_highgui vc_core)
+
+add_executable(vc_grow_seg_from_segments apps/vc_grow_seg_from_segments.cpp)
+target_link_libraries(vc_grow_seg_from_segments z5 opencv_highgui vc_core)
+
+add_executable(vc_tifxyz2obj apps/vc_tifxyz2obj.cpp)
+target_link_libraries(vc_tifxyz2obj opencv_highgui vc_core)
+
+add_executable(vc_obj2tifxyz apps/vc_obj2tifxyz.cpp)
+target_link_libraries(vc_obj2tifxyz opencv_highgui vc_core)
+
+add_executable(vc_tifxyz_inp_mask apps/vc_tifxyz_inp_mask.cpp)
+target_link_libraries(vc_tifxyz_inp_mask opencv_highgui vc_core)
+
+add_executable(vc_tifxyz_winding apps/vc_tifxyz_winding.cpp)
+target_link_libraries(vc_tifxyz_winding opencv_highgui vc_core
+)
+
+add_executable(vc_fill_quadmesh apps/vc_fill_quadmesh.cpp)
+target_link_libraries(vc_fill_quadmesh opencv_highgui vc_core Ceres::ceres)
+
+add_executable(vc_tiffxyz_upscale_grounding apps/vc_tiffxyz_upscale_grounding.cpp)
+target_link_libraries(vc_tiffxyz_upscale_grounding opencv_highgui vc_core Ceres::ceres)
+
+add_executable(vc_calc_surface_metrics apps/vc_calc_surface_metrics.cpp)
+target_link_libraries(vc_calc_surface_metrics vc_core Boost::program_options)
