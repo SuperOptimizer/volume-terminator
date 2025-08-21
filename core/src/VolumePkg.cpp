@@ -55,9 +55,6 @@ VolumePkg::VolumePkg(std::filesystem::path fileLocation, int version)
     : _rootdir{std::move(fileLocation)}
 {
 
-    // Create the directories with the default values
-    _metadata = Metadata();
-    _metadata.setPath(_rootdir / ::CONFIG);
 
     // Make directories
     for (const auto& d : ::ReqDirs(_rootdir)) {
@@ -69,17 +66,11 @@ VolumePkg::VolumePkg(std::filesystem::path fileLocation, int version)
         }
     }
 
-    // Do initial save
-    _metadata.save();
 }
 
 // Use this when reading a volpkg from a file
 VolumePkg::VolumePkg(const std::filesystem::path& fileLocation) : _rootdir{fileLocation}
 {
-    // Loads the metadata
-    _metadata = Metadata(fileLocation / ::CONFIG);
-
-    // Check directory structure
     for (const auto& d : ::ReqDirs(_rootdir)) {
         if (not std::filesystem::exists(d)) {
             Logger()->warn(
@@ -119,33 +110,18 @@ std::shared_ptr<VolumePkg> VolumePkg::New(std::filesystem::path fileLocation)
     return std::make_shared<VolumePkg>(fileLocation);
 }
 
-// METADATA RETRIEVAL //
-// Returns Volume Name from JSON config
+
 std::string VolumePkg::name() const
 {
-    // Gets the Volume name from the configuration file
-    auto name = _metadata.get<std::string>("name");
-    if (name != "NULL") {
-        return name;
-    }
-
-    return "UnnamedVolume";
+    return "asdfasdfasdf";
 }
 
-auto VolumePkg::version() const -> int { return _metadata.get<int>("version"); }
+auto VolumePkg::version() const -> int { return 1; }
 
-auto VolumePkg::materialThickness() const -> double
-{
-    return _metadata.get<double>("materialthickness");
-}
-
-auto VolumePkg::metadata() const -> Metadata { return _metadata; }
-
-void VolumePkg::saveMetadata() { _metadata.save(); }
+void VolumePkg::saveMetadata() { }
 
 void VolumePkg::saveMetadata(const std::filesystem::path& filePath)
 {
-    _metadata.save(filePath);
 }
 
 // VOLUME FUNCTIONS //

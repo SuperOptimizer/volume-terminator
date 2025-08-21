@@ -7,7 +7,6 @@
 #include <map>
 
 #include <filesystem>
-#include "Metadata.hpp"
 #include "Segmentation.hpp"
 #include "Volume.hpp"
 
@@ -22,7 +21,6 @@ public:
     [[nodiscard]] std::string name() const;
     [[nodiscard]] int version() const;
     [[nodiscard]] double materialThickness() const;
-    [[nodiscard]] Metadata metadata() const;
     void saveMetadata();
     void saveMetadata(const std::filesystem::path& filePath);
     bool hasVolumes() const;
@@ -51,7 +49,6 @@ public:
 
 
 private:
-    Metadata _metadata;
     std::filesystem::path _rootdir;
     std::map<std::string, std::shared_ptr<Volume>> _volumes;
     std::map<std::string, std::shared_ptr<Segmentation>> _segmentations;

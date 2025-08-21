@@ -1,13 +1,13 @@
 #pragma once
 
 #include <filesystem>
-#include <Metadata.hpp>
 
 class Segmentation
 {
 public:
     std::string _name;
     std::string _uuid;
+    std::string _format;
 
     explicit Segmentation(std::filesystem::path path);
     Segmentation(std::filesystem::path path, std::string uuid, std::string name);
@@ -17,9 +17,6 @@ public:
     static std::shared_ptr<Segmentation> New(
         std::filesystem::path path, std::string uuid, std::string name);
 
-    Metadata _metadata;
-
-    Metadata metadata() {return _metadata;}
 
     std::string id() {return _uuid;}
     std::string name() {return _name;}

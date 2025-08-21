@@ -11,8 +11,6 @@
 #include <z5/dataset.hxx>
 #include <z5/filesystem/handle.hxx>
 
-#include "Metadata.hpp"
-
 #include "z5/types/types.hxx"
 
 
@@ -41,12 +39,11 @@ public:
     bool isInBounds(const cv::Vec3d& v) const;
 
     z5::Dataset *zarrDataset(int level = 0);
-    size_t numScales();
+    size_t numScales() {return 6;}
 
     std::string id() {return _uuid;}
     std::string name() {return _name;}
     std::filesystem::path path() {return _path;}
-    Metadata metadata() {return _metadata;}
 
 protected:
     std::filesystem::path _path;
@@ -56,7 +53,6 @@ protected:
     int _height{0};
     int _slices{0};
     int _numSliceCharacters{0};
-    Metadata _metadata;
 
     z5::filesystem::handle::File *_zarrFile;
     std::vector<std::unique_ptr<z5::Dataset>> _zarrDs;

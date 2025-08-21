@@ -9,11 +9,11 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-option(VC_USE_OPENMP "Enable OpenMP support" ON)
+option(VC_USE_OPENMP "Enable OpenMP support" OFF)
 set(CHUNK_CACHE_SIZE_GB "10" CACHE STRING "size of the chunk cache in gigabytes")
 add_definitions(-DCHUNK_CACHE_SIZE_GB=${CHUNK_CACHE_SIZE_GB})
 
-set(CMAKE_CXX_FLAGS " -Wno-narrowing -std=c++23 -DWITH_BLOSC=1 -DWITH_ZLIB=1 -g3 -gdwarf-5 -funwind-tables -fasynchronous-unwind-tables" )
+set(CMAKE_CXX_FLAGS " -Wno-narrowing -std=c++23 -DWITH_BLOSC=1 -DWITH_ZLIB=1 -g3 -gdwarf-5 -funwind-tables -fasynchronous-unwind-tables -ferror-limit=1000 " )
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -g3 -gdwarf-5 -rdynamic")
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -133,7 +133,6 @@ find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs highgui videoio c
 find_package(z5 REQUIRED)
 
 add_library(vc_core
-        core/src/Metadata.cpp
         core/src/Volume.cpp
         core/src/Segmentation.cpp
         core/src/VolumePkg.cpp

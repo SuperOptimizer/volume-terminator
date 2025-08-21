@@ -953,18 +953,6 @@ void CWindow::OpenVolume(const QString& path)
         return;
     }
 
-    // Check version number
-    if (fVpkg->version() < VOLPKG_MIN_VERSION) {
-        const auto msg = "Volume package is version " +
-                         std::to_string(fVpkg->version()) +
-                         " but this program requires version " +
-                         std::to_string(VOLPKG_MIN_VERSION) + "+.";
-        Logger()->error(msg);
-        QMessageBox::warning(this, tr("ERROR"), QString(msg.c_str()));
-        fVpkg = nullptr;
-        return;
-    }
-
     fVpkgPath = aVpkgPath;
     setVolume(fVpkg->volume());
     {
@@ -1118,7 +1106,7 @@ void CWindow::LoadSurfaces(bool reload)
         if (_vol_qsurfs.find(seg_id) == _vol_qsurfs.end()) {
             // Not loaded yet
             auto seg = fVpkg->segmentation(seg_id);
-            if (seg->metadata().hasKey("format") && seg->metadata().get<std::string>("format") == "tifxyz") {
+            if (seg->_format == "tifxyz") {
                 to_load.push_back({seg_id, nullptr});
             }
         }
@@ -1527,8 +1515,9 @@ void CWindow::onSurfaceSelected()
         }
         else {
             auto seg = fVpkg->segmentation(_surfID);
-            if (seg->metadata().hasKey("vcps"))
-                throw std::runtime_error("vcps not supported");
+            //FIXME: ???
+            //if (seg->metadata().hasKey("vcps"))
+            //    throw std::runtime_error("vcps not supported");
         }
     }
 
@@ -2115,7 +2104,7 @@ void CWindow::AddSingleSegmentation(const std::string& segId)
     
     try {
         auto seg = fVpkg->segmentation(segId);
-        if (seg->metadata().hasKey("format") && seg->metadata().get<std::string>("format") == "tifxyz") {
+        if (seg->_format == "tifxyz") {
             QuadSurface *qs = new QuadSurface(seg->path());
             qs;
             qs->readOverlapping();
@@ -2401,9 +2390,9 @@ void CWindow::onVoxelizePaths()
     // Get voxel size from volume metadata if available
     float voxelSize = 1.0f;
     try {
-        if (currentVolume->metadata().hasKey("voxelsize")) {
-            voxelSize = currentVolume->metadata().get<float>("voxelsize");
-        }
+        //if (currentVolume->metadata().hasKey("voxelsize")) {
+            voxelSize = 7.91f; //currentVolume->metadata().get<float>("voxelsize");
+        //}
     } catch (...) {
         // Default to 1.0 if not found
         voxelSize = 1.0f;

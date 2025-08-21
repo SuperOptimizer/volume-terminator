@@ -30,9 +30,6 @@
 // CommandLineToolRunner needs cwindow and vice versa so forward declare here and let commandlinetoolrunner.cpp include CWindow.hpp
 class CommandLineToolRunner;
 
-// Volpkg version required by this app
-static constexpr int VOLPKG_MIN_VERSION = 6;
-static constexpr int VOLPKG_SLICE_MIN_INDEX = 0;
 
 
 class CWindow : public QMainWindow

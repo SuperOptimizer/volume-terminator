@@ -10,7 +10,8 @@ Segmentation::Segmentation(std::filesystem::path path)
 _path = path;
     _uuid = path.stem();
     _name = path.stem();
-    _metadata = Metadata(path / METADATA_FILE);
+    _format = "tifxyz"; //FIXME: pull this from metadata
+    //_metadata = Metadata(path / METADATA_FILE);
 }
 
 Segmentation::Segmentation(std::filesystem::path path, std::string uuid, std::string name)
@@ -18,6 +19,7 @@ Segmentation::Segmentation(std::filesystem::path path, std::string uuid, std::st
 _path = path;
     _uuid = uuid;
     _name = name;
+    _format = "tifxyz"; //FIXME: pull this from metadata
 }
 
 auto Segmentation::New(std::filesystem::path path) -> std::shared_ptr<Segmentation>
