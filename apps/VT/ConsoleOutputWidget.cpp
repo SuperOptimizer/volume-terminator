@@ -3,6 +3,7 @@
 #include <QClipboard>
 #include <QScrollBar>
 #include <QFontDatabase>
+#include <QHBoxLayout>
 
 
 ConsoleOutputWidget::ConsoleOutputWidget(QWidget* parent)

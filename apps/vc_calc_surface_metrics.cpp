@@ -56,7 +56,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    nlohmann::json metrics = apps::calc_point_metrics(collection, surface, winding);
+    nlohmann::json metrics = calc_point_metrics(collection, surface, winding);
 
     delete surface;
 

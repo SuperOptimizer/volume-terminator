@@ -1,23 +1,40 @@
 #include "OpsSettings.hpp"
-#include "ui_OpsSettings.h"
 
 #include "OpChain.hpp"
 #include "formsetsrc.hpp"
 
 #include <iostream>
 
+#include "OpsList.hpp"
+
+#include "OpsSettings.hpp"
+#include "OpChain.hpp"
+#include "formsetsrc.hpp"
+#include <QVBoxLayout>
+#include <QGridLayout>
+
 OpsSettings::OpsSettings(QWidget* parent)
-    : QWidget(parent), ui(new Ui::OpsSettings)
+    : QWidget(parent)
 {
-    ui->setupUi(this);
-    _box = this->findChild<QGroupBox*>("groupBox");
-    _box->setVisible(false); // start invisible until a layer is selected
-    _enable = this->findChild<QCheckBox*>("chkEnableLayer");    
+    // Create main layout
+    auto* mainLayout = new QGridLayout(this);
+
+    // Create group box
+    _box = new QGroupBox(this);
+    _box->setVisible(false);
+
+    // Create checkbox inside group box
+    auto* boxLayout = new QVBoxLayout(_box);
+    _enable = new QCheckBox("Layer enabled", _box);
+    _enable->setChecked(true);
+    boxLayout->addWidget(_enable);
+
+    // Add group box to main layout
+    mainLayout->addWidget(_box, 0, 0);
 
     connect(_enable, &QCheckBox::stateChanged, this, &OpsSettings::onEnabledChanged);
 }
 
-OpsSettings::~OpsSettings() { delete ui; }
 
 void OpsSettings::onEnabledChanged()
 {
@@ -34,8 +51,8 @@ QWidget *op_form_widget(Surface *op, OpsSettings *parent)
     
     if (dynamic_cast<OpChain*>(op)) {
         auto w = new FormSetSrc(op, parent);
-        //TODO inherit all settings form widgets from common base, unify the connect
-        QWidget::connect(w, &FormSetSrc::sendOpChainChanged, parent, &OpsSettings::sendOpChainChanged);
+        QWidget::connect(w, &FormSetSrc::sendOpChainChanged,
+                        parent, &OpsSettings::sendOpChainChanged);
         return w;
     }
 

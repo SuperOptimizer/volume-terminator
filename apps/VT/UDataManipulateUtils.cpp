@@ -1,5 +1,3 @@
-// UDataManipulateUtils.cpp
-// Chao Du 2014 Dec
 #include <cstddef>
 #include <cstdint>
 

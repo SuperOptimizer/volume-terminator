@@ -1,4 +1,7 @@
 #include "CommandLineToolRunner.hpp"
+
+#include <QClipboard>
+
 #include "CWindow.hpp"
 #include <QDir>
 #include <QFileInfo>
@@ -6,6 +9,10 @@
 #include <QVBoxLayout>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDialog>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QMessageBox>
 #include <QTextStream>
 
 

@@ -1,5 +1,7 @@
-// CSegmentationEditorWindow.cpp
 #include "CSegmentationEditorWindow.hpp"
+
+#include <QVBoxLayout>
+
 #include "CVolumeViewer.hpp"
 #include "CSurfaceCollection.hpp"
 

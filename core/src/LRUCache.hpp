@@ -1,8 +1,6 @@
 #pragma once
+
 #include <shared_mutex>
-
-/** @file */
-
 #include <cstddef>
 #include <list>
 #include <memory>
@@ -11,126 +9,46 @@
 
 
 
-/**
- * @brief Abstract Base Class for Key-Value Caches
- *
- * @tparam TKey Key type
- * @tparam TValue Value type
- */
 template <typename TKey, typename TValue>
 class Cache
 {
 public:
-    /** Shared Pointer Type */
     using Pointer = std::shared_ptr<Cache<TKey, TValue>>;
-
-    /**@{*/
-    /** @brief Set the maximum number of elements in the cache */
     virtual void setCapacity(std::size_t newCapacity) = 0;
-
-    /** @brief Get the maximum number of elements in the cache */
     virtual std::size_t capacity() const = 0;
-
-    /** @brief Get the current number of elements in the cache */
     virtual std::size_t size() const = 0;
-    /**@}*/
-
-    /**@{*/
-    /** @brief Get an item from the cache by key */
     virtual TValue get(const TKey& k) = 0;
-
-    /** @brief Get an item pointer from the cache by key */
     virtual TValue* getPointer(const TKey& k) = 0;
-
-    /** @brief Put an item into the cache */
     virtual void put(const TKey& k, const TValue& v) = 0;
-
-    /** @brief Check if an item is already in the cache */
     virtual bool contains(const TKey& k) = 0;
-
-    /** @brief Clear the cache */
     virtual void purge() = 0;
-    /**@}*/
 
 protected:
-    /** Default constructor */
     Cache() = default;
-
-    /** Constructor with capacity */
     explicit Cache(std::size_t capacity) : capacity_{capacity} {}
-
-    /** Maximum number of elements in the cache */
     std::size_t capacity_{200};
 };
 
 
-
-/**
- * @class LRUCache
- * @brief Least Recently Used Cache
- * @author Sean Karlage
- *
- * A cache using a least recently used replacement policy. As elements are used,
- * they are moved to the front of the cache. When the cache exceeds capacity,
- * elements are popped from the end of the cache and replacement elements are
- * added to the front.
- *
- * Usage information is tracked in a std::unordered_map since its performance
- * will likely be the fastest of the STL classes. This should be profiled. Data
- * elements are stored in insertion order in a std::list and are pointed to
- * by the elements in the usage map.
- *
- * Design mostly taken from
- * <a href = "https://github.com/lamerman/cpp-lru-cache">here</a>.
- *
- * @ingroup Types
- */
 template <typename TKey, typename TValue>
 class LRUCache final : public Cache<TKey, TValue>
 {
 public:
     using BaseClass = Cache<TKey, TValue>;
     using BaseClass::capacity_;
-
-    /**
-     * @brief Templated Key/Value pair
-     *
-     * Stored in the data list.
-     */
     using TPair = typename std::pair<TKey, TValue>;
-
-    /**
-     * @brief Templated Key/Value pair iterator
-     *
-     * Stored in the LRU map.
-     */
     using TListIterator = typename std::list<TPair>::iterator;
-
-    /** Shared pointer type */
     using Pointer = std::shared_ptr<LRUCache<TKey, TValue>>;
-
-    /**@{*/
-    /** @brief Default constructor */
     LRUCache() : BaseClass() {}
-
-    /** @brief Constructor with cache capacity parameter */
     explicit LRUCache(std::size_t capacity) : BaseClass(capacity) {}
-
-    /** @overload LRUCache() */
     static auto New() -> Pointer
     {
         return std::make_shared<LRUCache<TKey, TValue>>();
     }
-
-    /** @overload LRUCache(std::size_t) */
     static auto New(std::size_t capacity) -> Pointer
     {
         return std::make_shared<LRUCache<TKey, TValue>>(capacity);
     }
-    /**@}*/
-
-    /**@{*/
-    /** @brief Set the maximum number of elements in the cache */
     void setCapacity(std::size_t capacity) override
     {
         std::unique_lock<std::shared_mutex> lock(cache_mutex_);
@@ -148,16 +66,8 @@ public:
             items_.pop_back();
         }
     }
-
-    /** @brief Get the maximum number of elements in the cache */
     auto capacity() const -> std::size_t override { return capacity_; }
-
-    /** @brief Get the current number of elements in the cache */
     auto size() const -> std::size_t override { return lookup_.size(); }
-    /**@}*/
-
-    /**@{*/
-    /** @brief Get an item from the cache by key */
     auto get(const TKey& k) -> TValue override
     {
         std::unique_lock<std::shared_mutex> lock(cache_mutex_);
@@ -169,8 +79,6 @@ public:
             return lookupIter->second->second;
         }
     }
-    
-    /** @brief Get an item pointer from the cache by key */
     auto getPointer(const TKey& k) -> TValue* override
     {
         std::unique_lock<std::shared_mutex> lock(cache_mutex_);
@@ -182,8 +90,6 @@ public:
             return &lookupIter->second->second;
         }
     }
-
-    /** @brief Put an item into the cache */
     void put(const TKey& k, const TValue& v) override
     {
         std::unique_lock<std::shared_mutex> lock(cache_mutex_);
@@ -204,29 +110,20 @@ public:
             items_.pop_back();
         }
     }
-
-    /** @brief Check if an item is already in the cache */
     auto contains(const TKey& k) -> bool override
     {
         std::shared_lock<std::shared_mutex> lock(cache_mutex_);
         return lookup_.find(k) != std::end(lookup_);
     }
-
-    /** @brief Clear the cache */
-    void purge() override
+void purge() override
     {
         std::unique_lock<std::shared_mutex> lock(cache_mutex_);
         lookup_.clear();
         items_.clear();
     }
-    /**@}*/
-
 private:
-    /** Cache data storage */
     std::list<TPair> items_;
-    /** Cache usage information */
     std::unordered_map<TKey, TListIterator> lookup_;
-    /** Shared mutex for thread-safe access */
     mutable std::shared_mutex cache_mutex_;
 };
 

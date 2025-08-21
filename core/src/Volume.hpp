@@ -7,12 +7,11 @@
 #include <mutex>
 
 #include <filesystem>
+#include <opencv2/core/matx.hpp>
 #include <z5/dataset.hxx>
 #include <z5/filesystem/handle.hxx>
 
-#include "LRUCache.hpp"
 #include "Metadata.hpp"
-#include "Reslice.hpp"
 
 #include "z5/types/types.hxx"
 

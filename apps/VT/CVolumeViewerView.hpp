@@ -1,5 +1,4 @@
-// CVolumeViewer.cpp
-// Chao Du 2015 April
+#pragma once
 #include <QGraphicsView>
 
 

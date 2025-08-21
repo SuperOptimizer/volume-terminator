@@ -1,17 +1,8 @@
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QStringList>
 #include <QProcess>
-#include <QMessageBox>
-#include <QApplication>
-#include <QClipboard>
-#include <QDialog>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QFile>
-#include <memory>
+#include <QTextStream>
 
 #include "ProgressUtil.hpp"
 #include "ConsoleOutputWidget.hpp"

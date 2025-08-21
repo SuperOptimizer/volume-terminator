@@ -1,5 +1,3 @@
-// UDataManipulateUtils.h
-// Chao Du 2014 Dec
 #pragma once
 
 #include <qimage.h>

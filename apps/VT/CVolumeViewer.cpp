@@ -1,5 +1,3 @@
-// CVolumeViewer.cpp
-// Chao Du 2015 April
 #include "CVolumeViewer.hpp"
 #include "UDataManipulateUtils.hpp"
 
@@ -16,10 +14,13 @@
 #include "Slicing.hpp"
 
 #include <omp.h>
+#include <QSettings>
+#include <QVBoxLayout>
 
 #include "OpChain.hpp"
 
-using qga = QGuiApplication;
+#include <QTimer>
+
 
 #define BGND_RECT_MARGIN 8
 #define DEFAULT_TEXT_COLOR QColor(255, 255, 120)

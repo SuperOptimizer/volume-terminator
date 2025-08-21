@@ -5,31 +5,18 @@
 #include <QMap>
 #include <QColor>
 #include <memory>
+#include <QCheckBox>
+#include <QLabel>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QSlider>
+#include <QSpinBox>
 #include <opencv2/core.hpp>
 
 #include "PathData.hpp"
+#include "Slicing.hpp"
+#include "VolumePkg.hpp"
 
-class QLabel;
-class QSpinBox;
-class QSlider;
-class QPushButton;
-class QCheckBox;
-class QRadioButton;
-class QButtonGroup;
-
-class Volume;
-class VolumePkg;
-
-
-class ChunkCache;
-
-
-/**
- * @brief Widget for freehand drawing on volume surfaces
- * 
- * This widget provides tools for drawing masks and annotations on volume surfaces
- * with configurable brush settings, eraser mode, and mask export functionality.
- */
 class DrawingWidget : public QWidget
 {
     Q_OBJECT

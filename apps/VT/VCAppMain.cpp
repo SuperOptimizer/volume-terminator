@@ -1,6 +1,3 @@
-// main.cpp
-// Chao Du 2014 Dec
-
 #include <qapplication.h>
 
 #include "CWindow.hpp"

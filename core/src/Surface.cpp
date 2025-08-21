@@ -7,7 +7,6 @@
 
 #include <opencv2/imgproc.hpp>
 #include <opencv2/calib3d.hpp>
-//TODO remove
 #include <opencv2/highgui.hpp>
 
 #include <unordered_map>
@@ -1617,3 +1616,20 @@ std::string SurfaceMeta::name()
 {
     return path.filename();
 }
+
+/*
+std::string Surface::name() const {
+    return path.filename();
+}
+
+void Surface::readOverlapping() {
+    if (std::filesystem::exists(path / "overlapping")) {
+        throw std::runtime_error(
+            "Found overlapping directory at: " + (path / "overlapping").string() +
+            "\nPlease run overlapping_to_json.py on " + path.parent_path().string() +
+            " to convert it to JSON format"
+        );
+    }
+    overlapping_str = read_overlapping_json(path);
+}
+*/

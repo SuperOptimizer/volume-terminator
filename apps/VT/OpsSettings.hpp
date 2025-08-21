@@ -1,17 +1,10 @@
-#ifndef OPSSETTINGS_HPP
-#define OPSSETTINGS_HPP
+#pragma once
 
 #include <QWidget>
-
-class Surface;
-class QGroupBox;
-class QCheckBox;
-class OpChain;
-
-namespace Ui
-{
-class OpsSettings;
-}
+#include <QCheckBox>
+#include <QGroupBox>
+#include "OpChain.hpp"
+#include "Surface.hpp"
 
 class OpsSettings : public QWidget
 {
@@ -19,24 +12,19 @@ class OpsSettings : public QWidget
 
 public:
     explicit OpsSettings(QWidget* parent = nullptr);
-    ~OpsSettings();
+    ~OpsSettings() = default;
 
 public slots:
     void onOpSelected(Surface *op, OpChain *chain);
     void onEnabledChanged();
 
-signals:
-    void sendOpChainChanged(OpChain *chain);
+    signals:
+        void sendOpChainChanged(OpChain *chain);
 
 private:
-    Ui::OpsSettings* ui;
     QGroupBox *_box;
     QCheckBox *_enable;
-
     Surface *_op = nullptr;
     OpChain *_chain = nullptr;
-    
     QWidget *_form = nullptr;
 };
-
-#endif  // OPSSETTINGS_HPP

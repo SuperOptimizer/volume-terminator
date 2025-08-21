@@ -1,33 +1,18 @@
-// CVolumeViewer.h
-// Chao Du 2015 April
 #pragma once
 
-#include <QtWidgets>
-#include <opencv2/core/core.hpp>
+#include <QWidget>
+#include <QLabel>
 
 #include <set>
 #include "PathData.hpp"
 #include "VCCollection.hpp"
 #include "COutlinedTextItem.hpp"
-
-class ChunkCache;
-class Surface;
-class SurfacePointer;
-
-class QGraphicsScene;
-
-class Volume;
+#include "CSurfaceCollection.hpp"
+#include "CVolumeViewerView.hpp"
+#include "Slicing.hpp"
+#include "Volume.hpp"
 
 
-
-
-class CVolumeViewerView;
-class CSurfaceCollection;
-class POI;
-class Intersection;
-class SeedingWidget;
-class VCCollection;
- 
 class CVolumeViewer : public QWidget
 {
     Q_OBJECT

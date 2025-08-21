@@ -1,11 +1,5 @@
 #pragma once
 
-/**
- * @file DateTime.hpp
- *
- * @ingroup Core
- */
-
 #include <chrono>
 #include <cstddef>
 #include <ctime>
@@ -15,13 +9,6 @@
 #include <sstream>
 
 
-/**
- * @brief Returns a string representation of the current date and time
- *
- * Format: YYYYMMDDHMS
- *
- * Code from <a href="http://stackoverflow.com/a/16358264/1917043">here</a>.
- */
 inline auto DateTime() -> std::string
 {
     const auto now = std::time(nullptr);
@@ -32,13 +19,6 @@ inline auto DateTime() -> std::string
     return ss.str();
 }
 
-/**
- * @brief Returns a string representation of the provided time duration
- *
- * Format: dd:hh:mm:ss
- *
- * Code from <a href="https://stackoverflow.com/a/46134506">here</a>.
- */
 template <typename Rep, typename Period>
 auto DurationToString(std::chrono::duration<Rep, Period> input) -> std::string
 {
@@ -83,15 +63,6 @@ auto DurationToString(std::chrono::duration<Rep, Period> input) -> std::string
     return ss.str();
 }
 
-/**
- * @brief Convert a duration string to a a std::chrono duration.
- *
- * Accepts strings with ordered combinations of `#h`, `#m`, `#s`, and `#ms`.
- * Examples: `10s`, `500ms`, `1m30s`.
- *
- * @tparam Duration Output duration type
- * @param str Input string
- */
 template <typename Duration = std::chrono::milliseconds>
 auto DurationFromString(const std::string& str) -> Duration
 {

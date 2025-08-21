@@ -3,24 +3,13 @@
 #include <string>
 #include <map>
 #include <opencv2/core.hpp>
+#include <z5/filesystem/handle.hxx>
+
 #include "xtensor/containers/xarray.hpp"
 #include "Surface.hpp"
 
-namespace z5 {
-namespace filesystem {
-namespace handle {
-class File;
-}
-}
-}
 
 
-/**
- * @brief Voxelizes quadmesh surfaces into a multi-resolution zarr array
- *
- * This class converts surfaces (stored as tifxyz format) into voxel grids,
- * mimicking how surfaces are rendered as intersections in CVolumeViewer.
- */
 class SurfaceVoxelizer {
 public:
     /**

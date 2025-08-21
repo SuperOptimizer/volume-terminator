@@ -1,17 +1,12 @@
 #include "surface_metrics.hpp"
-#include <iostream>
 #include <vector>
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
-#include <sstream>
 #include <iomanip>
 #include <opencv2/imgproc.hpp>
-#include <opencv2/imgcodecs.hpp>
 #include <nlohmann/json.hpp>
 
-namespace apps
-{
 
 // Helper to get point-to-line-segment squared distance
 static float dist_point_segment_sq(const cv::Vec3f& p, const cv::Vec3f& a, const cv::Vec3f& b) {
@@ -203,5 +198,3 @@ nlohmann::json calc_point_metrics(const VCCollection& collection, QuadSurface* s
 
     return results;
 }
-
-} // namespace apps

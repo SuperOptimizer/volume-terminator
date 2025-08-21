@@ -1,7 +1,8 @@
 #pragma once
 
-#include <QGraphicsTextItem>
-#include <QPainter>
+#include <QGraphicsItem>
+#include <QPainterPath>
+#include <QRectF>
 
 
 class COutlinedTextItem : public QGraphicsTextItem

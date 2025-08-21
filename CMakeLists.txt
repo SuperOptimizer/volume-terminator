@@ -165,11 +165,9 @@ target_link_libraries(vcui vc_core Qt6::Core Qt6::Gui Qt6::Widgets)
 add_executable(VT
         apps/VT/VCAppMain.cpp
         apps/VT/CWindow.cpp
-        apps/VT/CWindowContextMenu.cpp
         apps/VT/UDataManipulateUtils.cpp
         apps/VT/CVolumeViewer.cpp
         apps/VT/CVolumeViewerView.cpp
-        apps/VT/ColorFrame.hpp
         apps/VT/SettingsDialog.cpp
         apps/VT/CSurfaceCollection.cpp
         apps/VT/OpChain.cpp

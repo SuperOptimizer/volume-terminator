@@ -1,15 +1,10 @@
-#ifndef FORMSETSRC_HPP
-#define FORMSETSRC_HPP
+#pragma once
 
 #include <QWidget>
+#include <QComboBox>
+#include <QLabel>
+#include <QGridLayout>
 #include "OpChain.hpp"
-
-namespace Ui
-{
-class FormSetSrc;
-}
-
-class QComboBox;
 
 class FormSetSrc : public QWidget
 {
@@ -17,19 +12,15 @@ class FormSetSrc : public QWidget
 
 public:
     explicit FormSetSrc(Surface *op, QWidget* parent = nullptr);
-    ~FormSetSrc();
-    
+    ~FormSetSrc() = default;
+
 private slots:
     void onAlgoIdxChanged(int index);
-    
-signals:
-    void sendOpChainChanged(OpChain *chain);
+
+    signals:
+        void sendOpChainChanged(OpChain *chain);
 
 private:
-    Ui::FormSetSrc* ui;
-    
     OpChain *_chain;
     QComboBox *_combo;
 };
-
-#endif  // FORMSETSRC_HPP

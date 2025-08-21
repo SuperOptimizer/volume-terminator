@@ -4,15 +4,12 @@
 
 #include <opencv2/core.hpp> 
 #include <nlohmann/json_fwd.hpp>
+#include <z5/dataset.hxx>
 
 #define Z_DBG_GEN_PREFIX "auto_grown_"
 
 class QuadSurface;
 class ChunkCache;
-
-namespace z5 {
-    class Dataset;
-}
 
 struct Rect3D {
     cv::Vec3f low = {0,0,0};

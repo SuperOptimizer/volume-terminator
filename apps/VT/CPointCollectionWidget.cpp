@@ -7,8 +7,10 @@
 #include <QColorDialog>
 #include <QFileDialog>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QMessageBox>
- 
+#include <QVBoxLayout>
+
 #include "VCCollection.hpp"
  
 

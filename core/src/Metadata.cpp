@@ -3,7 +3,6 @@
 
 
 
-// Read a json config from disk
 Metadata::Metadata(std::filesystem::path fileLocation) : _path{fileLocation}
 {
     // open the file
@@ -24,13 +23,9 @@ Metadata::Metadata(std::filesystem::path fileLocation) : _path{fileLocation}
     }
 }
 
-// save the JSON file to disk
 void Metadata::save(const std::filesystem::path& path)
 {
-    // open the file
-    std::ofstream jsonFile(path.string(), std::ofstream::out);
-
-    // try to push into the json file
+     std::ofstream jsonFile(path.string(), std::ofstream::out);
     jsonFile << _json << '\n';
     if (jsonFile.fail()) {
         auto msg = "could not write json file '" + path.string() + "'";

@@ -2,6 +2,7 @@
 #include <QPainterPath>
 #include <QPen>
 #include <QBrush>
+#include <QPainter>
 
 
 COutlinedTextItem::COutlinedTextItem(QGraphicsItem *parent)

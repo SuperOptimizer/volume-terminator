@@ -1,5 +1,4 @@
 #include "OpsList.hpp"
-#include "ui_OpsList.h"
 
 #include "OpChain.hpp"
 
@@ -7,14 +6,39 @@
 
 #include <QComboBox>
 
-OpsList::OpsList(QWidget* parent) : QWidget(parent), ui(new Ui::OpsList)
-{
-    ui->setupUi(this);
+#include "OpsList.hpp"
+#include "OpChain.hpp"
+#include <QTreeWidget>
+#include <QComboBox>
+#include <QPushButton>
+#include <QGridLayout>
+#include <QHBoxLayout>
 
-    _tree = ui->treeWidget;
-    _add_sel = ui->comboOp;
+OpsList::OpsList(QWidget* parent) : QWidget(parent)
+{
+    // Create widgets
+    auto* layout = new QGridLayout(this);
+
+    _tree = new QTreeWidget(this);
+    _tree->setAlternatingRowColors(true);
+    _tree->setRootIsDecorated(false);
+    _tree->setHeaderHidden(true);
+
+    auto* buttonLayout = new QHBoxLayout();
+    auto* appendButton = new QPushButton("Append", this);
+    _add_sel = new QComboBox(this);
+    _add_sel->addItem("refineAlphaComp");
+
+    buttonLayout->addWidget(appendButton);
+    buttonLayout->addWidget(_add_sel);
+
+    // Set up layout
+    layout->addWidget(_tree, 0, 0);
+    layout->addLayout(buttonLayout, 1, 0);
+
+    // Connect signals
     connect(_tree, &QTreeWidget::currentItemChanged, this, &OpsList::onSelChanged);
-    connect(ui->pushAppendOp, &QPushButton::clicked, this, &OpsList::onAppendOpClicked);
+    connect(appendButton, &QPushButton::clicked, this, &OpsList::onAppendOpClicked);
 }
 
 OpsList::~OpsList() { delete ui; }

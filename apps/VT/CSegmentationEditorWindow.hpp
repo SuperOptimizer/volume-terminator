@@ -1,4 +1,3 @@
-// CSegmentationEditorWindow.hpp
 #pragma once
 
 #include <QMainWindow>

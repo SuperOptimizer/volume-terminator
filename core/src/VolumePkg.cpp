@@ -1,6 +1,5 @@
 #include "VolumePkg.hpp"
 
-#include <functional>
 #include <set>
 #include <utility>
 

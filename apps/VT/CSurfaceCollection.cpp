@@ -1,6 +1,5 @@
 #include "CSurfaceCollection.hpp"
 
-#include "Slicing.hpp"
 #include "Surface.hpp"
 
 

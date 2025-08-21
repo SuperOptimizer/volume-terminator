@@ -1,5 +1,3 @@
-// CVolumeViewer.cpp
-// Chao Du 2015 April
 #include "CVolumeViewerView.hpp"
 #include "CVolumeViewer.hpp"
 
