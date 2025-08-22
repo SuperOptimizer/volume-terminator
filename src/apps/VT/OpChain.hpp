@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../core/Surface.hpp"
+#include "Surface.hpp"
 
 #include <set>
 
@@ -25,7 +25,6 @@ public:
     cv::Vec3f normal(const cv::Vec3f &ptr, const cv::Vec3f &offset = {0,0,0}) override;
     float pointTo(cv::Vec3f &ptr, const cv::Vec3f &coord, float th, int max_iters = 1000) override;
     void gen(cv::Mat_<cv::Vec3f> *coords, cv::Mat_<cv::Vec3f> *normals, cv::Size size, const cv::Vec3f &ptr, float scale, const cv::Vec3f &offset) override;
-    bool slow() const { return (_src_mode == OpChainSourceMode::BLUR && !_src_blur); }
 
     std::vector<DeltaSurface*> ops() { return _ops; };
 

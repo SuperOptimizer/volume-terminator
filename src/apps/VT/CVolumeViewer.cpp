@@ -7,11 +7,11 @@
 #include "COutlinedTextItem.hpp"
 #include "CSurfaceCollection.hpp"
 #include "CVolumeViewerView.hpp"
-#include "../../ui/VCCollection.hpp"
+#include "VCCollection.hpp"
 
-#include "../../core/Slicing.hpp"
-#include "../../core/Surface.hpp"
-#include "../../core/VolumePkg.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
+#include "VolumePkg.hpp"
 
 #include <QSettings>
 #include <QVBoxLayout>

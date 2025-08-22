@@ -56,12 +56,9 @@ private:
     std::unordered_map<std::string,int> _group_store;
 };
 
-//NOTE depending on request this might load a lot (the whole array) into RAM
 void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds, const cv::Mat_<cv::Vec3f> &coords, ChunkCache *cache = nullptr);
 void readInterpolated2D(cv::Mat_<uint8_t> &out, z5::Dataset *ds, const cv::Mat_<cv::Vec3f> &coords, ChunkCache *cache);
-void readArea3D(xt::xtensor<uint8_t,3,xt::layout_type::column_major> &out, const cv::Vec3i& offset, z5::Dataset *ds, ChunkCache *cache);
 cv::Mat_<cv::Vec3f> smooth_vc_segmentation(const cv::Mat_<cv::Vec3f> &points);
-cv::Mat_<cv::Vec3f> vc_segmentation_calc_normals(const cv::Mat_<cv::Vec3f> &points);
 void vc_segmentation_scales(cv::Mat_<cv::Vec3f> points, double &sx, double &sy);
 cv::Vec3f grid_normal(const cv::Mat_<cv::Vec3f> &points, const cv::Vec3f &loc);
 
@@ -113,4 +110,42 @@ template<typename T, int C>
 static inline bool loc_valid_xy(const cv::Mat_<cv::Vec<T,C>> &m, const cv::Vec2d &l)
 {
     return loc_valid(m, {l[1],l[0]});
+}
+
+
+template<typename T>
+static xt::xarray<T> *readChunk(const z5::Dataset & ds, const z5::types::ShapeType& chunkId)
+{
+    if (!ds.chunkExists(chunkId)) {
+        return nullptr;
+    }
+
+    if (!ds.isZarr())
+        throw std::runtime_error("only zarr datasets supported currently!");
+    if (ds.getDtype() != z5::types::Datatype::uint8 && ds.getDtype() != z5::types::Datatype::uint16)
+        throw std::runtime_error("only uint8_t/uint16 zarrs supported currently!");
+
+    z5::types::ShapeType chunkShape;
+    // size_t chunkSize;
+    ds.getChunkShape(chunkId, chunkShape);
+    // get the shape of the chunk (as stored it is stored)
+    //for ZARR also edge chunks are always full size!
+    const auto & maxChunkShape = ds.defaultChunkShape();
+
+    // chunkSize = std::accumulate(chunkShape.begin(), chunkShape.end(), 1, std::multiplies<std::size_t>());
+
+    auto *out = new xt::xarray<T>();
+    *out = xt::empty<T>(maxChunkShape);
+
+
+    // read/decompress & convert data
+    if (ds.getDtype() == z5::types::Datatype::uint8) {
+        ds.readChunk(chunkId, out->data());
+    }
+    else if (ds.getDtype() == z5::types::Datatype::uint16) {
+        std::cout << "uint16 not supported!\n";
+        abort();
+    }
+
+    return out;
 }

@@ -1,5 +1,5 @@
-#include "../core/Surface.hpp"
-#include "../core/Slicing.hpp"
+#include "Surface.hpp"
+#include "Slicing.hpp"
 #include <cctype>
 
 #include <iostream>

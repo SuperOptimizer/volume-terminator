@@ -18,42 +18,6 @@
 #include <algorithm>
 #include <unordered_set>
 
-template<typename T>
-static xt::xarray<T> *readChunk(const z5::Dataset & ds, const z5::types::ShapeType& chunkId)
-{
-    if (!ds.chunkExists(chunkId)) {
-        return nullptr;
-    }
-
-    if (!ds.isZarr())
-        throw std::runtime_error("only zarr datasets supported currently!");
-    if (ds.getDtype() != z5::types::Datatype::uint8 && ds.getDtype() != z5::types::Datatype::uint16)
-        throw std::runtime_error("only uint8_t/uint16 zarrs supported currently!");
-
-    z5::types::ShapeType chunkShape;
-    // size_t chunkSize;
-    ds.getChunkShape(chunkId, chunkShape);
-    // get the shape of the chunk (as stored it is stored)
-    //for ZARR also edge chunks are always full size!
-    const auto & maxChunkShape = ds.defaultChunkShape();
-
-    // chunkSize = std::accumulate(chunkShape.begin(), chunkShape.end(), 1, std::multiplies<std::size_t>());
-
-    auto *out = new xt::xarray<T>();
-    *out = xt::empty<T>(maxChunkShape);
-
-
-    // read/decompress & convert data
-    if (ds.getDtype() == z5::types::Datatype::uint8) {
-        ds.readChunk(chunkId, out->data());
-    }
-    else if (ds.getDtype() == z5::types::Datatype::uint16) {
-        std::cout << "uint16 not supported!\n";
-        abort();
-    }
-
-    return out;
-}
 
 int ChunkCache::groupIdx(const std::string& name)
 {
@@ -153,67 +117,6 @@ bool ChunkCache::hasST(const cv::Vec4i& idx) {
     return _store.contains(idx);
 }
 
-//algorithm 2: do interpolation on basis of individual chunks
-void readArea3D(xt::xtensor<uint8_t,3,xt::layout_type::column_major> &out, const cv::Vec3i& offset, z5::Dataset *ds, ChunkCache *cache)
-{
-    //FIXME assert dims
-    //FIXME based on key math we should check bounds here using volume and chunk size
-    int group_idx = cache->groupIdx(ds->path());
-
-    cv::Vec3i size = {out.shape()[0],out.shape()[1],out.shape()[2]};
-
-    auto chunksize = ds->chunking().blockShape();
-
-    cv::Vec3i to = offset+size;
-    cv::Vec3i offset_valid = offset;
-    for(int i=0;i<3;i++) {
-        offset_valid[i] = std::max(0,offset_valid[i]);
-        to[i] = std::max(0,to[i]);
-        offset_valid[i] = std::min(int(ds->shape(i)),offset_valid[i]);
-        to[i] = std::min(int(ds->shape(i)),to[i]);
-    }
-
-    {
-        cv::Vec4i last_idx = {-1,-1,-1,-1};
-        std::shared_ptr<xt::xarray<uint8_t>> chunk_ref;
-        xt::xarray<uint8_t> *chunk = nullptr;
-        for(size_t z = offset_valid[0];z<to[0];z++)
-            for(size_t y = offset_valid[1];y<to[1];y++)
-                for(size_t x = offset_valid[2];x<to[2];x++) {
-
-                    int iz = z/chunksize[0];
-                    int iy = y/chunksize[1];
-                    int ix = x/chunksize[2];
-
-                    cv::Vec4i idx = {group_idx,iz,iy,ix};
-
-                    if (idx != last_idx) {
-                        last_idx = idx;
-                        cache->mutex.lock();
-
-                        if (!cache->has(idx)) {
-                            cache->mutex.unlock();
-                            // std::cout << "reading chunk " << cv::Vec3i(ix,iy,iz) << " for " << cv::Vec3i(x,y,z) << chunksize << std::endl;
-                            chunk = readChunk<uint8_t>(*ds, {size_t(iz),size_t(iy),size_t(ix)});
-                            cache->mutex.lock();
-                            cache->put(idx, chunk);
-                        }
-                        else {
-                            chunk_ref = cache->get(idx);
-                            chunk = chunk_ref.get();
-                        }
-                        cache->mutex.unlock();
-                    }
-
-                    if (chunk) {
-                        int lz = z-iz*chunksize[0];
-                        int ly = y-iy*chunksize[1];
-                        int lx = x-ix*chunksize[2];
-                        out(z-offset[0], y-offset[1], x-offset[2]) = chunk->operator()(lz,ly,lx);
-                    }
-            }
-    }
-}
 
 
 ChunkCache::~ChunkCache()
@@ -743,31 +646,4 @@ void vc_segmentation_scales(cv::Mat_<cv::Vec3f> points, double &sx, double &sy)
 
     sx = count/sum_x;
     sy = count/sum_y;
-}
-
-cv::Mat_<cv::Vec3f> vc_segmentation_calc_normals(const cv::Mat_<cv::Vec3f> &points) {
-    int n_step = 1;
-    cv::Mat_<cv::Vec3f> blur;
-    cv::GaussianBlur(points, blur, {21,21}, 0);
-    cv::Mat_<cv::Vec3f> normals(points.size());
-#pragma omp parallel for
-    for(int j=n_step;j<points.rows-n_step;j++)
-        for(int i=n_step;i<points.cols-n_step;i++) {
-            cv::Vec3f xv = normed(blur(j,i+n_step)-blur(j,i-n_step));
-            cv::Vec3f yv = normed(blur(j+n_step,i)-blur(j-n_step,i));
-            
-            cv::Vec3f n = yv.cross(xv);
-            n = n/sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
-            
-            normals(j,i) = n;
-        }
-        
-        cv::GaussianBlur(normals, normals, {21,21}, 0);
-        
-#pragma omp parallel for
-        for(int j=n_step;j<points.rows-n_step;j++)
-            for(int i=n_step;i<points.cols-n_step;i++)
-                normals(j,i) = normed(normals(j,i));
-    
-    return normals;
 }

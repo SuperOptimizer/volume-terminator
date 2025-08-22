@@ -5,12 +5,12 @@
 
 #include <set>
 #include "PathData.hpp"
-#include "../../ui/VCCollection.hpp"
+#include "VCCollection.hpp"
 #include "COutlinedTextItem.hpp"
 #include "CSurfaceCollection.hpp"
 #include "CVolumeViewerView.hpp"
-#include "../../core/Slicing.hpp"
-#include "../../core/Volume.hpp"
+#include "Slicing.hpp"
+#include "Volume.hpp"
 
 
 class CVolumeViewer : public QWidget

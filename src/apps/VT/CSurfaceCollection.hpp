@@ -3,7 +3,7 @@
 #include <QObject>
 #include <opencv2/core.hpp>
 
-#include "../../core/Surface.hpp"
+#include "Surface.hpp"
 
 
 struct POI

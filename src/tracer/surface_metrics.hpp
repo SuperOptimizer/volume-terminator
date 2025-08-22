@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../ui/VCCollection.hpp"
-#include "../core/Surface.hpp"
+#include "VCCollection.hpp"
+#include "Surface.hpp"
 
 #include <nlohmann/json.hpp>
 

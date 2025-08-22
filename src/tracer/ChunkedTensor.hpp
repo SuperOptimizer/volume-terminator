@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/Slicing.hpp"
+#include "Slicing.hpp"
 
 #include <opencv2/core.hpp>
 #include "z5/dataset.hxx"
@@ -44,6 +44,69 @@ struct passTroughComputor
         small = view(large, xt::range(low,high),xt::range(low,high),xt::range(low,high));
     }
 };
+
+
+//algorithm 2: do interpolation on basis of individual chunks
+static inline void readArea3D(xt::xtensor<uint8_t,3,xt::layout_type::column_major> &out, const cv::Vec3i& offset, z5::Dataset *ds, ChunkCache *cache)
+{
+    //FIXME assert dims
+    //FIXME based on key math we should check bounds here using volume and chunk size
+    int group_idx = cache->groupIdx(ds->path());
+
+    cv::Vec3i size = {out.shape()[0],out.shape()[1],out.shape()[2]};
+
+    auto chunksize = ds->chunking().blockShape();
+
+    cv::Vec3i to = offset+size;
+    cv::Vec3i offset_valid = offset;
+    for(int i=0;i<3;i++) {
+        offset_valid[i] = std::max(0,offset_valid[i]);
+        to[i] = std::max(0,to[i]);
+        offset_valid[i] = std::min(int(ds->shape(i)),offset_valid[i]);
+        to[i] = std::min(int(ds->shape(i)),to[i]);
+    }
+
+    {
+        cv::Vec4i last_idx = {-1,-1,-1,-1};
+        std::shared_ptr<xt::xarray<uint8_t>> chunk_ref;
+        xt::xarray<uint8_t> *chunk = nullptr;
+        for(size_t z = offset_valid[0];z<to[0];z++)
+            for(size_t y = offset_valid[1];y<to[1];y++)
+                for(size_t x = offset_valid[2];x<to[2];x++) {
+
+                    int iz = z/chunksize[0];
+                    int iy = y/chunksize[1];
+                    int ix = x/chunksize[2];
+
+                    cv::Vec4i idx = {group_idx,iz,iy,ix};
+
+                    if (idx != last_idx) {
+                        last_idx = idx;
+                        cache->mutex.lock();
+
+                        if (!cache->has(idx)) {
+                            cache->mutex.unlock();
+                            // std::cout << "reading chunk " << cv::Vec3i(ix,iy,iz) << " for " << cv::Vec3i(x,y,z) << chunksize << std::endl;
+                            chunk = readChunk<uint8_t>(*ds, {size_t(iz),size_t(iy),size_t(ix)});
+                            cache->mutex.lock();
+                            cache->put(idx, chunk);
+                        }
+                        else {
+                            chunk_ref = cache->get(idx);
+                            chunk = chunk_ref.get();
+                        }
+                        cache->mutex.unlock();
+                    }
+
+                    if (chunk) {
+                        int lz = z-iz*chunksize[0];
+                        int ly = y-iy*chunksize[1];
+                        int lx = x-ix*chunksize[2];
+                        out(z-offset[0], y-offset[1], x-offset[2]) = chunk->operator()(lz,ly,lx);
+                    }
+            }
+    }
+}
 
 static uint64_t miss = 0;
 static uint64_t total = 0;

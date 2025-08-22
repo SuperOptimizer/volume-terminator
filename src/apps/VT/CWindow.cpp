@@ -44,12 +44,12 @@
 #include "SeedingWidget.hpp"
 #include "DrawingWidget.hpp"
 
-#include "../../core/Volume.hpp"
-#include "../../core/VolumePkg.hpp"
+#include "Volume.hpp"
+#include "VolumePkg.hpp"
 
-#include "../../core/Surface.hpp"
-#include "../../core/Slicing.hpp"
-#include "../../core/SurfaceVoxelizer.hpp"
+#include "Surface.hpp"
+#include "Slicing.hpp"
+#include "SurfaceVoxelizer.hpp"
 #include "CommandLineToolRunner.hpp"
 
 #include <QGuiApplication>

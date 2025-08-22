@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "../../ui/VCCollection.hpp"
+#include "VCCollection.hpp"
  
 
 CPointCollectionWidget::CPointCollectionWidget(VCCollection *collection, QWidget *parent)

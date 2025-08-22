@@ -9,7 +9,7 @@
 
 #include "ui_VCMain.h"
 
-#include "../../ui/VCCollection.hpp"
+#include "VCCollection.hpp"
 
 #include <QShortcut>
 
@@ -21,9 +21,9 @@
 #include "OpsList.hpp"
 #include "OpsSettings.hpp"
 #include "SeedingWidget.hpp"
-#include "../../core/Surface.hpp"
-#include "../../core/Volume.hpp"
-#include "../../core/VolumePkg.hpp"
+#include "Surface.hpp"
+#include "Volume.hpp"
+#include "VolumePkg.hpp"
 
 #define MAX_RECENT_VOLPKG 10
 

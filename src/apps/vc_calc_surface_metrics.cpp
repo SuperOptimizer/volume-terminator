@@ -1,6 +1,6 @@
 #include "surface_metrics.hpp"
-#include "../ui/VCCollection.hpp"
-#include "../core/Surface.hpp"
+#include "VCCollection.hpp"
+#include "Surface.hpp"
 #include <opencv2/imgcodecs.hpp>
 #include <boost/program_options.hpp>
 #include <nlohmann/json.hpp>

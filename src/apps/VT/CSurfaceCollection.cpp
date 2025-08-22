@@ -1,6 +1,6 @@
 #include "CSurfaceCollection.hpp"
 
-#include "../../core/Surface.hpp"
+#include "Surface.hpp"
 
 
 CSurfaceCollection::~CSurfaceCollection()

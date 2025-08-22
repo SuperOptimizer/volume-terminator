@@ -1,5 +1,5 @@
-#include "../core/Slicing.hpp"
-#include "../core/Surface.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
 #include <nlohmann/json.hpp>
 #include <fstream>
 

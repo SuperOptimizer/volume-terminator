@@ -3,7 +3,7 @@
 #include <opencv2/core.hpp>
 
 #include "CostFunctions.hpp"
-#include "../core/Surface.hpp"
+#include "Surface.hpp"
 
 
 #define OPTIMIZE_ALL 1

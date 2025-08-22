@@ -7,8 +7,8 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/video/tracking.hpp>
 
-#include "../core/Slicing.hpp"
-#include "../core/Surface.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
 #include "ChunkedTensor.hpp"
 
 

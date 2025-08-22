@@ -4,7 +4,7 @@
 #include <QComboBox>
 #include <z5/dataset.hxx>
 
-#include "../../core/Slicing.hpp"
+#include "Slicing.hpp"
 #include <QTreeWidgetItem>
 
 #include "OpChain.hpp"

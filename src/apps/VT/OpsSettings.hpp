@@ -4,7 +4,7 @@
 #include <QCheckBox>
 #include <QGroupBox>
 #include "OpChain.hpp"
-#include "../../core/Surface.hpp"
+#include "Surface.hpp"
 
 class OpsSettings : public QWidget
 {

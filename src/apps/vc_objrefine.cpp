@@ -16,8 +16,8 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "../core/Slicing.hpp"
-#include "../core/Surface.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
 
 #include <unordered_map>
 #include <filesystem>

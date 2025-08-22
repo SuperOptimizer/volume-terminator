@@ -1,5 +1,5 @@
-#include "../core/Slicing.hpp"
-#include "../core/Surface.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
 
 #include "z5/factory.hxx"
 #include <nlohmann/json.hpp>

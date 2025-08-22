@@ -10,8 +10,8 @@
 
 #include <opencv2/core.hpp>
 
-#include "../core/Slicing.hpp"
-#include "../core/Surface.hpp"
+#include "Slicing.hpp"
+#include "Surface.hpp"
 
 #include <filesystem>
 

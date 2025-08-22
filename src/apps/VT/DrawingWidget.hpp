@@ -14,8 +14,8 @@
 #include <opencv2/core.hpp>
 
 #include "PathData.hpp"
-#include "../../core/Slicing.hpp"
-#include "../../core/VolumePkg.hpp"
+#include "Slicing.hpp"
+#include "VolumePkg.hpp"
 
 class DrawingWidget : public QWidget
 {

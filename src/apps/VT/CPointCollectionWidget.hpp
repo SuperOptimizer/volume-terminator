@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../ui/VCCollection.hpp"
+#include "VCCollection.hpp"
 #include <QCheckBox>
 #include <QDockWidget>
 #include <QDoubleSpinBox>
