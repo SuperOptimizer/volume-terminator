@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QProcess>
 #include <QFile>
+#include <QProcess>
 #include <QTextStream>
 
 #include "ProgressUtil.hpp"
-#include "ConsoleOutputWidget.hpp"
 #include "CWindow.hpp"
+#include "ConsoleOutputWidget.hpp"
 
 
 /**
@@ -43,7 +43,7 @@ public:
 
     bool execute(Tool tool);
     void cancel() const;
-    bool isRunning() const;
+    [[nodiscard]] bool isRunning() const;
     
     void showConsoleOutput() const;
     void hideConsoleOutput() const;
@@ -62,12 +62,13 @@ private slots:
     void onProcessError(QProcess::ProcessError error);
     void onProcessReadyRead();
 
-private:
-    QStringList buildArguments(Tool tool) const;
+
+    [[nodiscard]] QStringList buildArguments(Tool tool) const;
 
     static QString toolName(Tool tool);
-    QString getOutputPath() const;
+    [[nodiscard]] QString getOutputPath() const;
 
+private:
     CWindow* _mainWindow;
     ProgressUtil* _progressUtil;
     
@@ -92,8 +93,8 @@ private:
     int _seed_x;
     int _seed_y;
     int _seed_z;
-    bool _useExpandMode;
-    bool _useRandomSeed;
+    bool _useExpandMode{};
+    bool _useRandomSeed{};
     int _parallelProcesses;  // processes for xargs
     int _iterationCount;     // iterations for xargs
     

@@ -49,7 +49,7 @@ public:
     bool loadObj(const std::string& filename) {
         std::ifstream file(filename);
         if (!file.is_open()) {
-            std::cerr << "Cannot open OBJ file: " << filename << "\n";
+            std::cerr << "Cannot open OBJ file: " << filename << std::endl;
             return false;
         }
         
@@ -102,10 +102,10 @@ public:
         
         file.close();
         
-        std::cout << "Loaded OBJ file:" << "\n";
-        std::cout << "  Vertices: " << vertices.size() << "\n";
-        std::cout << "  UVs: " << uvs.size() << "\n";
-        std::cout << "  Faces: " << faces.size() << "\n";
+        std::cout << "Loaded OBJ file:" << std::endl;
+        std::cout << "  Vertices: " << vertices.size() << std::endl;
+        std::cout << "  UVs: " << uvs.size() << std::endl;
+        std::cout << "  Faces: " << faces.size() << std::endl;
         
         return !vertices.empty() && !faces.empty() && !uvs.empty();
     }
@@ -128,7 +128,7 @@ public:
         }
         
         std::cout << "UV bounds: [" << uv_min[0] << ", " << uv_min[1] << "] to [" 
-                  << uv_max[0] << ", " << uv_max[1] << "]" << "\n";
+                  << uv_max[0] << ", " << uv_max[1] << "]" << std::endl;
         
         // Build grid from UV range and stretch factor
         cv::Vec2f uv_range = uv_max - uv_min;
@@ -143,11 +143,11 @@ public:
             scale[0] = du * uv_to_obj; // OBJ units per pixel in U
             scale[1] = dv * uv_to_obj; // OBJ units per pixel in V
             std::cout << "UV-metric mode: grid " << grid_size[0] << " x " << grid_size[1]
-                      << "  scale(OBJ units): " << scale[0] << ", " << scale[1] << "\n";
+                      << "  scale(OBJ units): " << scale[0] << ", " << scale[1] << std::endl;
         } else {
             // Two-pass approach (pre-rasterize then measure in 3D)
             std::cout << "Creating preliminary grid " << grid_size[0] << " x " << grid_size[1]
-                      << " to measure scale from 3D..." << "\n";
+                      << " to measure scale from 3D..." << std::endl;
             cv::Mat_<cv::Vec3f> preliminary_points(
                 grid_size[1], grid_size[0], cv::Vec3f(-1, -1, -1));
 
@@ -162,8 +162,8 @@ public:
             grid_size[0] = std::max(2, static_cast<int>(std::round(measured[0] * stretch_factor)) + 1);
             grid_size[1] = std::max(2, static_cast<int>(std::round(measured[1] * stretch_factor)) + 1);
 
-            std::cout << "Final grid: " << grid_size[0] << " x " << grid_size[1] << "\n";
-            std::cout << "Scale(OBJ units): " << measured[0] << ", " << measured[1] << "\n";
+            std::cout << "Final grid: " << grid_size[0] << " x " << grid_size[1] << std::endl;
+            std::cout << "Scale(OBJ units): " << measured[0] << ", " << measured[1] << std::endl;
         }
     }
     
@@ -187,16 +187,16 @@ public:
         }
         
         std::cout << "Valid grid points: " << valid_count << " / " << (grid_size[0] * grid_size[1]) 
-                  << " (" << (100.0f * valid_count / (grid_size[0] * grid_size[1])) << "%)" << "\n";
+                  << " (" << (100.0f * valid_count / (grid_size[0] * grid_size[1])) << "%)" << std::endl;
         
         // Scale is currently in OBJ units. Convert to micrometers now.
         if (valid_count == 0) {
-            std::cerr << "Warning: no valid grid points were rasterized." << "\n";
+            std::cerr << "Warning: no valid grid points were rasterized." << std::endl;
         }
         if (uv_is_metric) {
             scale[0] *= mesh_units;
             scale[1] *= mesh_units;
-            std::cout << "Scale from UV (micrometers): " << scale[0] << ", " << scale[1] << "\n";
+            std::cout << "Scale from UV (micrometers): " << scale[0] << ", " << scale[1] << std::endl;
         } else {
             // Measure from 3D to preserve anisotropy and noise-robustness
             calculateScaleFromGrid(*points, mesh_units);
@@ -257,11 +257,11 @@ public:
             scale[1] = (sum_y / count) * mesh_units;
         } else {
             // Fallback to UV-based scale if we couldn't calculate from grid
-            std::cerr << "Warning: Could not calculate scale from grid, using UV-based fallback" << "\n";
+            std::cerr << "Warning: Could not calculate scale from grid, using UV-based fallback" << std::endl;
             // scale already set in determineGridDimensions
         }
         
-        std::cout << "Calculated scale factors from grid: " << scale[0] << ", " << scale[1] << " micrometers" << "\n";
+        std::cout << "Calculated scale factors from grid: " << scale[0] << ", " << scale[1] << " micrometers" << std::endl;
     }
     
 private:
@@ -358,22 +358,22 @@ int main(int argc, char *argv[])
     if (argc < 3) {
         std::cout << "usage: " << argv[0]
                   << " <input.obj> <output_directory> [stretch_factor] [mesh_units]"
-                  << " [--uv-metric] [--uv-to-obj=<ratio>]" << "\n";
-        std::cout << "Converts an OBJ file to tifxyz format" << "\n";
-        std::cout << "\n";
-        std::cout << "Parameters:" << "\n";
-        std::cout << "  stretch_factor: UV scaling factor (default: 1.0)" << "\n";
-        std::cout << "  mesh_units    : micrometers per OBJ unit (default: 1.0)" << "\n";
-        std::cout << "Flags:" << "\n";
-        std::cout << "  --uv-metric         : UVs are metric (default; UV units == OBJ units unless --uv-to-obj is set)" << "\n";
-        std::cout << "  --uv-non-metric     : Revert to legacy behavior (measure scale from 3D mesh)" << "\n";
-        std::cout << "  --uv-to-obj=<ratio> : OBJ units per 1 UV unit (default: 1.0). Only used with --uv-metric." << "\n";
-        std::cout << "\n";
-        std::cout << "Note: Scale factors are automatically calculated from the mesh grid structure." << "\n";
-        std::cout << "Examples:" << "\n";
-        std::cout << "  " << argv[0] << " mesh.obj outdir                       (legacy behavior)" << "\n";
-        std::cout << "  " << argv[0] << " mesh.obj outdir 800 1.0 --uv-metric  (UV is metric, OBJ units == UV units)" << "\n";
-        std::cout << "  " << argv[0] << " mesh.obj outdir --uv-metric --uv-to-obj=0.001" << "\n";
+                  << " [--uv-metric] [--uv-to-obj=<ratio>]" << std::endl;
+        std::cout << "Converts an OBJ file to tifxyz format" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Parameters:" << std::endl;
+        std::cout << "  stretch_factor: UV scaling factor (default: 1.0)" << std::endl;
+        std::cout << "  mesh_units    : micrometers per OBJ unit (default: 1.0)" << std::endl;
+        std::cout << "Flags:" << std::endl;
+        std::cout << "  --uv-metric         : UVs are metric (default; UV units == OBJ units unless --uv-to-obj is set)" << std::endl;
+        std::cout << "  --uv-non-metric     : Revert to legacy behavior (measure scale from 3D mesh)" << std::endl;
+        std::cout << "  --uv-to-obj=<ratio> : OBJ units per 1 UV unit (default: 1.0). Only used with --uv-metric." << std::endl;
+        std::cout << std::endl;
+        std::cout << "Note: Scale factors are automatically calculated from the mesh grid structure." << std::endl;
+        std::cout << "Examples:" << std::endl;
+        std::cout << "  " << argv[0] << " mesh.obj outdir                       (legacy behavior)" << std::endl;
+        std::cout << "  " << argv[0] << " mesh.obj outdir 800 1.0 --uv-metric  (UV is metric, OBJ units == UV units)" << std::endl;
+        std::cout << "  " << argv[0] << " mesh.obj outdir --uv-metric --uv-to-obj=0.001" << std::endl;
         return EXIT_SUCCESS;
     }
 
@@ -411,38 +411,38 @@ int main(int argc, char *argv[])
         if (consumed_numbers == 0) {
             stretch_factor = std::atof(a.c_str());
             if (stretch_factor <= 0) {
-                std::cerr << "Invalid stretch factor: " << a << "\n";
+                std::cerr << "Invalid stretch factor: " << a << std::endl;
                 return EXIT_FAILURE;
             }
             consumed_numbers++;
         } else if (consumed_numbers == 1) {
             mesh_units = std::atof(a.c_str());
             if (mesh_units <= 0) {
-                std::cerr << "Invalid mesh units: " << a << "\n";
+                std::cerr << "Invalid mesh units: " << a << std::endl;
                 return EXIT_FAILURE;
             }
             consumed_numbers++;
         } else {
-            std::cerr << "Unknown argument: " << a << "\n";
+            std::cerr << "Unknown argument: " << a << std::endl;
             return EXIT_FAILURE;
         }
     }
 
     if (!std::filesystem::exists(obj_path)) {
-        std::cerr << "Input file does not exist: " << obj_path << "\n";
+        std::cerr << "Input file does not exist: " << obj_path << std::endl;
         return EXIT_FAILURE;
     }
 
-    std::cout << "Converting OBJ to tifxyz format" << "\n";
-    std::cout << "Input: " << obj_path << "\n";
-    std::cout << "Output: " << output_dir << "\n";
-    std::cout << "Stretch factor: " << stretch_factor << "\n";
-    std::cout << "Mesh units: " << mesh_units << " micrometers per OBJ unit" << "\n";
+    std::cout << "Converting OBJ to tifxyz format" << std::endl;
+    std::cout << "Input: " << obj_path << std::endl;
+    std::cout << "Output: " << output_dir << std::endl;
+    std::cout << "Stretch factor: " << stretch_factor << std::endl;
+    std::cout << "Mesh units: " << mesh_units << " micrometers per OBJ unit" << std::endl;
     if (uv_metric) {
-        std::cout << "UV mode: metric (default)" << "\n";
-        std::cout << "UV->OBJ scale: " << uv_to_obj << " OBJ units / UV unit" << "\n";
+        std::cout << "UV mode: metric (default)" << std::endl;
+        std::cout << "UV->OBJ scale: " << uv_to_obj << " OBJ units / UV unit" << std::endl;
     } else {
-        std::cout << "UV mode: non-metric (scale measured from mesh)" << "\n";
+        std::cout << "UV mode: non-metric (scale measured from mesh)" << std::endl;
     }
     
     ObjToTifxyzConverter converter;
@@ -451,7 +451,7 @@ int main(int argc, char *argv[])
 
     // Load OBJ file
     if (!converter.loadObj(obj_path.string())) {
-        std::cerr << "Failed to load OBJ file" << "\n";
+        std::cerr << "Failed to load OBJ file" << std::endl;
         return EXIT_FAILURE;
     }
     
@@ -461,7 +461,7 @@ int main(int argc, char *argv[])
     // Create quad surface
     QuadSurface* surf = converter.createQuadSurface(mesh_units);
     if (!surf) {
-        std::cerr << "Failed to create quad surface" << "\n";
+        std::cerr << "Failed to create quad surface" << std::endl;
         return EXIT_FAILURE;
     }
     
@@ -471,14 +471,14 @@ int main(int argc, char *argv[])
         uuid = obj_path.stem().string();
     }
     
-    std::cout << "Saving to tifxyz format..." << "\n";
+    std::cout << "Saving to tifxyz format..." << std::endl;
     
     try {
         surf->save(output_dir.string(), uuid);
-        std::cout << "Successfully converted to tifxyz format" << "\n";
+        std::cout << "Successfully converted to tifxyz format" << std::endl;
     }
     catch (const std::exception& e) {
-        std::cerr << "Error saving tifxyz: " << e.what() << "\n";
+        std::cerr << "Error saving tifxyz: " << e.what() << std::endl;
         delete surf;
         return EXIT_FAILURE;
     }

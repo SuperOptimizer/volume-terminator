@@ -69,7 +69,7 @@ bool check_existing_segments(const std::filesystem::path& tgt_dir, const cv::Vec
 
         QuadSurface other(entry.path());
         if (contains(other, origin, search_effort)) {
-            std::cout << "Found overlapping segment at location: " << entry.path() << "\n";
+            std::cout << "Found overlapping segment at location: " << entry.path() << std::endl;
             return true;
         }
     }
@@ -79,8 +79,8 @@ bool check_existing_segments(const std::filesystem::path& tgt_dir, const cv::Vec
 int main(int argc, char *argv[])
 {
     if (argc != 7 && argc != 4) {
-        std::cout << "usage: " << argv[0] << " <ome-zarr-volume> <tgt-dir> <json-params> <seed-x> <seed-y> <seed-z>" << "\n";
-        std::cout << "or:    " << argv[0] << " <ome-zarr-volume> <tgt-dir> <json-params>" << "\n";
+        std::cout << "usage: " << argv[0] << " <ome-zarr-volume> <tgt-dir> <json-params> <seed-x> <seed-y> <seed-z>" << std::endl;
+        std::cout << "or:    " << argv[0] << " <ome-zarr-volume> <tgt-dir> <json-params>" << std::endl;
         return EXIT_SUCCESS;
     }
 
@@ -95,8 +95,8 @@ int main(int argc, char *argv[])
     z5::filesystem::handle::Dataset ds_handle(group, "0", json::parse(std::ifstream(vol_path/"0/.zarray")).value<std::string>("dimension_separator","."));
     std::unique_ptr<z5::Dataset> ds = z5::filesystem::openDataset(ds_handle);
 
-    std::cout << "zarr dataset size for scale group 0 " << ds->shape() << "\n";
-    std::cout << "chunk shape shape " << ds->chunking().blockShape() << "\n";
+    std::cout << "zarr dataset size for scale group 0 " << ds->shape() << std::endl;
+    std::cout << "chunk shape shape " << ds->chunking().blockShape() << std::endl;
 
     ChunkCache chunk_cache(params.value("cache_size", 1e9));
 
@@ -124,10 +124,10 @@ int main(int argc, char *argv[])
 
     std::string mode = params.value("mode", "seed");
     
-    std::cout << "mode: " << mode << "\n";
-    std::cout << "step size: " << step_size << "\n";
-    std::cout << "min_area_cm: " << min_area_cm << "\n";
-    std::cout << "tgt_overlap_count: " << tgt_overlap_count << "\n";
+    std::cout << "mode: " << mode << std::endl;
+    std::cout << "step size: " << step_size << std::endl;
+    std::cout << "min_area_cm: " << min_area_cm << std::endl;
+    std::cout << "tgt_overlap_count: " << tgt_overlap_count << std::endl;
 
     std::unordered_map<std::string,QuadSurface*> surfs;
     std::vector<QuadSurface*> surfs_v;
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
                 if (name.compare(0, name_prefix.size(), name_prefix))
                     continue;
 
-                std::cout << entry.path() << entry.path().filename() << "\n";
+                std::cout << entry.path() << entry.path().filename() << std::endl;
 
                 std::filesystem::path meta_fn = entry.path() / "meta.json";
                 if (!std::filesystem::exists(meta_fn))
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
             }
             
         if (!surfs.size()) {
-            std::cerr << "ERROR: no seed surfaces found in expansion mode" << "\n";
+            std::cerr << "ERROR: no seed surfaces found in expansion mode" << std::endl;
             return EXIT_FAILURE;
         }
         
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
                 break;
         }
 
-        std::cout << "found potential overlapping starting seed " << origin << " with overlap " << count_overlap << "\n";
+        std::cout << "found potential overlapping starting seed " << origin << " with overlap " << count_overlap << std::endl;
     }
     else {
         if (argc == 7) {
@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
             origin = {atof(argv[4]), atof(argv[5]), atof(argv[6])};
             double v;
             interpolator.Evaluate(origin[2], origin[1], origin[0], &v);
-            std::cout << "seed location " << origin << " value is " << v << "\n";
+            std::cout << "seed location " << origin << " value is " << v << std::endl;
         }
         else {
             mode = "random_seed";
@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
                             continue;
                         succ = true;
                         origin = p;
-                        std::cout << "Found seed location " << origin << " value: " << v << "\n";
+                        std::cout << "Found seed location " << origin << " value: " << v << std::endl;
                         break;
                     }
                 }
@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
 
             if (!succ) {
                 std::cout << "ERROR: Could not find valid non-overlapping seed location after " 
-                        << max_attempts << " attempts" << "\n";
+                        << max_attempts << " attempts" << std::endl;
                 return EXIT_SUCCESS;
             }
         }
@@ -326,7 +326,7 @@ int main(int argc, char *argv[])
         (*surf->meta)["seed_overlap"] = count_overlap;
     std::string uuid = name_prefix + time_str();
     std::filesystem::path seg_dir = tgt_dir / uuid;
-    std::cout << "saving " << seg_dir << "\n";
+    std::cout << "saving " << seg_dir << std::endl;
     surf->save(seg_dir, uuid);
 
     QuadSurface current;

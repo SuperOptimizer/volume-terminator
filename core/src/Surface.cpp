@@ -433,21 +433,21 @@ float min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f &out,
             }
 
             val = at_int(points, cand);
-            // std::cout << "at" << cand << val << "\n";
+            // std::cout << "at" << cand << val << std::endl;
             float res = tdist_sum(val, tgts, tds);
             if (plane) {
                 float d = plane->pointDist(val);
                 res += d*d;
             }
             if (res < best) {
-                // std::cout << res << val << step << cand << "\n";
+                // std::cout << res << val << step << cand << std::endl;
                 changed = true;
                 best = res;
                 loc = cand;
                 out = val;
             }
             // else
-                // std::cout << "(" << res << val << step << cand << "\n";
+                // std::cout << "(" << res << val << step << cand << std::endl;
         }
 
         if (changed)
@@ -460,7 +460,7 @@ float min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f &out,
             break;
     }
 
-    // std::cout << "best" << best << out << "\n" <<  "\n";
+    // std::cout << "best" << best << out << std::endl <<  std::endl;
     return best;
 }
 

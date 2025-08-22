@@ -41,6 +41,9 @@ public:
     std::shared_ptr<xt::xarray<uint8_t>> get(const cv::Vec4i& key);
     void reset();
     bool has(const cv::Vec4i& idx);
+    void putST(const cv::Vec4i& idx, xt::xarray<uint8_t> *ar);
+    std::shared_ptr<xt::xarray<uint8_t>> getST(const cv::Vec4i& idx);
+    bool hasST(const cv::Vec4i& idx);
     std::shared_mutex mutex;
 private:
     uint64_t _generation = 0;
@@ -51,12 +54,11 @@ private:
     std::unordered_map<cv::Vec4i,uint64_t,vec4i_hash> _gen_store;
     //store group keys
     std::unordered_map<std::string,int> _group_store;
-
-    std::shared_mutex _mutex;
 };
 
 //NOTE depending on request this might load a lot (the whole array) into RAM
 void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds, const cv::Mat_<cv::Vec3f> &coords, ChunkCache *cache = nullptr);
+void readInterpolated2D(cv::Mat_<uint8_t> &out, z5::Dataset *ds, const cv::Mat_<cv::Vec3f> &coords, ChunkCache *cache);
 void readArea3D(xt::xtensor<uint8_t,3,xt::layout_type::column_major> &out, const cv::Vec3i& offset, z5::Dataset *ds, ChunkCache *cache);
 cv::Mat_<cv::Vec3f> smooth_vc_segmentation(const cv::Mat_<cv::Vec3f> &points);
 cv::Mat_<cv::Vec3f> vc_segmentation_calc_normals(const cv::Mat_<cv::Vec3f> &points);

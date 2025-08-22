@@ -304,7 +304,7 @@ void VolumePkg::loadSegmentationsFromDirectory(const std::string& dirName)
                 _segmentationDirectories[s->id()] = dirName;
             }
             catch (const std::exception &exc) {
-                std::cout << "WARNING: some exception occured, skipping segment dir: " << dirpath << "\n";
+                std::cout << "WARNING: some exception occured, skipping segment dir: " << dirpath << std::endl;
                 std::cerr << exc.what();
             }
         }

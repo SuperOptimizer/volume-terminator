@@ -1,9 +1,9 @@
 #include "ConsoleOutputWidget.hpp"
 #include <QApplication>
 #include <QClipboard>
-#include <QScrollBar>
 #include <QFontDatabase>
 #include <QHBoxLayout>
+#include <QScrollBar>
 
 
 ConsoleOutputWidget::ConsoleOutputWidget(QWidget* parent)
@@ -14,14 +14,14 @@ ConsoleOutputWidget::ConsoleOutputWidget(QWidget* parent)
     , _titleLabel(new QLabel(tr("Console Output"), this))
 {
 
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    QHBoxLayout* headerLayout = new QHBoxLayout();
-    QHBoxLayout* buttonLayout = new QHBoxLayout();
+    auto* mainLayout = new QVBoxLayout(this);
+    auto* headerLayout = new QHBoxLayout();
+    auto* buttonLayout = new QHBoxLayout();
 
     _textEdit->setReadOnly(true);
     _textEdit->setLineWrapMode(QPlainTextEdit::NoWrap);
 
-    QFont consoleFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QFont const consoleFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     _textEdit->setFont(consoleFont);
     
     _textEdit->setStyleSheet("QPlainTextEdit { background-color: #2b2b2b; color: #f0f0f0; }");
@@ -43,8 +43,7 @@ ConsoleOutputWidget::ConsoleOutputWidget(QWidget* parent)
 }
 
 ConsoleOutputWidget::~ConsoleOutputWidget()
-{
-}
+= default;
 
 void ConsoleOutputWidget::appendOutput(const QString& text) const {
     _textEdit->appendPlainText(text);

@@ -71,7 +71,7 @@ CWindow::CWindow() :
     // setAttribute(Qt::WA_DeleteOnClose);
 
     chunk_cache = new ChunkCache(CHUNK_CACHE_SIZE_GB*1024*1024*1024);
-    std::cout << "chunk cache size is " << CHUNK_CACHE_SIZE_GB << " gigabytes " << "\n";
+    std::cout << "chunk cache size is " << CHUNK_CACHE_SIZE_GB << " gigabytes " << std::endl;
     
     _surf_col = new CSurfaceCollection();
     
@@ -1049,7 +1049,7 @@ void CWindow::OpenRecent()
 
 void CWindow::LoadSurfaces(bool reload)
 {
-    std::cout << "Start of loading surfaces..." << "\n";
+    std::cout << "Start of loading surfaces..." << std::endl;
 
     if (reload) {
         auto dir = fVpkg->getSegmentationDirectory();
@@ -1107,18 +1107,18 @@ void CWindow::LoadSurfaces(bool reload)
     
     // Load only new surfaces in parallel
     if (!to_load.empty()) {
-        std::cout << "Loading " << to_load.size() << " new surfaces..." << "\n";
+        std::cout << "Loading " << to_load.size() << " new surfaces..." << std::endl;
         
         #pragma omp parallel for
         for(int i = 0; i < to_load.size(); i++) {
             auto seg = fVpkg->segmentation(to_load[i].first);
             try {
                 QuadSurface *qs = new QuadSurface(seg->path());
-                //qs->ensureLoaded();
-                //qs->readOverlapping();
+                qs->ensureLoaded();
+                qs->readOverlapping();
                 to_load[i].second = qs;
             } catch (const std::exception& e) {
-                std::cerr << "Failed to load surface " << to_load[i].first << ": " << e.what() << "\n";
+                std::cerr << "Failed to load surface " << to_load[i].first << ": " << e.what() << std::endl;
                 to_load[i].second = nullptr;
             }
         }
@@ -1129,7 +1129,7 @@ void CWindow::LoadSurfaces(bool reload)
                 _vol_qsurfs[pair.first] = pair.second;
                 _surf_col->setSurface(pair.first, pair.second, true);
             } else {
-                std::cout << "Skipping surface " << pair.first << " due to invalid metadata" << "\n";
+                std::cout << "Skipping surface " << pair.first << " due to invalid metadata" << std::endl;
             }
         }
     }
@@ -1153,7 +1153,7 @@ void CWindow::LoadSurfaces(bool reload)
     // Emit signal to notify that surfaces have been loaded
     emit sendSurfacesLoaded();
 
-    std::cout << "Loading of surfaces completed." << "\n";
+    std::cout << "Loading of surfaces completed." << std::endl;
 
     if (_vol_qsurfs.size() > 100) {  // Threshold of 100 segments
         chkFilterCurrentOnly->setChecked(true);
@@ -1193,7 +1193,6 @@ void CWindow::Keybindings(void)
         "U: Rotate view counterclockwise \n"
         "O: Rotate view clockwise \n"
         "X/I: Reset view rotation back to zero \n"
-        "\n"
         "Mouse: \n"
         "------------------- \n"
         "Mouse Wheel: Scroll up/down \n"
@@ -1252,7 +1251,7 @@ auto CWindow::can_change_volume_() const -> bool
 // Handle request to step impact range down
 void CWindow::onLocChanged()
 {
-    // std::cout << "loc changed!" << "\n";
+    // std::cout << "loc changed!" << std::endl;
     
     // sendLocChanged(spinLoc[0]->value(),spinLoc[1]->value(),spinLoc[2]->value());
 }
@@ -1262,7 +1261,7 @@ void CWindow::onVolumeClicked(const cv::Vec3f& vol_loc, const cv::Vec3f& normal,
         return;
     }
     else if (modifiers & Qt::ControlModifier) {
-        std::cout << "clicked on vol loc " << vol_loc << "\n";
+        std::cout << "clicked on vol loc " << vol_loc << std::endl;
         //NOTE this comes before the focus poi, so focus is applied by views using these slices
         //FIXME this assumes a single segmentation ... make configurable and cleaner ...
         if (QuadSurface *segment = dynamic_cast<QuadSurface*>(surf)) {
@@ -1420,7 +1419,7 @@ void CWindow::onTagChanged(void)
         if (reviewedJustAdded && _vol_qsurfs.contains(id)) {
             QuadSurface* surfMeta = _vol_qsurfs[id];
             
-            std::cout << "Marking partial review for overlaps of " << id << ", found " << surfMeta->overlapping_str.size() << " overlaps" << "\n";
+            std::cout << "Marking partial review for overlaps of " << id << ", found " << surfMeta->overlapping_str.size() << " overlaps" << std::endl;
             
             // Iterate through overlapping surfaces
             for (const std::string& overlapId : surfMeta->overlapping_str) {
@@ -1452,7 +1451,7 @@ void CWindow::onTagChanged(void)
                             // Save the metadata
                             overlapSurf->save_meta();
                             
-                            std::cout << "Added partial_review tag to " << overlapId << "\n";
+                            std::cout << "Added partial_review tag to " << overlapId << std::endl;
                         }
                     }
                 }
@@ -1517,7 +1516,7 @@ void CWindow::onSurfaceSelected()
             const QSignalBlocker b3{_chkReviewed};
             const QSignalBlocker b4{_chkRevisit};
             
-            std::cout << "surf " << _surf->path << _surfID <<  _surf->meta << "\n";
+            std::cout << "surf " << _surf->path << _surfID <<  _surf->meta << std::endl;
             
             _chkApproved->setEnabled(true);
             _chkDefective->setEnabled(true);
@@ -1547,7 +1546,7 @@ void CWindow::onSurfaceSelected()
         }
     }
     else
-        std::cout << "ERROR loading " << _surfID << "\n";
+        std::cout << "ERROR loading " << _surfID << std::endl;
 
     // If "Current Segment Only" is checked, refresh the filter to update intersections
     if (chkFilterCurrentOnly && chkFilterCurrentOnly->isChecked()) {
@@ -2073,7 +2072,7 @@ void CWindow::AddSingleSegmentation(const std::string& segId)
         return;
     }
     
-    std::cout << "Adding segmentation: " << segId << "\n";
+    std::cout << "Adding segmentation: " << segId << std::endl;
     
     try {
         auto seg = fVpkg->segmentation(segId);
@@ -2097,13 +2096,13 @@ void CWindow::AddSingleSegmentation(const std::string& segId)
             UpdateSurfaceTreeIcon(item);
         }
     } catch (const std::exception& e) {
-        std::cout << "Failed to add segmentation " << segId << ": " << e.what() << "\n";
+        std::cout << "Failed to add segmentation " << segId << ": " << e.what() << std::endl;
     }
 }
 
 void CWindow::RemoveSingleSegmentation(const std::string& segId)
 {
-    std::cout << "Removing segmentation: " << segId << "\n";
+    std::cout << "Removing segmentation: " << segId << std::endl;
     
     // Check if this is the currently selected segmentation
     bool wasSelected = (_surfID == segId);
@@ -2164,7 +2163,7 @@ void CWindow::RemoveSingleSegmentation(const std::string& segId)
 
 void CWindow::LoadSurfacesIncremental()
 {
-    std::cout << "Starting incremental surface load..." << "\n";
+    std::cout << "Starting incremental surface load..." << std::endl;
     
     if (!fVpkg) {
         return;
@@ -2177,7 +2176,7 @@ void CWindow::LoadSurfacesIncremental()
     auto changes = DetectSurfaceChanges();
     
     std::cout << "Found " << changes.toAdd.size() << " surfaces to add and " 
-              << changes.toRemove.size() << " surfaces to remove" << "\n";
+              << changes.toRemove.size() << " surfaces to remove" << std::endl;
     
     // Apply removals first
     for (const auto& id : changes.toRemove) {
@@ -2198,7 +2197,7 @@ void CWindow::LoadSurfacesIncremental()
     // Emit signal to notify that surfaces have been updated
     emit sendSurfacesLoaded();
     
-    std::cout << "Incremental surface load completed." << "\n";
+    std::cout << "Incremental surface load completed." << std::endl;
 }
 
 void CWindow::onGenerateReviewReport()
@@ -3090,7 +3089,7 @@ void CWindow::onDeleteSegments(const std::vector<std::string>& segmentIds)
             successCount++;
             needsReload = true;
         } catch (const std::filesystem::filesystem_error& e) {
-            std::cerr << "Failed to delete segment " << segmentId << ": " << e.what() << "\n";
+            std::cerr << "Failed to delete segment " << segmentId << ": " << e.what() << std::endl;
 
             // Check if it's a permission error
             if (e.code() == std::errc::permission_denied) {
@@ -3100,7 +3099,7 @@ void CWindow::onDeleteSegments(const std::vector<std::string>& segmentIds)
             }
         } catch (const std::exception& e) {
             failedSegments << QString::fromStdString(segmentId);
-            std::cerr << "Failed to delete segment " << segmentId << ": " << e.what() << "\n";
+            std::cerr << "Failed to delete segment " << segmentId << ": " << e.what() << std::endl;
         }
     }
 
@@ -3124,7 +3123,7 @@ void CWindow::onDeleteSegments(const std::vector<std::string>& segmentIds)
             UpdateVolpkgLabel(0);
             onSegFilterChanged(0);
         } catch (const std::exception& e) {
-            std::cerr << "Error updating UI after deletion: " << e.what() << "\n";
+            std::cerr << "Error updating UI after deletion: " << e.what() << std::endl;
             QMessageBox::warning(this, tr("Warning"),
                                tr("Segments were deleted but there was an error refreshing the list. "
                                   "Please reload surfaces manually."));

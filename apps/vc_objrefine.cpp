@@ -43,7 +43,7 @@ cv::Vec3f parse_vec3f(std::string line, std::string type = "")
     std::istringstream iss(line);
     std::string t;
     if (!(iss >> t >> v[0] >> v[1] >> v[2]) || (type.size() && t != type)) {
-        std::cout << t << v << type << line << "\n";
+        std::cout << t << v << type << line << std::endl;
         throw std::runtime_error("error in parse_vec3f()");
     }
     return v;
@@ -131,7 +131,7 @@ int process_obj(const std::string &src, const std::string &tgt, DSReader &reader
                 vns.push_back(normal);
         }
         // if (vs.size() % 10000 == 0)
-            // std::cout << vs.size() << "\n";
+            // std::cout << vs.size() << std::endl;
     }
 
     if (vs.size() != vns.size())
@@ -175,11 +175,11 @@ int process_obj(const std::string &src, const std::string &tgt, DSReader &reader
                 float col = int(slice(v_counter, 0)*1000/255.0)/1000.0;
                 out << " " << col << " " << col << " " << col;
             }
-            out << "\n";
+            out << std::endl;
             v_counter++;
         }
         else
-            out << line << "\n";
+            out << line << std::endl;
     }
 
     return EXIT_SUCCESS;
@@ -196,7 +196,7 @@ public:
     ~MeasureLife()
     {
         auto end = std::chrono::high_resolution_clock::now();
-        std::cout << " took " << std::chrono::duration<double>(end-start).count() << " s" << "\n";
+        std::cout << " took " << std::chrono::duration<double>(end-start).count() << " s" << std::endl;
     }
 private:
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
@@ -205,7 +205,7 @@ private:
 int main(int argc, char *argv[])
 {
     if (argc != 5) {
-        std::cout << "usage: " << argv[0] << " <zarr-volume> <src-obj> <out-obj> <json-params>" << "\n";
+        std::cout << "usage: " << argv[0] << " <zarr-volume> <src-obj> <out-obj> <json-params>" << std::endl;
         return EXIT_SUCCESS;
     }
 
@@ -221,8 +221,8 @@ int main(int argc, char *argv[])
     z5::filesystem::handle::Dataset ds_handle(group, "1", "/");
     std::unique_ptr<z5::Dataset> ds = z5::filesystem::openDataset(ds_handle);
 
-    std::cout << "zarr dataset size for scale group 1 " << ds->shape() << "\n";
-    std::cout << "chunk shape shape " << ds->chunking().blockShape() << "\n";
+    std::cout << "zarr dataset size for scale group 1 " << ds->shape() << std::endl;
+    std::cout << "chunk shape shape " << ds->chunking().blockShape() << std::endl;
 
     ChunkCache chunk_cache(10e9);
 

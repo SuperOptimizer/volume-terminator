@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QWidget>
+#include <QLabel>
 #include <QPlainTextEdit>
 #include <QPushButton>
-#include <QLabel>
+#include <QWidget>
 
 class ConsoleOutputWidget : public QWidget
 {
@@ -17,7 +17,7 @@ public:
     void clear() const;
     void setTitle(const QString& title) const;
 
-public slots:
+
     void copyToClipboard() const;
 
 private:

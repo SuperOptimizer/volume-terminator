@@ -1,21 +1,21 @@
 #include "CommandLineToolRunner.hpp"
 
-#include <QClipboard>
 #include "CWindow.hpp"
-#include <QDir>
-#include <QFileInfo>
-#include <QStatusBar>
-#include <QVBoxLayout>
+#include <QClipboard>
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDialog>
+#include <QDir>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMessageBox>
+#include <QStatusBar>
 #include <QTextStream>
+#include <QVBoxLayout>
 
 
-CommandLineToolRunner::CommandLineToolRunner(QStatusBar* statusBar, CWindow* mainWindow, QObject* parent)
+CommandLineToolRunner::CommandLineToolRunner(QStatusBar*  /*statusBar*/, CWindow* mainWindow, QObject* parent)
     : QObject(parent)
     , _mainWindow(mainWindow)
     , _progressUtil(new ProgressUtil(nullptr, this))
@@ -37,14 +37,14 @@ CommandLineToolRunner::CommandLineToolRunner(QStatusBar* statusBar, CWindow* mai
     _consoleDialog->setWindowTitle(tr("Command Output"));
     _consoleDialog->resize(700, 500);
 
-    QVBoxLayout* layout = new QVBoxLayout(_consoleDialog);
+    auto* layout = new QVBoxLayout(_consoleDialog);
     layout->addWidget(_consoleOutput);
     _consoleDialog->setLayout(layout);
 }
 
 CommandLineToolRunner::~CommandLineToolRunner()
 {
-    if (_process) {
+    if (_process != nullptr) {
         if (_process->state() != QProcess::NotRunning) {
             _process->terminate();
             _process->waitForFinished(3000);
@@ -52,11 +52,11 @@ CommandLineToolRunner::~CommandLineToolRunner()
         delete _process;
     }
 
-    if (_logStream) {
+    if (_logStream != nullptr) {
         delete _logStream;
         _logStream = nullptr;
     }
-    if (_logFile) {
+    if (_logFile != nullptr) {
         _logFile->close();
         delete _logFile;
         _logFile = nullptr;
@@ -148,25 +148,25 @@ void CommandLineToolRunner::setToObjParams(const QString &tifxyzPath, const QStr
 
 bool CommandLineToolRunner::execute(Tool tool)
 {
-    if (_process && _process->state() != QProcess::NotRunning) {
+    if ((_process != nullptr) && _process->state() != QProcess::NotRunning) {
         QMessageBox::warning(nullptr, tr("Warning"), tr("A tool is already running."));
         return false;
     }
 
     _consoleOutput->clear();
 
-    QString toolCmd = toolName(tool);
-    QFileInfo toolInfo(toolCmd);
+    QString const toolCmd = toolName(tool);
+    QFileInfo const toolInfo(toolCmd);
     if (!toolInfo.exists() || !toolInfo.isExecutable()) {
-        QString errorMsg = tr("Tool executable not found or not executable: %1").arg(toolCmd);
+        QString const errorMsg = tr("Tool executable not found or not executable: %1").arg(toolCmd);
         _consoleOutput->appendOutput(errorMsg);
         showConsoleOutput();
         QMessageBox::warning(nullptr, tr("Error"), errorMsg);
         return false;
     }
 
-    if (_mainWindow) {
-        QString currentVolumePath = _mainWindow->getCurrentVolumePath();
+    if (_mainWindow != nullptr) {
+        QString const currentVolumePath = _mainWindow->getCurrentVolumePath();
         if (currentVolumePath.isEmpty()) {
             QMessageBox::warning(nullptr, tr("Error"), tr("No volume selected."));
             return false;
@@ -193,8 +193,8 @@ bool CommandLineToolRunner::execute(Tool tool)
             return false;
         }
 
-        QFileInfo outputInfo(_outputPattern);
-        QDir outputDir = outputInfo.dir();
+        QFileInfo const outputInfo(_outputPattern);
+        QDir const outputDir = outputInfo.dir();
         if (!outputDir.exists()) {
             if (!outputDir.mkpath(".")) {
                 QMessageBox::warning(nullptr, tr("Error"), tr("Failed to create output directory: %1").arg(outputDir.path()));
@@ -205,15 +205,15 @@ bool CommandLineToolRunner::execute(Tool tool)
 
     _currentTool = tool;
 
-    QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
-    QString toolBaseName = QFileInfo(toolCmd).baseName();
-    QString logFilePath = QString("/tmp/%1_%2.txt").arg(toolBaseName, timestamp);
+    QString const timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+    QString const toolBaseName = QFileInfo(toolCmd).baseName();
+    QString const logFilePath = QString("/tmp/%1_%2.txt").arg(toolBaseName, timestamp);
 
-    if (_logStream) {
+    if (_logStream != nullptr) {
         delete _logStream;
         _logStream = nullptr;
     }
-    if (_logFile) {
+    if (_logFile != nullptr) {
         _logFile->close();
         delete _logFile;
         _logFile = nullptr;
@@ -235,7 +235,7 @@ bool CommandLineToolRunner::execute(Tool tool)
         _consoleOutput->appendOutput(tr("Warning: Failed to create log file: %1\n").arg(logFilePath));
     }
 
-    if (!_process) {
+    if (_process == nullptr) {
         _process = new QProcess(this);
         _process->setProcessChannelMode(QProcess::MergedChannels);
 
@@ -246,8 +246,8 @@ bool CommandLineToolRunner::execute(Tool tool)
         connect(_process, &QProcess::readyRead, this, &CommandLineToolRunner::onProcessReadyRead);
     }
 
-    QStringList args = buildArguments(tool);
-    QString toolCommand = toolName(tool);
+    QStringList const args = buildArguments(tool);
+    QString const toolCommand = toolName(tool);
 
     QString startMessage;
 
@@ -259,7 +259,7 @@ bool CommandLineToolRunner::execute(Tool tool)
                           .arg(QFileInfo(_segmentPath).fileName());
 
         QString baseCmd = QString("%1 %2").arg(toolCommand, args.join(" "));
-        QString shellCmd = QString("time seq 1 %1 | xargs -i -P %2 bash -c 'nice ionice %3 || true'")
+        QString const shellCmd = QString("time seq 1 %1 | xargs -i -P %2 bash -c 'nice ionice %3 || true'")
                               .arg(_iterationCount)
                               .arg(_parallelProcesses)
                               .arg(baseCmd.replace("'", "\\'"));
@@ -292,18 +292,18 @@ bool CommandLineToolRunner::execute(Tool tool)
 }
 
 void CommandLineToolRunner::cancel() const {
-    if (_process && _process->state() != QProcess::NotRunning) {
+    if ((_process != nullptr) && _process->state() != QProcess::NotRunning) {
         _process->terminate();
     }
 }
 
 bool CommandLineToolRunner::isRunning() const
 {
-    return (_process && _process->state() != QProcess::NotRunning);
+    return ((_process != nullptr) && _process->state() != QProcess::NotRunning);
 }
 
 void CommandLineToolRunner::showConsoleOutput() const {
-    if (_consoleDialog) {
+    if (_consoleDialog != nullptr) {
         _consoleDialog->show();
         _consoleDialog->raise();
         _consoleDialog->activateWindow();
@@ -311,7 +311,7 @@ void CommandLineToolRunner::showConsoleOutput() const {
 }
 
 void CommandLineToolRunner::hideConsoleOutput() const {
-    if (_consoleDialog) {
+    if (_consoleDialog != nullptr) {
         _consoleDialog->hide();
     }
 }
@@ -333,13 +333,13 @@ void CommandLineToolRunner::setIterationCount(int count)
 
 void CommandLineToolRunner::onProcessReadyRead()
 {
-    if (_process) {
-        QByteArray output = _process->readAll();
-        QString outputText = QString::fromUtf8(output);
+    if (_process != nullptr) {
+        QByteArray const output = _process->readAll();
+        QString const outputText = QString::fromUtf8(output);
 
         _consoleOutput->appendOutput(outputText);
 
-        if (_logStream) {
+        if (_logStream != nullptr) {
             *_logStream << outputText;
             _logStream->flush();
         }
@@ -349,13 +349,14 @@ void CommandLineToolRunner::onProcessReadyRead()
 }
 
 void CommandLineToolRunner::onProcessStarted() const {
-    QString message = tr("Running %1...").arg(toolName(_currentTool));
-    if (_progressUtil) _progressUtil->startAnimation(message);
+    QString const message = tr("Running %1...").arg(toolName(_currentTool));
+    if (_progressUtil != nullptr) { _progressUtil->startAnimation(message);
+}
 }
 
 void CommandLineToolRunner::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
-    if (_logStream) {
+    if (_logStream != nullptr) {
         *_logStream << Qt::endl << "===================================" << Qt::endl;
         *_logStream << "Process finished at: " << QDateTime::currentDateTime().toString(Qt::ISODate) << Qt::endl;
         *_logStream << "Exit code: " << exitCode << Qt::endl;
@@ -363,38 +364,41 @@ void CommandLineToolRunner::onProcessFinished(int exitCode, QProcess::ExitStatus
         _logStream->flush();
     }
 
-    if (_logStream) {
+    if (_logStream != nullptr) {
         delete _logStream;
         _logStream = nullptr;
     }
-    if (_logFile) {
+    if (_logFile != nullptr) {
         _logFile->close();
         delete _logFile;
         _logFile = nullptr;
     }
 
     if (exitCode == 0 && exitStatus == QProcess::NormalExit) {
-        QString message = tr("%1 completed successfully").arg(toolName(_currentTool));
-        QString outputPath = getOutputPath();
+        QString const message = tr("%1 completed successfully").arg(toolName(_currentTool));
+        QString const outputPath = getOutputPath();
 
         // the runner can copy the output of a process to the clipboard, currently this only makes sense for rendering
         // so the user can quickly open the output dir
-        bool copyToClipboard = (_currentTool == Tool::RenderTifXYZ);
+        bool const copyToClipboard = (_currentTool == Tool::RenderTifXYZ);
 
         if (copyToClipboard) {
             QApplication::clipboard()->setText(outputPath);
-            if (_progressUtil) _progressUtil->stopAnimation(message + tr(" - Path copied to clipboard"));
+            if (_progressUtil != nullptr) { _progressUtil->stopAnimation(message + tr(" - Path copied to clipboard"));
+}
         } else {
-            if (_progressUtil) _progressUtil->stopAnimation(message);
+            if (_progressUtil != nullptr) { _progressUtil->stopAnimation(message);
+}
         }
 
         emit toolFinished(_currentTool, true, message, outputPath, copyToClipboard);
     } else {
-        QString errorMessage = tr("%1 failed with exit code: %2")
+        QString const errorMessage = tr("%1 failed with exit code: %2")
                                 .arg(toolName(_currentTool))
                                 .arg(exitCode);
 
-        if (_progressUtil) _progressUtil->stopAnimation(tr("Process failed"));
+        if (_progressUtil != nullptr) { _progressUtil->stopAnimation(tr("Process failed"));
+}
 
         emit toolFinished(_currentTool, false, errorMessage, QString(), false);
     }
@@ -415,29 +419,30 @@ void CommandLineToolRunner::onProcessError(QProcess::ProcessError error)
         default: errorMessage += tr("unknown error"); break;
     }
 
-    QStringList args = buildArguments(_currentTool);
+    QStringList const args = buildArguments(_currentTool);
     errorMessage += tr("\nArguments: %1").arg(args.join(" "));
 
-    if (_logStream) {
+    if (_logStream != nullptr) {
         *_logStream << Qt::endl << "ERROR: " << errorMessage << Qt::endl;
         _logStream->flush();
     }
 
-    if (_logStream) {
+    if (_logStream != nullptr) {
         delete _logStream;
         _logStream = nullptr;
     }
-    if (_logFile) {
+    if (_logFile != nullptr) {
         _logFile->close();
         delete _logFile;
         _logFile = nullptr;
     }
 
-    if (_progressUtil) _progressUtil->stopAnimation(tr("Process failed"));
+    if (_progressUtil != nullptr) { _progressUtil->stopAnimation(tr("Process failed"));
+}
 
     emit toolFinished(_currentTool, false, errorMessage, QString(), false);
 
-    if (_consoleOutput) {
+    if (_consoleOutput != nullptr) {
         _consoleOutput->appendOutput(errorMessage);
     }
 
@@ -493,7 +498,7 @@ QStringList CommandLineToolRunner::buildArguments(Tool tool) const {
 }
 
 QString CommandLineToolRunner::toolName(Tool tool) {
-    QString basePath = QCoreApplication::applicationDirPath() + "/";
+    QString const basePath = QCoreApplication::applicationDirPath() + "/";
 
     switch (tool) {
         case Tool::RenderTifXYZ:
@@ -518,7 +523,7 @@ QString CommandLineToolRunner::toolName(Tool tool) {
 
 QString CommandLineToolRunner::getOutputPath() const
 {
-    QFileInfo outputInfo(_outputPattern);
+    QFileInfo const outputInfo(_outputPattern);
     return outputInfo.dir().path();
 }
 

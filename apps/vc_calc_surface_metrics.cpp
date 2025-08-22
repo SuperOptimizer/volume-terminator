@@ -24,12 +24,12 @@ int main(int argc, char** argv)
     po::notify(vm);
 
     if (vm.count("help")) {
-        std::cout << desc << "\n";
+        std::cout << desc << std::endl;
         return 0;
     }
 
     if (!vm.count("collection") || !vm.count("surface") || !vm.count("output") || !vm.count("winding")) {
-        std::cerr << "Error: --collection, --surface, --winding, and --output are required." << "\n";
+        std::cerr << "Error: --collection, --surface, --winding, and --output are required." << std::endl;
         return 1;
     }
 
@@ -40,19 +40,19 @@ int main(int argc, char** argv)
 
     VCCollection collection;
     if (!collection.loadFromJSON(collection_path)) {
-        std::cerr << "Error: Failed to load point collection from " << collection_path << "\n";
+        std::cerr << "Error: Failed to load point collection from " << collection_path << std::endl;
         return 1;
     }
 
     QuadSurface* surface = load_quad_from_tifxyz(surface_path);
     if (!surface) {
-        std::cerr << "Error: Failed to load surface from " << surface_path << "\n";
+        std::cerr << "Error: Failed to load surface from " << surface_path << std::endl;
         return 1;
     }
 
     cv::Mat_<float> winding = cv::imread(winding_path, cv::IMREAD_UNCHANGED);
     if (winding.empty()) {
-        std::cerr << "Error: Failed to load winding from " << winding_path << "\n";
+        std::cerr << "Error: Failed to load winding from " << winding_path << std::endl;
         return 1;
     }
 
@@ -62,14 +62,14 @@ int main(int argc, char** argv)
 
     std::ofstream o(output_path);
     if (!o.is_open()) {
-        std::cerr << "Error: Failed to open output file " << output_path << "\n";
+        std::cerr << "Error: Failed to open output file " << output_path << std::endl;
         return 1;
     }
 
     o << metrics.dump(4);
     o.close();
 
-    std::cout << "Successfully calculated metrics and saved to " << output_path << "\n";
+    std::cout << "Successfully calculated metrics and saved to " << output_path << std::endl;
 
     return 0;
 }

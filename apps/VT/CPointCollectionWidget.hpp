@@ -1,16 +1,16 @@
 #pragma once
 
-#include <QDockWidget>
 #include "VCCollection.hpp"
-#include <QTreeView>
-#include <QStandardItemModel>
-#include <QPushButton>
-#include <QWidget>
-#include <QGroupBox>
-#include <QLineEdit>
 #include <QCheckBox>
-#include <QItemSelection>
+#include <QDockWidget>
 #include <QDoubleSpinBox>
+#include <QGroupBox>
+#include <QItemSelection>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QStandardItemModel>
+#include <QTreeView>
+#include <QWidget>
 
 
 
@@ -54,35 +54,36 @@ private slots:
     void onSaveClicked();
     void onLoadClicked();
   
- private:
+
     void keyPressEvent(QKeyEvent *event) override;
     void setupUi();
     void updateMetadataWidgets() const;
-    QStandardItem* findCollectionItem(uint64_t collectionId) const;
+    [[nodiscard]] QStandardItem* findCollectionItem(uint64_t collectionId) const;
 
+private:
     VCCollection *_point_collection = nullptr;
     uint64_t _selected_collection_id = 0;
     uint64_t _selected_point_id = 0;
 
-    QTreeView *_tree_view;
-    QStandardItemModel *_model;
+    QTreeView *_tree_view{};
+    QStandardItemModel *_model{};
  
-    QPushButton *_load_button;
-    QPushButton *_save_button;
-    QPushButton *_reset_button;
+    QPushButton *_load_button{};
+    QPushButton *_save_button{};
+    QPushButton *_reset_button{};
  
-    QGroupBox *_collection_metadata_group;
-    QLineEdit *_collection_name_edit;
-    QPushButton *_new_name_button;
-    QCheckBox *_absolute_winding_checkbox;
-    QPushButton *_color_button;
-    QPushButton *_fill_winding_plus_button;
-    QPushButton *_fill_winding_minus_button;
-    QPushButton *_fill_winding_equals_button;
+    QGroupBox *_collection_metadata_group{};
+    QLineEdit *_collection_name_edit{};
+    QPushButton *_new_name_button{};
+    QCheckBox *_absolute_winding_checkbox{};
+    QPushButton *_color_button{};
+    QPushButton *_fill_winding_plus_button{};
+    QPushButton *_fill_winding_minus_button{};
+    QPushButton *_fill_winding_equals_button{};
 
-    QGroupBox *_point_metadata_group;
-    QCheckBox *_winding_enabled_checkbox;
-    QDoubleSpinBox* _winding_spinbox;
+    QGroupBox *_point_metadata_group{};
+    QCheckBox *_winding_enabled_checkbox{};
+    QDoubleSpinBox* _winding_spinbox{};
 };
 
 

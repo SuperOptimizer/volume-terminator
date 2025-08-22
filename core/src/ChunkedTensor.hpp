@@ -122,7 +122,7 @@ public:
                 nlohmann::json meta;
                 meta["dataset_source_path"] = std::filesystem::canonical(ds->path()).string();
                 std::ofstream o(tmp_dir/"meta.json");
-                o << std::setw(4) << meta << "\n";
+                o << std::setw(4) << meta << std::endl;
                 
                 std::filesystem::path tgt_path;
                 for(int i=0;i<1000;i++) {
@@ -574,6 +574,6 @@ private:
 
 static inline void print_accessor_stats()
 {
-    std::cout << "acc miss/total " << miss << " " << total << " " << double(miss)/total << "\n";
-    std::cout << "chunk compute overhead/total " << chunk_compute_collisions << " " << chunk_compute_total << " " << double(chunk_compute_collisions)/chunk_compute_total << "\n";
+    std::cout << "acc miss/total " << miss << " " << total << " " << double(miss)/total << std::endl;
+    std::cout << "chunk compute overhead/total " << chunk_compute_collisions << " " << chunk_compute_total << " " << double(chunk_compute_collisions)/chunk_compute_total << std::endl;
 }

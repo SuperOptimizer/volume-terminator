@@ -46,7 +46,7 @@ OpsList::~OpsList() {  }
 void OpsList::onOpChainSelected(OpChain *ops)
 {
     _op_chain = ops;
-    std::cout << "OpChain/Layer selected " << ops << "\n";
+    std::cout << "OpChain/Layer selected " << ops << std::endl;
 
     _tree->clear();
 
