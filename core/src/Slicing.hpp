@@ -10,10 +10,10 @@
 struct vec4i_hash {
     size_t operator()(cv::Vec4i p) const
     {
-        size_t hash1 = std::hash<int>{}(p[0]);
-        size_t hash2 = std::hash<int>{}(p[1]);
-        size_t hash3 = std::hash<int>{}(p[2]);
-        size_t hash4 = std::hash<int>{}(p[3]);
+        const size_t hash1 = std::hash<int>{}(p[0]);
+        const size_t hash2 = std::hash<int>{}(p[1]);
+        const size_t hash3 = std::hash<int>{}(p[2]);
+        const size_t hash4 = std::hash<int>{}(p[3]);
 
         //magic numbers from boost. should be good enough
         size_t hash = hash1  ^ (hash2 + 0x9e3779b9 + (hash1 << 6) + (hash1 >> 2));

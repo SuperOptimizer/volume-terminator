@@ -476,15 +476,15 @@ struct vec3i_hash {
 };
 
 void readInterpolated2D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
-                       const cv::Mat_<cv::Vec3f> &coords, ChunkCache *cache) {
+                                  const cv::Mat_<cv::Vec3f> &coords, ChunkCache *cache) {
     out = cv::Mat_<uint8_t>(coords.size(), 0);
 
     int group_idx = cache->groupIdx(ds->path());
 
-    // Since chunks are power-of-2 cubes
-    auto chunk_size = ds->chunking().blockShape()[0];  // All dimensions same
-    const int chunk_shift = __builtin_ctz(chunk_size);  // log2(chunk_size)
-    const int chunk_mask = chunk_size - 1;  // For modulo operation
+    // Bit operations setup
+    const int chunk_size = ds->chunking().blockShape()[0];
+    const int chunk_shift = __builtin_ctz(chunk_size);
+    const int chunk_mask = chunk_size - 1;
 
     int w = coords.cols;
     int h = coords.rows;
@@ -493,45 +493,63 @@ void readInterpolated2D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
     xt::xarray<uint8_t> *chunk = nullptr;
     std::shared_ptr<xt::xarray<uint8_t>> chunk_ref;
 
-    for(size_t y = 0; y < h; y++) {
-        for(size_t x = 0; x < w; x++) {
-            // Round to nearest integer
-            int ox = int(coords(y,x)[2] + 0.5f);
-            int oy = int(coords(y,x)[1] + 0.5f);
-            int oz = int(coords(y,x)[0] + 0.5f);
+    // Process in tiles for better cache locality
+    const int TILE_SIZE = 32;
 
-            if (ox < 0 || oy < 0 || oz < 0)
-                continue;
+    for(size_t tile_y = 0; tile_y < h; tile_y += TILE_SIZE) {
+        size_t y_end = std::min(tile_y + TILE_SIZE, (size_t)h);
 
-            // Use bit shifts instead of division
-            int ix = ox >> chunk_shift;
-            int iy = oy >> chunk_shift;
-            int iz = oz >> chunk_shift;
+        for(size_t tile_x = 0; tile_x < w; tile_x += TILE_SIZE) {
+            size_t x_end = std::min(tile_x + TILE_SIZE, (size_t)w);
 
-            cv::Vec4i idx = {group_idx, ix, iy, iz};
-
-            if (idx != last_idx) {
-                last_idx = idx;
-
-                if (!cache->hasST(idx)) {
-                    chunk = readChunk<uint8_t>(*ds, {size_t(ix), size_t(iy), size_t(iz)});
-                    cache->putST(idx, chunk);
-                    chunk_ref = cache->getST(idx);
-                } else {
-                    chunk_ref = cache->getST(idx);
+            for(size_t y = tile_y; y < y_end; y++) {
+                // Prefetch next row
+                if (y + 1 < y_end) {
+                    __builtin_prefetch(&coords(y+1, tile_x), 0, 1);
                 }
-                chunk = chunk_ref.get();
+
+                for(size_t x = tile_x; x < x_end; x++) {
+                    // Use fast rounding (could use SIMD here)
+                    int ox = int(coords(y,x)[2] + 0.5f);
+                    int oy = int(coords(y,x)[1] + 0.5f);
+                    int oz = int(coords(y,x)[0] + 0.5f);
+
+                    // Branchless bounds check
+                    if ((ox | oy | oz) < 0)
+                        continue;
+
+                    // Bit operations for chunk index
+                    int ix = ox >> chunk_shift;
+                    int iy = oy >> chunk_shift;
+                    int iz = oz >> chunk_shift;
+
+                    cv::Vec4i idx = {group_idx, ix, iy, iz};
+
+                    // Only reload chunk if needed
+                    if (idx != last_idx) {
+                        last_idx = idx;
+
+                        if (!cache->hasST(idx)) {
+                            chunk = readChunk<uint8_t>(*ds, {size_t(ix), size_t(iy), size_t(iz)});
+                            cache->putST(idx, chunk);
+                            chunk_ref = cache->getST(idx);
+                        } else {
+                            chunk_ref = cache->getST(idx);
+                        }
+                        chunk = chunk_ref.get();
+                    }
+
+                    if (!chunk)
+                        continue;
+
+                    // Bit mask for local coordinates
+                    int lx = ox & chunk_mask;
+                    int ly = oy & chunk_mask;
+                    int lz = oz & chunk_mask;
+
+                    out(y,x) = chunk->operator()(lx, ly, lz);
+                }
             }
-
-            if (!chunk)
-                continue;
-
-            // Use bit mask instead of modulo
-            int lx = ox & chunk_mask;
-            int ly = oy & chunk_mask;
-            int lz = oz & chunk_mask;
-
-            out(y,x) = chunk->operator()(lx, ly, lz);
         }
     }
 }
