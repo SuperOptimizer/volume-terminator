@@ -18,8 +18,8 @@ std::ostream& operator<< (std::ostream& out, const xt::svector<size_t> &v) {
 int main(int argc, char *argv[])
 {
     if (argc != 3) {
-        std::cout << "usage: " << argv[0] << " <tgt-dir> <single-tiffxyz>" << std::endl;
-        std::cout << "   this will check for overlap between any tiffxyz in target dir and <single-tiffxyz> and add overlap metadata" << std::endl;
+        std::cout << "usage: " << argv[0] << " <tgt-dir> <single-tiffxyz>" << "\n";
+        std::cout << "   this will check for overlap between any tiffxyz in target dir and <single-tiffxyz> and add overlap metadata" << "\n";
         return EXIT_SUCCESS;
     }
 
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
             try {
                 meta = json::parse(meta_f);
             } catch (const json::exception& e) {
-                std::cerr << "Error parsing meta.json for " << name << ": " << e.what() << std::endl;
+                std::cerr << "Error parsing meta.json for " << name << ": " << e.what() << "\n";
                 continue;
             }
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
                 other_overlapping.insert(current.name());
                 write_overlapping_json(other.path, other_overlapping);
 
-                std::cout << "Found overlap: " << current.name() << " <-> " << other.name() << std::endl;
+                std::cout << "Found overlap: " << current.name() << " <-> " << other.name() << "\n";
             }
         }
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     if (found_overlaps || !current_overlapping.empty()) {
         write_overlapping_json(current.path, current_overlapping);
         std::cout << "Updated overlapping data for " << current.name()
-                  << " (" << current_overlapping.size() << " overlaps)" << std::endl;
+                  << " (" << current_overlapping.size() << " overlaps)" << "\n";
     }
 
     return EXIT_SUCCESS;

@@ -60,7 +60,7 @@ class PlaneSurface : public Surface
 {
 public:
     PlaneSurface() {};
-    PlaneSurface(cv::Vec3f origin_, cv::Vec3f normal_);
+    PlaneSurface(const cv::Vec3f& origin_, const cv::Vec3f &normal_);
 
     // Surface API
     cv::Vec3f pointer() override;
@@ -74,12 +74,12 @@ public:
              const cv::Vec3f &ptr, float scale, const cv::Vec3f &offset) override;
 
     // Plane-specific methods
-    float pointDist(cv::Vec3f wp);
-    cv::Vec3f project(cv::Vec3f wp, float render_scale = 1.0, float coord_scale = 1.0);
-    void setNormal(cv::Vec3f normal);
-    void setOrigin(cv::Vec3f origin);
+    float pointDist(const cv::Vec3f& wp) const;
+    cv::Vec3f project(const cv::Vec3f& wp, float render_scale = 1.0, float coord_scale = 1.0) const;
+    void setNormal(const cv::Vec3f& normal);
+    void setOrigin(const cv::Vec3f& origin);
     cv::Vec3f origin();
-    float scalarp(cv::Vec3f point) const;
+    float scalarp(const cv::Vec3f& point) const;
 
 protected:
     void update();
@@ -99,7 +99,7 @@ public:
     QuadSurface(cv::Mat_<cv::Vec3f> *points, const cv::Vec2f &scale);
     // Lazy construction from file
     QuadSurface(const std::filesystem::path &path);
-    ~QuadSurface();
+    ~QuadSurface() override;
 
     // Lazy loading implementation
     bool isLoaded() const override { return _points != nullptr; }
@@ -111,7 +111,7 @@ public:
     void move(cv::Vec3f &ptr, const cv::Vec3f &offset) override;
     bool valid(const cv::Vec3f &ptr, const cv::Vec3f &offset = {0,0,0}) override;
     cv::Vec3f loc(const cv::Vec3f &ptr, const cv::Vec3f &offset = {0,0,0}) override;
-    cv::Vec3f loc_raw(const cv::Vec3f &ptr);
+    cv::Vec3f loc_raw(const cv::Vec3f &ptr) const;
     cv::Vec3f coord(const cv::Vec3f &ptr, const cv::Vec3f &offset = {0,0,0}) override;
     cv::Vec3f normal(const cv::Vec3f &ptr, const cv::Vec3f &offset = {0,0,0}) override;
     void gen(cv::Mat_<cv::Vec3f> *coords, cv::Mat_<cv::Vec3f> *normals, cv::Size size,
@@ -125,12 +125,12 @@ public:
 
     // Saving methods
     void save(const std::string &path, const std::string &uuid);
-    void save(std::filesystem::path &path);
-    void save_meta();
+    void save(const std::filesystem::path &path);
+    void save_meta() const;
 
     // Direct access (triggers load if needed)
-    cv::Mat_<cv::Vec3f> rawPoints();
-    cv::Mat_<cv::Vec3f>* rawPointsPtr();
+    cv::Mat_<cv::Vec3f> rawPoints() const;
+    cv::Mat_<cv::Vec3f>* rawPointsPtr() const;
 
     friend QuadSurface *regularized_local_quad(QuadSurface *src, const cv::Vec3f &ptr, int w, int h, int step_search, int step_out);
     friend QuadSurface *smooth_vc_segmentation(QuadSurface *src);
@@ -200,7 +200,7 @@ class ControlPointSurface : public DeltaSurface
 {
 public:
     ControlPointSurface(Surface *base) : DeltaSurface(base) {};
-    void addControlPoint(const cv::Vec3f &base_ptr, cv::Vec3f control_point);
+    void addControlPoint(const cv::Vec3f &base_ptr, const cv::Vec3f& control_point);
     void gen(cv::Mat_<cv::Vec3f> *coords, cv::Mat_<cv::Vec3f> *normals, cv::Size size,
              const cv::Vec3f &ptr, float scale, const cv::Vec3f &offset) override;
     void setBase(Surface *base) override;
@@ -241,7 +241,7 @@ void find_intersect_segments(std::vector<std::vector<cv::Vec3f>> &seg_vol,
 
 float min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f &out,
               const std::vector<cv::Vec3f> &tgts, const std::vector<float> &tds,
-              PlaneSurface *plane, float init_step = 16.0, float min_step = 0.125);
+              const PlaneSurface *plane, float init_step = 16.0, float min_step = 0.125);
 
 
 float pointTo(cv::Vec2f &loc, const cv::Mat_<cv::Vec3d> &points, const cv::Vec3f &tgt,

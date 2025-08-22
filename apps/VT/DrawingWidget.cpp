@@ -191,13 +191,13 @@ void DrawingWidget::setupUI()
     
 }
 
-void DrawingWidget::setVolumePkg(std::shared_ptr<VolumePkg> vpkg)
+void DrawingWidget::setVolumePkg(const std::shared_ptr<VolumePkg> &vpkg)
 {
     fVpkg = vpkg;
     updateUI();
 }
 
-void DrawingWidget::setCurrentVolume(std::shared_ptr<Volume> volume)
+void DrawingWidget::setCurrentVolume(const std::shared_ptr<Volume> &volume)
 {
     currentVolume = volume;
     updateUI();
@@ -208,24 +208,23 @@ void DrawingWidget::setCache(ChunkCache* cache)
     chunkCache = cache;
 }
 
-void DrawingWidget::onVolumeChanged(std::shared_ptr<Volume> vol)
+void DrawingWidget::onVolumeChanged(const std::shared_ptr<Volume>& vol)
 {
     setCurrentVolume(vol);
 }
 
-void DrawingWidget::onVolumeChanged(std::shared_ptr<Volume> vol, const std::string& volumeId)
+void DrawingWidget::onVolumeChanged(const std::shared_ptr<Volume> &vol, const std::string& volumeId)
 {
     currentVolume = vol;
     currentVolumeId = volumeId;
     updateUI();
 }
 
-void DrawingWidget::toggleDrawingMode()
-{
+void DrawingWidget::toggleDrawingMode() const {
     toggleModeButton->setChecked(!toggleModeButton->isChecked());
 }
 
-void DrawingWidget::onMousePress(cv::Vec3f vol_point, cv::Vec3f normal, Qt::MouseButton button, Qt::KeyboardModifiers modifiers)
+void DrawingWidget::onMousePress(const cv::Vec3f& vol_point, const cv::Vec3f& normal, Qt::MouseButton button, Qt::KeyboardModifiers modifiers)
 {
     if (!drawingModeActive || button != Qt::LeftButton) {
         return;
@@ -245,7 +244,7 @@ void DrawingWidget::onMousePress(cv::Vec3f vol_point, cv::Vec3f normal, Qt::Mous
     startDrawing(vol_point);
 }
 
-void DrawingWidget::onMouseMove(cv::Vec3f vol_point, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers)
+void DrawingWidget::onMouseMove(const cv::Vec3f &vol_point, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers)
 {
     // Check if mouse button is still pressed and we're in drawing mode
     if (!(buttons & Qt::LeftButton) || !drawingModeActive) {
@@ -291,7 +290,7 @@ void DrawingWidget::onMouseMove(cv::Vec3f vol_point, Qt::MouseButtons buttons, Q
     addPointToPath(vol_point);
 }
 
-void DrawingWidget::onMouseRelease(cv::Vec3f vol_point, Qt::MouseButton button, Qt::KeyboardModifiers modifiers)
+void DrawingWidget::onMouseRelease(const cv::Vec3f& vol_point, Qt::MouseButton button, Qt::KeyboardModifiers modifiers)
 {
     if (button != Qt::LeftButton || !isDrawing) {
         return;
@@ -314,8 +313,7 @@ void DrawingWidget::updateCurrentZSlice(int z)
     currentZSlice = z;
 }
 
-void DrawingWidget::onSurfacesLoaded()
-{
+void DrawingWidget::onSurfacesLoaded() const {
     updateUI();
 }
 
@@ -412,8 +410,7 @@ void DrawingWidget::clearAllPaths()
     infoLabel->setText("All paths cleared");
 }
 
-void DrawingWidget::updateUI()
-{
+void DrawingWidget::updateUI() const {
     bool hasVolume = currentVolume != nullptr;
     saveAsMaskButton->setEnabled(hasVolume && !drawnPaths.isEmpty());
     
@@ -429,7 +426,7 @@ void DrawingWidget::updateUI()
     }
 }
 
-void DrawingWidget::startDrawing(cv::Vec3f startPoint)
+void DrawingWidget::startDrawing(const cv::Vec3f& startPoint)
 {
     isDrawing = true;
     currentPath = PathData();
@@ -454,7 +451,7 @@ void DrawingWidget::startDrawing(cv::Vec3f startPoint)
     emit sendPathsChanged(processedPaths);
 }
 
-void DrawingWidget::addPointToPath(cv::Vec3f point)
+void DrawingWidget::addPointToPath(const cv::Vec3f &point)
 {
     if (!isDrawing) {
         return;
@@ -519,8 +516,7 @@ void DrawingWidget::updateColorPreview()
         .arg(color.name()));
 }
 
-cv::Mat DrawingWidget::generateMask()
-{
+cv::Mat DrawingWidget::generateMask() const {
     if (!currentVolume || drawnPaths.isEmpty()) {
         return cv::Mat();
     }
@@ -629,8 +625,7 @@ bool DrawingWidget::isValidVolumePoint(const cv::Vec3f& point) const
     return true;
 }
 
-float DrawingWidget::pointToSegmentDistance(const cv::Vec3f& point, const cv::Vec3f& segStart, const cv::Vec3f& segEnd) const
-{
+float DrawingWidget::pointToSegmentDistance(const cv::Vec3f& point, const cv::Vec3f& segStart, const cv::Vec3f& segEnd) {
     cv::Vec3f segVec = segEnd - segStart;
     float segLengthSq = segVec.dot(segVec);
     
@@ -650,8 +645,7 @@ float DrawingWidget::pointToSegmentDistance(const cv::Vec3f& point, const cv::Ve
 }
 
 bool DrawingWidget::isPointInEraserBrush(const cv::Vec3f& point, const cv::Vec3f& eraserPoint, 
-                                          float eraserRadius, PathData::BrushShape brushShape) const
-{
+                                          float eraserRadius, PathData::BrushShape brushShape) {
     // For now, we only consider 2D distance (X,Y) as we're drawing on slices
     float dx = point[0] - eraserPoint[0];
     float dy = point[1] - eraserPoint[1];
@@ -664,8 +658,7 @@ bool DrawingWidget::isPointInEraserBrush(const cv::Vec3f& point, const cv::Vec3f
     }
 }
 
-QList<PathData> DrawingWidget::processPathsWithErasers(const QList<PathData>& rawPaths) const
-{
+QList<PathData> DrawingWidget::processPathsWithErasers(const QList<PathData>& rawPaths) {
     QList<PathData> processedPaths;
     
     // Process paths in chronological order

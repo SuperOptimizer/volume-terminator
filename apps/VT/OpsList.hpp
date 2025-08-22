@@ -15,7 +15,7 @@ class OpsList : public QWidget
 
 public:
     explicit OpsList(QWidget* parent = nullptr);
-    ~OpsList();
+    ~OpsList() override;
 
     void setDataset(z5::Dataset *ds, ChunkCache *cache, float scale);
 

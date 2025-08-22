@@ -135,8 +135,7 @@ void CPointCollectionWidget::setupUi()
 }
 
 
-void CPointCollectionWidget::refreshTree()
-{
+void CPointCollectionWidget::refreshTree() const {
     _model->clear();
     _model->setHorizontalHeaderLabels({"Name", "Points"});
 
@@ -148,13 +147,13 @@ void CPointCollectionWidget::refreshTree()
     const auto& all_collections_map = _point_collection->getAllCollections();
     std::vector<VCCollection::Collection> sorted_collections;
     sorted_collections.reserve(all_collections_map.size());
-    for (const auto& pair : all_collections_map) {
-        sorted_collections.push_back(pair.second);
+    for (const auto &val: all_collections_map | std::views::values) {
+        sorted_collections.push_back(val);
     }
-    std::sort(sorted_collections.begin(), sorted_collections.end(),
-              [](const VCCollection::Collection& a, const VCCollection::Collection& b) {
-        return a.name < b.name;
-    });
+    std::ranges::sort(sorted_collections,
+                      [](const VCCollection::Collection& a, const VCCollection::Collection& b) {
+                          return a.name < b.name;
+                      });
 
     // Iterate through sorted collections and add to tree
     for (const auto& collection : sorted_collections) {
@@ -172,13 +171,13 @@ void CPointCollectionWidget::refreshTree()
         // Get points and sort them by ID
         std::vector<ColPoint> sorted_points;
         sorted_points.reserve(collection.points.size());
-        for (const auto& pair : collection.points) {
-            sorted_points.push_back(pair.second);
+        for (const auto &val: collection.points | std::views::values) {
+            sorted_points.push_back(val);
         }
-        std::sort(sorted_points.begin(), sorted_points.end(),
-                  [](const ColPoint& a, const ColPoint& b) {
-            return a.id < b.id;
-        });
+        std::ranges::sort(sorted_points,
+                          [](const ColPoint& a, const ColPoint& b) {
+                              return a.id < b.id;
+                          });
 
         // Add sorted points to the collection item
         for (const auto& point : sorted_points) {
@@ -196,16 +195,14 @@ void CPointCollectionWidget::refreshTree()
     _tree_view->expandAll();
 }
 
-void CPointCollectionWidget::onResetClicked()
-{
+void CPointCollectionWidget::onResetClicked() const {
     if (_point_collection) {
         _tree_view->selectionModel()->clear();
         _point_collection->clearAll();
     }
 }
 
-void CPointCollectionWidget::onCollectionAdded(uint64_t collectionId)
-{
+void CPointCollectionWidget::onCollectionAdded(uint64_t collectionId) const {
     const auto& collection = _point_collection->getAllCollections().at(collectionId);
     QStandardItem *name_item = new QStandardItem(QString::fromStdString(collection.name));
     QColor color(collection.color[0] * 255, collection.color[1] * 255, collection.color[2] * 255);
@@ -218,15 +215,13 @@ void CPointCollectionWidget::onCollectionAdded(uint64_t collectionId)
     
     _model->appendRow({name_item, count_item});
 
-    for(const auto& point_pair : collection.points) {
-        onPointAdded(point_pair.second);
+    for(const auto &val: collection.points | std::views::values) {
+        onPointAdded(val);
     }
 }
 
-void CPointCollectionWidget::onCollectionChanged(uint64_t collectionId)
-{
-    QStandardItem* item = findCollectionItem(collectionId);
-    if (item) {
+void CPointCollectionWidget::onCollectionChanged(uint64_t collectionId) const {
+    if (QStandardItem* item = findCollectionItem(collectionId)) {
         const auto& collection = _point_collection->getAllCollections().at(collectionId);
         if (item->text() != QString::fromStdString(collection.name)) {
             item->setText(QString::fromStdString(collection.name));
@@ -240,22 +235,18 @@ void CPointCollectionWidget::onCollectionChanged(uint64_t collectionId)
     }
 }
 
-void CPointCollectionWidget::onCollectionRemoved(uint64_t collectionId)
-{
+void CPointCollectionWidget::onCollectionRemoved(uint64_t collectionId) const {
     if (collectionId == -1) { // Clear all
         _model->clear();
         return;
     }
-    QStandardItem* item = findCollectionItem(collectionId);
-    if (item) {
+    if (QStandardItem* item = findCollectionItem(collectionId)) {
         _model->removeRow(item->row());
     }
 }
 
-void CPointCollectionWidget::onPointAdded(const ColPoint& point)
-{
-    QStandardItem* collection_item = findCollectionItem(point.collectionId);
-    if (collection_item) {
+void CPointCollectionWidget::onPointAdded(const ColPoint& point) const {
+    if (QStandardItem* collection_item = findCollectionItem(point.collectionId)) {
         QStandardItem *id_item = new QStandardItem(QString::number(point.id));
         id_item->setData(QVariant::fromValue(point.id));
         id_item->setFlags(id_item->flags() & ~Qt::ItemIsEditable);
@@ -266,34 +257,29 @@ void CPointCollectionWidget::onPointAdded(const ColPoint& point)
         collection_item->appendRow({id_item, pos_item});
         
         // Update count
-        QStandardItem* count_item = _model->item(collection_item->row(), 1);
-        if(count_item) {
+        if(QStandardItem* count_item = _model->item(collection_item->row(), 1)) {
             count_item->setText(QString::number(collection_item->rowCount()));
         }
     }
 }
 
-void CPointCollectionWidget::onPointChanged(const ColPoint& point)
-{
+void CPointCollectionWidget::onPointChanged(const ColPoint& point) const {
     // For now, just update the metadata if it's the selected point
     if (point.id == _selected_point_id) {
         updateMetadataWidgets();
     }
 }
 
-void CPointCollectionWidget::onPointRemoved(uint64_t pointId)
-{
+void CPointCollectionWidget::onPointRemoved(uint64_t pointId) const {
     // Find the item corresponding to the pointId and remove it
     for (int i = 0; i < _model->rowCount(); ++i) {
-        QStandardItem *collection_item = _model->item(i);
-        if (collection_item) {
+        if (QStandardItem *collection_item = _model->item(i)) {
             for (int j = 0; j < collection_item->rowCount(); ++j) {
                 QStandardItem *point_item = collection_item->child(j);
                 if (point_item && point_item->data().toULongLong() == pointId) {
                     collection_item->removeRow(j);
                     // Update count
-                    QStandardItem* count_item = _model->item(collection_item->row(), 1);
-                    if(count_item) {
+                    if(QStandardItem* count_item = _model->item(collection_item->row(), 1)) {
                         count_item->setText(QString::number(collection_item->rowCount()));
                     }
                     return;
@@ -331,8 +317,7 @@ void CPointCollectionWidget::onSelectionChanged(const QItemSelection &selected, 
     }
 }
 
-void CPointCollectionWidget::updateMetadataWidgets()
-{
+void CPointCollectionWidget::updateMetadataWidgets() const {
     bool collection_selected = (_selected_collection_id != 0);
     bool point_selected = (_selected_point_id != 0);
 
@@ -341,7 +326,7 @@ void CPointCollectionWidget::updateMetadataWidgets()
 
     if (collection_selected) {
         const auto& collections = _point_collection->getAllCollections();
-        if (collections.count(_selected_collection_id)) {
+        if (collections.contains(_selected_collection_id)) {
             const auto& collection = collections.at(_selected_collection_id);
             
             // Temporarily block signals to prevent feedback loop
@@ -367,8 +352,7 @@ void CPointCollectionWidget::updateMetadataWidgets()
     }
 
     if (point_selected) {
-        auto point_opt = _point_collection->getPoint(_selected_point_id);
-        if (point_opt) {
+        if (auto point_opt = _point_collection->getPoint(_selected_point_id)) {
             _winding_spinbox->blockSignals(true);
             _winding_enabled_checkbox->blockSignals(true);
 
@@ -397,8 +381,7 @@ void CPointCollectionWidget::updateMetadataWidgets()
     }
 }
 
-void CPointCollectionWidget::onNameEdited(const QString &name)
-{
+void CPointCollectionWidget::onNameEdited(const QString &name) const {
     if (_selected_collection_id != 0) {
         std::string new_name = name.toStdString();
         if (!new_name.empty()) {
@@ -407,18 +390,16 @@ void CPointCollectionWidget::onNameEdited(const QString &name)
     }
 }
 
-void CPointCollectionWidget::onNewNameClicked()
-{
+void CPointCollectionWidget::onNewNameClicked() const {
     std::string new_name = _point_collection->generateNewCollectionName("col");
     uint64_t new_id = _point_collection->addCollection(new_name);
     selectCollection(new_id);
 }
 
-void CPointCollectionWidget::onAbsoluteWindingChanged(int state)
-{
+void CPointCollectionWidget::onAbsoluteWindingChanged(int state) const {
     if (_selected_collection_id != 0) {
         const auto& collections = _point_collection->getAllCollections();
-        if (collections.count(_selected_collection_id)) {
+        if (collections.contains(_selected_collection_id)) {
             auto metadata = collections.at(_selected_collection_id).metadata;
             metadata.absolute_winding_number = (state == Qt::Checked);
             _point_collection->setCollectionMetadata(_selected_collection_id, metadata);
@@ -440,11 +421,9 @@ void CPointCollectionWidget::onColorButtonClicked()
     }
 }
 
-void CPointCollectionWidget::onWindingEdited(double value)
-{
+void CPointCollectionWidget::onWindingEdited(double value) const {
     if (_selected_point_id != 0) {
-        auto point_opt = _point_collection->getPoint(_selected_point_id);
-        if (point_opt) {
+        if (auto point_opt = _point_collection->getPoint(_selected_point_id)) {
             ColPoint updated_point = *point_opt;
             updated_point.winding_annotation = value;
             _point_collection->updatePoint(updated_point);
@@ -452,11 +431,9 @@ void CPointCollectionWidget::onWindingEdited(double value)
     }
 }
 
-void CPointCollectionWidget::onWindingEnabledChanged(int state)
-{
+void CPointCollectionWidget::onWindingEnabledChanged(int state) const {
     if (_selected_point_id != 0) {
-        auto point_opt = _point_collection->getPoint(_selected_point_id);
-        if (point_opt) {
+        if (auto point_opt = _point_collection->getPoint(_selected_point_id)) {
             ColPoint updated_point = *point_opt;
             if (state == Qt::Checked) {
                 updated_point.winding_annotation = _winding_spinbox->value();
@@ -468,22 +445,19 @@ void CPointCollectionWidget::onWindingEnabledChanged(int state)
     }
 }
 
-void CPointCollectionWidget::onFillWindingPlusClicked()
-{
+void CPointCollectionWidget::onFillWindingPlusClicked() const {
     if (_selected_collection_id != 0) {
         _point_collection->autoFillWindingNumbers(_selected_collection_id, VCCollection::WindingFillMode::Incremental);
     }
 }
 
-void CPointCollectionWidget::onFillWindingMinusClicked()
-{
+void CPointCollectionWidget::onFillWindingMinusClicked() const {
     if (_selected_collection_id != 0) {
         _point_collection->autoFillWindingNumbers(_selected_collection_id, VCCollection::WindingFillMode::Decremental);
     }
 }
 
-void CPointCollectionWidget::onFillWindingEqualsClicked()
-{
+void CPointCollectionWidget::onFillWindingEqualsClicked() const {
     if (_selected_collection_id != 0) {
         _point_collection->autoFillWindingNumbers(_selected_collection_id, VCCollection::WindingFillMode::Constant);
     }
@@ -519,18 +493,15 @@ void CPointCollectionWidget::onLoadClicked()
     }
 }
  
-void CPointCollectionWidget::selectCollection(uint64_t collectionId)
-{
-    QStandardItem* item = findCollectionItem(collectionId);
-    if (item) {
+void CPointCollectionWidget::selectCollection(uint64_t collectionId) const {
+    if (QStandardItem* item = findCollectionItem(collectionId)) {
         _tree_view->selectionModel()->clearSelection();
         _tree_view->selectionModel()->select(item->index(), QItemSelectionModel::Select | QItemSelectionModel::Rows);
         _tree_view->scrollTo(item->index());
     }
 }
 
-QStandardItem* CPointCollectionWidget::findCollectionItem(uint64_t collectionId)
-{
+QStandardItem* CPointCollectionWidget::findCollectionItem(uint64_t collectionId) const {
     for (int i = 0; i < _model->rowCount(); ++i) {
         QStandardItem *item = _model->item(i);
         if (item && item->data().toULongLong() == collectionId) {
@@ -540,16 +511,14 @@ QStandardItem* CPointCollectionWidget::findCollectionItem(uint64_t collectionId)
     return nullptr;
 }
 
-void CPointCollectionWidget::selectPoint(uint64_t pointId)
-{
+void CPointCollectionWidget::selectPoint(uint64_t pointId) const {
     if (_selected_point_id == pointId) {
         return;
     }
 
     // Find the item corresponding to the pointId
     for (int i = 0; i < _model->rowCount(); ++i) {
-        QStandardItem *collection_item = _model->item(i);
-        if (collection_item) {
+        if (QStandardItem *collection_item = _model->item(i)) {
             for (int j = 0; j < collection_item->rowCount(); ++j) {
                 QStandardItem *point_item = collection_item->child(j);
                 if (point_item && point_item->data().toULongLong() == pointId) {

@@ -67,17 +67,17 @@ void ChunkCache::put(const cv::Vec4i& idx, xt::xarray<uint8_t> *ar)
     if (_stored >= _size) {
         using KP = std::pair<cv::Vec4i, uint64_t>;
         std::vector<KP> gen_list(_gen_store.begin(), _gen_store.end());
-        std::sort(gen_list.begin(), gen_list.end(), [](KP &a, KP &b){ return a.second < b.second; });
-        for(const auto& it : gen_list) {
-            std::shared_ptr<xt::xarray<uint8_t>> ar = _store[it.first];
+        std::sort(gen_list.begin(), gen_list.end(), [](const KP &a, const KP &b){ return a.second < b.second; });
+        for(const auto &key: gen_list | std::views::keys) {
+            std::shared_ptr<xt::xarray<uint8_t>> ar = _store[key];
             //TODO we could remove this with lower probability so we dont store infiniteyl empty blocks but also keep more of them as they are cheap
             if (ar.get()) {
                 size_t size = ar.get()->storage().size();
                 ar.reset();
                 _stored -= size;
             
-                _store.erase(it.first);
-                _gen_store.erase(it.first);
+                _store.erase(key);
+                _gen_store.erase(key);
             }
 
             //we delete 10% of cache content to amortize sorting costs
@@ -88,7 +88,7 @@ void ChunkCache::put(const cv::Vec4i& idx, xt::xarray<uint8_t> *ar)
     }
 
     if (ar) {
-        if (_store.count(idx)) {
+        if (_store.contains(idx)) {
             assert(_store[idx].get());
             _stored -= ar->size();
         }
@@ -139,11 +139,10 @@ void readArea3D(xt::xtensor<uint8_t,3,xt::layout_type::column_major> &out, const
 
                         if (!cache->has(idx)) {
                             cache->mutex.unlock();
-                            // std::cout << "reading chunk " << cv::Vec3i(ix,iy,iz) << " for " << cv::Vec3i(x,y,z) << chunksize << std::endl;
+                            // std::cout << "reading chunk " << cv::Vec3i(ix,iy,iz) << " for " << cv::Vec3i(x,y,z) << chunksize << "\n";
                             chunk = readChunk<uint8_t>(*ds, {size_t(iz),size_t(iy),size_t(ix)});
                             cache->mutex.lock();
                             cache->put(idx, chunk);
-                            chunk_ref = cache->get(idx);
                         }
                         else {
                             chunk_ref = cache->get(idx);
@@ -217,7 +216,7 @@ static void speculativeLoadNeighbors(z5::Dataset *ds, ChunkCache *cache, int gro
     };
 
     // Get dataset dimensions in chunks
-    auto shape = ds->shape();
+    const auto& shape = ds->shape();
     auto chunkShape = ds->chunking().blockShape();
     int max_iz = (shape[0] + chunkShape[0] - 1) / chunkShape[0];
     int max_iy = (shape[1] + chunkShape[1] - 1) / chunkShape[1];
@@ -282,7 +281,6 @@ static uint8_t retrieveSingleValueCached(z5::Dataset *ds, ChunkCache *cache, int
             {size_t(ix),size_t(iy),size_t(iz)});
         cache->mutex.lock();
         cache->put(idx, chunk);
-        chunk_ref = cache->get(idx);
     } else {
         chunk_ref = cache->get(idx);
         chunk = chunk_ref.get();
@@ -371,7 +369,7 @@ static uint8_t performTrilinearInterpolation(const InterpolationValues &vals,
 
 // Function to load or get chunk from cache
 static std::pair<std::shared_ptr<xt::xarray<uint8_t>>, xt::xarray<uint8_t>*>
-loadOrGetChunk(z5::Dataset *ds, ChunkCache *cache, cv::Vec4i idx,
+loadOrGetChunk(z5::Dataset *ds, ChunkCache *cache, const cv::Vec4i& idx,
                int ix, int iy, int iz) {
     std::shared_ptr<xt::xarray<uint8_t>> chunk_ref;
     xt::xarray<uint8_t> *chunk = nullptr;
@@ -401,7 +399,7 @@ void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
     out = cv::Mat_<uint8_t>(coords.size(), 0);
 
     if (!cache) {
-        std::cout << "ERROR should use a shared chunk cache!" << std::endl;
+        std::cout << "ERROR should use a shared chunk cache!" << '\n';
         abort();
     }
 
@@ -414,7 +412,6 @@ void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
     int w = coords.cols;
     int h = coords.rows;
 
-    std::shared_mutex mutex;
     size_t done = 0;
 
     // Track which chunks we've already speculatively loaded
@@ -440,7 +437,7 @@ void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
             {
                 done++;
                 if (done % 100 == 0)
-                    std::cout << "done: " << double(done)/h*100 << "%" << std::endl;
+                    std::cout << "done: " << double(done)/h*100 << "%" << '\n';
             }
 
             for(size_t x = 0;x<w;x++) {
@@ -513,7 +510,7 @@ void readInterpolated3D(cv::Mat_<uint8_t> &out, z5::Dataset *ds,
 
 
 //somehow opencvs functions are pretty slow 
-static cv::Vec3f normed(const cv::Vec3f v)
+static cv::Vec3f normed(const cv::Vec3f& v)
 {
     return v/sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
 }
@@ -525,10 +522,10 @@ static cv::Vec3f at_int(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f p)
     float fx = p[0]-x;
     float fy = p[1]-y;
     
-    cv::Vec3f p00 = points(y,x);
-    cv::Vec3f p01 = points(y,x+1);
-    cv::Vec3f p10 = points(y+1,x);
-    cv::Vec3f p11 = points(y+1,x+1);
+    const cv::Vec3f& p00 = points(y,x);
+    const cv::Vec3f& p01 = points(y,x+1);
+    const cv::Vec3f& p10 = points(y+1,x);
+    const cv::Vec3f& p11 = points(y+1,x+1);
     
     cv::Vec3f p0 = (1-fx)*p00 + fx*p01;
     cv::Vec3f p1 = (1-fx)*p10 + fx*p11;
@@ -582,7 +579,7 @@ static float sdist(const cv::Vec3f &a, const cv::Vec3f &b)
     return d.dot(d);
 }
 
-static void min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f &out, cv::Vec3f tgt, bool z_search = true)
+static void min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f &out, const cv::Vec3f& tgt)
 {
     cv::Rect boundary(1,1,points.cols-2,points.rows-2);
     if (!boundary.contains(cv::Point(loc))) {
@@ -598,10 +595,7 @@ static void min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f
     float res;
     
     std::vector<cv::Vec2f> search;
-    if (z_search)
-        search = {{0,-1},{0,1},{-1,0},{1,0}};
-    else
-        search = {{1,0},{-1,0}};
+    search = {{1,0},{-1,0}};
     
     float step = 1.0;
     
@@ -656,7 +650,7 @@ cv::Mat_<cv::Vec3f> smooth_vc_segmentation(const cv::Mat_<cv::Vec3f> &points)
     for(int j=1;j<points.rows;j++)
         for(int i=1;i<points.cols-1;i++) {
             cv::Vec2f loc = {i,j};
-            min_loc(points, loc, out(j,i), blur(j,i), false);
+            min_loc(points, loc, out(j,i), blur(j,i));
         }
         
         return out;
@@ -675,7 +669,7 @@ void vc_segmentation_scales(cv::Mat_<cv::Vec3f> points, double &sx, double &sy)
     int imax = points.size().width*0.9;
     int step = 4;
     if (points.size().height < 20) {
-        std::cout << "small array vc scales " << std::endl;
+        std::cout << "small array vc scales " << '\n';
         jmin = 1;
         jmax = points.size().height;
         imin = 1;
@@ -687,7 +681,6 @@ void vc_segmentation_scales(cv::Mat_<cv::Vec3f> points, double &sx, double &sy)
         double _sum_x = 0;
         double _sum_y = 0;
         int _count = 0;
-        cv::Vec3f *row = points.ptr<cv::Vec3f>(j);
         for(int i=imin;i<imax;i+=step) {
             cv::Vec3f v = points(j,i)-points(j,i-1);
             _sum_x += sqrt(v.dot(v));

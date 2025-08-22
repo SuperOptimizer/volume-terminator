@@ -274,8 +274,7 @@ void SettingsDialog::setupUi()
             [this]{ showTooltip(btnHelpPreloadedSlices); });
 }
 
-void SettingsDialog::loadSettings()
-{
+void SettingsDialog::loadSettings() const {
     QSettings settings("VC.ini", QSettings::IniFormat);
 
     edtDefaultPathVolpkg->setText(settings.value("volpkg/default_path").toString());
@@ -374,8 +373,7 @@ std::vector<int> SettingsDialog::expandSettingToIntRange(const QString& setting)
     return res;
 }
 
-void SettingsDialog::updateVolumeList(const QStringList& volumeIds)
-{
+void SettingsDialog::updateVolumeList(const QStringList& volumeIds) const {
     QString currentVolume = cmbDefaultVolume->currentText();
     cmbDefaultVolume->clear();
 
@@ -393,7 +391,7 @@ void SettingsDialog::updateVolumeList(const QStringList& volumeIds)
     }
 }
 
-void SettingsDialog::showTooltip(QPushButton* btn)
+void SettingsDialog::showTooltip(const QPushButton* btn)
 {
     QToolTip::showText(QCursor::pos(), btn->toolTip());
 }

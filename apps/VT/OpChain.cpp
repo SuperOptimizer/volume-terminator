@@ -103,7 +103,6 @@ void OpChain::setEnabled(DeltaSurface *surf, bool enabled)
         _disabled.insert(surf);
 }
 
-bool OpChain::enabled(DeltaSurface *surf)
-{
-    return _disabled.count(surf) == 0;
+bool OpChain::enabled(DeltaSurface *surf) const {
+    return !_disabled.contains(surf);
 }

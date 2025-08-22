@@ -182,7 +182,7 @@ cv::Mat_<cv::Vec3f> points_hr_grounding(cv::Mat_<float> wind_lr, const cv::Mat_<
                 l10 = {l10[1],l10[0]};
                 l11 = {l11[1],l11[0]};                
                 
-                // std::cout << "succ!" << res << cv::Vec2i(i,j) << l00 << l01 << points_tgt(j,i) << std::endl;
+                // std::cout << "succ!" << res << cv::Vec2i(i,j) << l00 << l01 << points_tgt(j,i) << "\n";
                 
                 for(int sy=0;sy<=scale;sy++)
                     for(int sx=0;sx<=scale;sx++) {
@@ -199,7 +199,7 @@ cv::Mat_<cv::Vec3f> points_hr_grounding(cv::Mat_<float> wind_lr, const cv::Mat_<
                         }
                     }
             }
-        std::cout << "grounded " << succ << std::endl;
+        std::cout << "grounded " << succ << "\n";
     }
     
     for(int j=0;j<points_lr_grounded.rows;j++)
@@ -266,8 +266,8 @@ std::string time_str()
 int main(int argc, char *argv[])
 {
     if (argc < 6 || (argc-4) % 2 != 0)  {
-        std::cout << "usage: " << argv[0] << " <tiffxyz-lr> <winding-lr> <scale-factor> <tiffxyz-highres1> <winding1>  ..." << std::endl;
-        std::cout << "   upsamples a lr tiffxyz by interpolating locations from multiple hr surfaces each provided as a pair of tiffxyz, winding-tiff" << std::endl;
+        std::cout << "usage: " << argv[0] << " <tiffxyz-lr> <winding-lr> <scale-factor> <tiffxyz-highres1> <winding1>  ..." << "\n";
+        std::cout << "   upsamples a lr tiffxyz by interpolating locations from multiple hr surfaces each provided as a pair of tiffxyz, winding-tiff" << "\n";
         return EXIT_SUCCESS;
     }
     
@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
     for(int n=0;n<(argc-4)/2;n++) {
         QuadSurface *surf = load_quad_from_tifxyz(argv[n*2+4]);
         
-        std::cout << "surf " << argv[n*2+4] << std::endl;
+        std::cout << "surf " << argv[n*2+4] << "\n";
         
         cv::Mat_<float> wind = cv::imread(argv[n*2+5], cv::IMREAD_UNCHANGED);
                     
@@ -332,15 +332,15 @@ int main(int argc, char *argv[])
         
         std::sort(offsets.begin(), offsets.end());
         std::sort(offsets_rev.begin(), offsets_rev.end());
-        std::cout << "off 0.1 " << offsets[offsets.size()*0.1] << std::endl;
-        std::cout << "off 0.5 " << offsets[offsets.size()*0.5] << std::endl;
-        std::cout << "off 0.9 " << offsets[offsets.size()*0.9] << std::endl;
+        std::cout << "off 0.1 " << offsets[offsets.size()*0.1] << "\n";
+        std::cout << "off 0.5 " << offsets[offsets.size()*0.5] << "\n";
+        std::cout << "off 0.9 " << offsets[offsets.size()*0.9] << "\n";
         float div_fw = std::abs(offsets[offsets.size()*0.9] - offsets[offsets.size()*0.1]);
         
         
-        std::cout << "off_rev 0.1 " << offsets_rev[offsets_rev.size()*0.1] << std::endl;
-        std::cout << "off_rev 0.5 " << offsets_rev[offsets_rev.size()*0.5] << std::endl;
-        std::cout << "off_rev 0.9 " << offsets_rev[offsets_rev.size()*0.9] << std::endl;
+        std::cout << "off_rev 0.1 " << offsets_rev[offsets_rev.size()*0.1] << "\n";
+        std::cout << "off_rev 0.5 " << offsets_rev[offsets_rev.size()*0.5] << "\n";
+        std::cout << "off_rev 0.9 " << offsets_rev[offsets_rev.size()*0.9] << "\n";
         float div_bw = std::abs(offsets_rev[offsets.size()*0.9] - offsets_rev[offsets.size()*0.1]);
         
         
@@ -359,7 +359,7 @@ int main(int argc, char *argv[])
         std::string name_prefix = "grounding_hr_";
         std::string uuid = name_prefix + time_str();
         std::filesystem::path seg_dir = tgt_dir / uuid;
-        std::cout << "saving " << seg_dir << std::endl;
+        std::cout << "saving " << seg_dir << "\n";
         surf_hr->save(seg_dir, uuid);
         delete surf_hr;
     }

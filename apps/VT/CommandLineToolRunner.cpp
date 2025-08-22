@@ -88,7 +88,7 @@ void CommandLineToolRunner::setRenderParams(float scale, int resolution, int lay
     _layers = layers;
 }
 
-void CommandLineToolRunner::setGrowParams(QString volumePath, QString tgtDir, QString jsonParams, int seed_x, int seed_y, int seed_z, bool useExpandMode, bool useRandomSeed)
+void CommandLineToolRunner::setGrowParams(const QString &volumePath, const QString &tgtDir, const QString &jsonParams, int seed_x, int seed_y, int seed_z, bool useExpandMode, bool useRandomSeed)
 {
     _volumePath = volumePath;
     _tgtDir = tgtDir;
@@ -125,7 +125,7 @@ void CommandLineToolRunner::setGrowParams(QString volumePath, QString tgtDir, QS
     }
 }
 
-void CommandLineToolRunner::setTraceParams(QString volumePath, QString srcDir, QString tgtDir, QString jsonParams, QString srcSegment)
+void CommandLineToolRunner::setTraceParams(const QString &volumePath, const QString &srcDir, const QString &tgtDir, const QString &jsonParams, const QString &srcSegment)
 {
     _volumePath = volumePath;
     _srcDir = srcDir;
@@ -134,13 +134,13 @@ void CommandLineToolRunner::setTraceParams(QString volumePath, QString srcDir, Q
     _srcSegment = srcSegment;
 }
 
-void CommandLineToolRunner::setAddOverlapParams(QString tgtDir, QString tifxyzPath)
+void CommandLineToolRunner::setAddOverlapParams(const QString &tgtDir, const QString &tifxyzPath)
 {
     _tgtDir = tgtDir;
     _tifxyzPath = tifxyzPath;
 }
 
-void CommandLineToolRunner::setToObjParams(QString tifxyzPath, QString objPath)
+void CommandLineToolRunner::setToObjParams(const QString &tifxyzPath, const QString &objPath)
 {
     _tifxyzPath = tifxyzPath;
     _objPath = objPath;
@@ -207,7 +207,7 @@ bool CommandLineToolRunner::execute(Tool tool)
 
     QString timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
     QString toolBaseName = QFileInfo(toolCmd).baseName();
-    QString logFilePath = QString("/tmp/%1_%2.txt").arg(toolBaseName).arg(timestamp);
+    QString logFilePath = QString("/tmp/%1_%2.txt").arg(toolBaseName, timestamp);
 
     if (_logStream) {
         delete _logStream;
@@ -258,7 +258,7 @@ bool CommandLineToolRunner::execute(Tool tool)
                           .arg(_parallelProcesses)
                           .arg(QFileInfo(_segmentPath).fileName());
 
-        QString baseCmd = QString("%1 %2").arg(toolCommand).arg(args.join(" "));
+        QString baseCmd = QString("%1 %2").arg(toolCommand, args.join(" "));
         QString shellCmd = QString("time seq 1 %1 | xargs -i -P %2 bash -c 'nice ionice %3 || true'")
                               .arg(_iterationCount)
                               .arg(_parallelProcesses)
@@ -276,7 +276,7 @@ bool CommandLineToolRunner::execute(Tool tool)
         _process->setArguments(QStringList() << "-c" << shellCmd);
         _process->start();
     } else {
-        startMessage = tr("Starting %1 for: %2").arg(toolCommand).arg(QFileInfo(_segmentPath).fileName());
+        startMessage = tr("Starting %1 for: %2").arg(toolCommand, QFileInfo(_segmentPath).fileName());
         emit toolStarted(_currentTool, startMessage);
 
         _consoleOutput->setTitle(tr("Running: %1").arg(toolCommand));
@@ -291,8 +291,7 @@ bool CommandLineToolRunner::execute(Tool tool)
     return true;
 }
 
-void CommandLineToolRunner::cancel()
-{
+void CommandLineToolRunner::cancel() const {
     if (_process && _process->state() != QProcess::NotRunning) {
         _process->terminate();
     }
@@ -303,8 +302,7 @@ bool CommandLineToolRunner::isRunning() const
     return (_process && _process->state() != QProcess::NotRunning);
 }
 
-void CommandLineToolRunner::showConsoleOutput()
-{
+void CommandLineToolRunner::showConsoleOutput() const {
     if (_consoleDialog) {
         _consoleDialog->show();
         _consoleDialog->raise();
@@ -312,8 +310,7 @@ void CommandLineToolRunner::showConsoleOutput()
     }
 }
 
-void CommandLineToolRunner::hideConsoleOutput()
-{
+void CommandLineToolRunner::hideConsoleOutput() const {
     if (_consoleDialog) {
         _consoleDialog->hide();
     }
@@ -351,8 +348,7 @@ void CommandLineToolRunner::onProcessReadyRead()
     }
 }
 
-void CommandLineToolRunner::onProcessStarted()
-{
+void CommandLineToolRunner::onProcessStarted() const {
     QString message = tr("Running %1...").arg(toolName(_currentTool));
     if (_progressUtil) _progressUtil->startAnimation(message);
 }
@@ -448,8 +444,7 @@ void CommandLineToolRunner::onProcessError(QProcess::ProcessError error)
     showConsoleOutput();
 }
 
-QStringList CommandLineToolRunner::buildArguments(Tool tool)
-{
+QStringList CommandLineToolRunner::buildArguments(Tool tool) const {
     QStringList args;
 
     switch (tool) {
@@ -497,8 +492,7 @@ QStringList CommandLineToolRunner::buildArguments(Tool tool)
     return args;
 }
 
-QString CommandLineToolRunner::toolName(Tool tool) const
-{
+QString CommandLineToolRunner::toolName(Tool tool) {
     QString basePath = QCoreApplication::applicationDirPath() + "/";
 
     switch (tool) {

@@ -99,13 +99,13 @@ VolumePkg::VolumePkg(const std::filesystem::path& fileLocation) : _rootdir{fileL
     }
 }
 
-std::shared_ptr<VolumePkg> VolumePkg::New(std::filesystem::path fileLocation, int version)
+std::shared_ptr<VolumePkg> VolumePkg::New(const std::filesystem::path& fileLocation, int version)
 {
     return std::make_shared<VolumePkg>(fileLocation, version);
 }
 
 // Shared pointer volumepkg construction
-std::shared_ptr<VolumePkg> VolumePkg::New(std::filesystem::path fileLocation)
+std::shared_ptr<VolumePkg> VolumePkg::New(const std::filesystem::path& fileLocation)
 {
     return std::make_shared<VolumePkg>(fileLocation);
 }
@@ -129,7 +129,7 @@ auto VolumePkg::hasVolumes() const -> bool { return !_volumes.empty(); }
 
 auto VolumePkg::hasVolume(const std::string& id) const -> bool
 {
-    return _volumes.count(id) > 0;
+    return _volumes.contains(id);
 }
 
 auto VolumePkg::numberOfVolumes() const -> std::size_t
@@ -140,8 +140,8 @@ auto VolumePkg::numberOfVolumes() const -> std::size_t
 auto VolumePkg::volumeIDs() const -> std::vector<std::string>
 {
     std::vector<std::string> ids;
-    for (const auto& v : _volumes) {
-        ids.emplace_back(v.first);
+    for (const auto &key: _volumes | std::views::keys) {
+        ids.emplace_back(key);
     }
     return ids;
 }
@@ -149,8 +149,8 @@ auto VolumePkg::volumeIDs() const -> std::vector<std::string>
 auto VolumePkg::volumeNames() const -> std::vector<std::string>
 {
     std::vector<std::string> names;
-    for (const auto& v : _volumes) {
-        names.emplace_back(v.second->name());
+    for (const auto &val: _volumes | std::views::values) {
+        names.emplace_back(val->name());
     }
     return names;
 }
@@ -184,8 +184,7 @@ auto VolumePkg::newVolume(std::string name) -> std::shared_ptr<Volume>
     return r.first->second;
 }
 
-auto VolumePkg::volume() const -> const std::shared_ptr<Volume>
-{
+auto VolumePkg::volume() const -> std::shared_ptr<Volume> {
     if (_volumes.empty()) {
         throw std::out_of_range("No volumes in VolPkg");
     }
@@ -200,9 +199,8 @@ auto VolumePkg::volume() -> std::shared_ptr<Volume>
     return _volumes.begin()->second;
 }
 
-auto VolumePkg::volume(const std::string& id) const
-    -> const std::shared_ptr<Volume>
-{
+auto VolumePkg::volume(const std::string &id) const
+    -> std::shared_ptr<Volume> {
     return _volumes.at(id);
 }
 
@@ -222,9 +220,8 @@ auto VolumePkg::numberOfSegmentations() const -> std::size_t
     return _segmentations.size();
 }
 
-auto VolumePkg::segmentation(const std::string& id)
-    const -> const std::shared_ptr<Segmentation>
-{
+auto VolumePkg::segmentation(const std::string &id)
+const -> std::shared_ptr<Segmentation> {
     return _segmentations.at(id);
 }
 
@@ -243,10 +240,9 @@ auto VolumePkg::segmentationIDs() const -> std::vector<std::string>
 {
     std::vector<std::string> ids;
     // Only return IDs from the current directory
-    for (const auto& s : _segmentations) {
-        auto it = _segmentationDirectories.find(s.first);
-        if (it != _segmentationDirectories.end() && it->second == _currentSegmentationDir) {
-            ids.emplace_back(s.first);
+    for (const auto &key: _segmentations | std::views::keys) {
+        if (auto it = _segmentationDirectories.find(key); it != _segmentationDirectories.end() && it->second == _currentSegmentationDir) {
+            ids.emplace_back(key);
         }
     }
     return ids;
@@ -255,8 +251,8 @@ auto VolumePkg::segmentationIDs() const -> std::vector<std::string>
 auto VolumePkg::segmentationNames() const -> std::vector<std::string>
 {
     std::vector<std::string> names;
-    for (const auto& s : _segmentations) {
-        names.emplace_back(s.second->name());
+    for (const auto &val: _segmentations | std::views::values) {
+        names.emplace_back(val->name());
     }
     return names;
 }
@@ -281,11 +277,11 @@ void VolumePkg::loadSegmentationsFromDirectory(const std::string& dirName)
         _segmentationDirectories.erase(id);
         
         // Remove from files vector
-        auto it = std::remove_if(_segmentation_files.begin(), _segmentation_files.end(),
-            [&id, this](const std::filesystem::path& path) {
-                auto segIt = _segmentations.find(id);
-                return segIt != _segmentations.end() && segIt->second->path() == path;
-            });
+        auto it = std::ranges::remove_if(_segmentation_files,
+                                         [&id, this](const std::filesystem::path& path) {
+                                             auto segIt = _segmentations.find(id);
+                                             return segIt != _segmentations.end() && segIt->second->path() == path;
+                                         }).begin();
         _segmentation_files.erase(it, _segmentation_files.end());
     }
     
@@ -308,7 +304,7 @@ void VolumePkg::loadSegmentationsFromDirectory(const std::string& dirName)
                 _segmentationDirectories[s->id()] = dirName;
             }
             catch (const std::exception &exc) {
-                std::cout << "WARNING: some exception occured, skipping segment dir: " << dirpath << std::endl;
+                std::cout << "WARNING: some exception occured, skipping segment dir: " << dirpath << "\n";
                 std::cerr << exc.what();
             }
         }
@@ -356,8 +352,7 @@ void VolumePkg::removeSegmentation(const std::string& id)
     _segmentations.erase(it);
     
     // Remove from files vector
-    auto fileIt = std::find(_segmentation_files.begin(),
-                           _segmentation_files.end(), segPath);
+    auto fileIt = std::ranges::find(_segmentation_files, segPath);
     if (fileIt != _segmentation_files.end()) {
         _segmentation_files.erase(fileIt);
     }
@@ -392,7 +387,7 @@ void VolumePkg::refreshSegmentations()
         if (dirIt != _segmentationDirectories.end() && dirIt->second == _currentSegmentationDir) {
             // This segmentation belongs to the current directory
             // Check if it still exists on disk
-            if (diskPaths.find(seg.second->path()) == diskPaths.end()) {
+            if (!diskPaths.contains(seg.second->path())) {
                 // Not on disk anymore - mark for removal
                 toRemove.push_back(seg.first);
             }
@@ -418,9 +413,8 @@ void VolumePkg::refreshSegmentations()
         
         // Remove from files vector if we have a path
         if (!segPath.empty()) {
-            auto fileIt = std::find(_segmentation_files.begin(),
-                                  _segmentation_files.end(),
-                                  segPath);
+            auto fileIt = std::ranges::find(_segmentation_files,
+                                            segPath);
             if (fileIt != _segmentation_files.end()) {
                 _segmentation_files.erase(fileIt);
             }
@@ -430,8 +424,8 @@ void VolumePkg::refreshSegmentations()
     // Find and add new segmentations (on disk but not in memory)
     for (const auto& diskPath : diskPaths) {
         bool found = false;
-        for (const auto& seg : _segmentations) {
-            if (seg.second->path() == diskPath) {
+        for (const auto &val: _segmentations | std::views::values) {
+            if (val->path() == diskPath) {
                 found = true;
                 break;
             }

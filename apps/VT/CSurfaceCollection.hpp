@@ -38,18 +38,18 @@ class CSurfaceCollection : public QObject
     Q_OBJECT
     
 public:
-    ~CSurfaceCollection();
+    ~CSurfaceCollection() override;
     void setSurface(const std::string &name, Surface*, bool noSignalSend = false);
     void setPOI(const std::string &name, POI *poi);
     void setIntersection(const std::string &a, const std::string &b, Intersection *intersect);
     Surface *surface(const std::string &name);
     Intersection *intersection(const std::string &a, const std::string &b);
     POI *poi(const std::string &name);
-    std::vector<Surface*> surfaces();
-    std::vector<POI*> pois();
-    std::vector<std::string> surfaceNames();
-    std::vector<std::string> poiNames();
-    std::vector<std::pair<std::string,std::string>> intersections(const std::string &a = "");
+    std::vector<Surface*> surfaces() const;
+    std::vector<POI*> pois() const;
+    std::vector<std::string> surfaceNames() const;
+    std::vector<std::string> poiNames() const;
+    std::vector<std::pair<std::string,std::string>> intersections(const std::string &a = "") const;
     
 signals:
     void sendSurfaceChanged(std::string, Surface*);

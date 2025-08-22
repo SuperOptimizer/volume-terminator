@@ -31,12 +31,12 @@ SeedingWidget::SeedingWidget(VCCollection* point_collection, CSurfaceCollection*
     , currentVolume(nullptr)
     , chunkCache(nullptr)
     , currentZSlice(0)
+    , _point_collection(point_collection)
+    , _surface_collection(surface_collection)
     , currentMode(Mode::PointMode)
     , isDrawing(false)
     , colorIndex(0)
     , jobsRunning(false)
-    , _point_collection(point_collection)
-    , _surface_collection(surface_collection)
 {
     setupUI();
 
@@ -222,14 +222,14 @@ void SeedingWidget::setupUI()
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
 }
 
-void SeedingWidget::setVolumePkg(std::shared_ptr<VolumePkg> vpkg)
+void SeedingWidget::setVolumePkg(const std::shared_ptr<VolumePkg> &vpkg)
 {
-    std::cout << "SeedingWidget::setVolumePkg called - vpkg: " << (vpkg ? "valid" : "null") << std::endl;
+    std::cout << "SeedingWidget::setVolumePkg called - vpkg: " << (vpkg ? "valid" : "null") << "\n";
     fVpkg = vpkg;
     updateButtonStates();
 }
 
-void SeedingWidget::setCurrentVolume(std::shared_ptr<Volume> volume)
+void SeedingWidget::setCurrentVolume(const std::shared_ptr<Volume> &volume)
 {
     currentVolume = volume;
     updateButtonStates();
@@ -241,13 +241,11 @@ void SeedingWidget::setCache(ChunkCache* cache)
 }
 
 
-void SeedingWidget::onCollectionAdded(uint64_t collectionId)
-{
+void SeedingWidget::onCollectionAdded(uint64_t collectionId) const {
     onCollectionChanged(0);
 }
 
-void SeedingWidget::onCollectionChanged(uint64_t collectionId)
-{
+void SeedingWidget::onCollectionChanged(uint64_t collectionId) const {
     if (!_point_collection) return;
 
     collectionComboBox->clear();
@@ -257,15 +255,14 @@ void SeedingWidget::onCollectionChanged(uint64_t collectionId)
     }
 }
 
-void SeedingWidget::onCollectionRemoved(uint64_t collectionId)
-{
+void SeedingWidget::onCollectionRemoved(uint64_t collectionId) const {
     onCollectionChanged(0);
 }
 
-void SeedingWidget::onVolumeChanged(std::shared_ptr<Volume> vol, const std::string& volumeId)
+void SeedingWidget::onVolumeChanged(const std::shared_ptr<Volume> &vol, const std::string& volumeId)
 {
     std::cout << "SeedingWidget::onVolumeChanged called - volume: " << (vol ? "valid" : "null")
-              << ", volumeId: " << volumeId << std::endl;
+              << ", volumeId: " << volumeId << "\n";
     currentVolume = vol;
     currentVolumeId = volumeId;
     updateButtonStates();
@@ -276,14 +273,12 @@ void SeedingWidget::updateCurrentZSlice(int z)
     currentZSlice = z;
 }
 
-void SeedingWidget::onClearPreviewClicked()
-{
+void SeedingWidget::onClearPreviewClicked() const {
     _point_collection->clearCollection(_point_collection->getCollectionId("ray_preview"));
     infoLabel->setText("Preview points cleared.");
 }
 
-void SeedingWidget::onClearPeaksClicked()
-{
+void SeedingWidget::onClearPeaksClicked() const {
     _point_collection->clearCollection(_point_collection->getCollectionId("seeding_peaks"));
     infoLabel->setText("Peak points cleared.");
 }
@@ -309,8 +304,8 @@ void SeedingWidget::onPreviewRaysClicked()
 
     std::vector<cv::Vec3f> preview_points;
 
-    const int pointsPerRay = 10;
     for (int i = 0; i < numSteps; i++) {
+        constexpr int pointsPerRay = 10;
         const double angle = i * angleStep * M_PI / 180.0;
         const cv::Vec2f rayDir(cos(angle), sin(angle));
 
@@ -434,8 +429,7 @@ void SeedingWidget::castRays()
 
 void SeedingWidget::findPeaksAlongRay(
     const cv::Vec2f& rayDir, 
-    const cv::Vec3f& startPoint)
-{
+    const cv::Vec3f& startPoint) const {
     if (!currentVolume) {
         return;
     }
@@ -544,10 +538,10 @@ void SeedingWidget::findPeaksAlongRay(
 
 void SeedingWidget::onRunSegmentationClicked()
 {
-    std::cout << "SeedingWidget::onRunSegmentationClicked - START" << std::endl;
-    std::cout << "  currentVolume: " << (currentVolume ? "valid" : "null") << std::endl;
-    std::cout << "  currentVolumeId: " << currentVolumeId << std::endl;
-    std::cout << "  fVpkg: " << (fVpkg ? "valid" : "null") << std::endl;
+    std::cout << "SeedingWidget::onRunSegmentationClicked - START" << "\n";
+    std::cout << "  currentVolume: " << (currentVolume ? "valid" : "null") << "\n";
+    std::cout << "  currentVolumeId: " << currentVolumeId << "\n";
+    std::cout << "  fVpkg: " << (fVpkg ? "valid" : "null") << "\n";
     
     // Get the selected collection name from the combo box
     std::string sourceCollection = collectionComboBox->currentText().toStdString();
@@ -651,9 +645,9 @@ void SeedingWidget::onRunSegmentationClicked()
                 
                 // Log result
                 if (exitCode != 0) {
-                    std::cerr << "Process for point " << pointIndex << " failed with exit code: " << exitCode << std::endl;
+                    std::cerr << "Process for point " << pointIndex << " failed with exit code: " << exitCode << "\n";
                 } else {
-                    std::cout << "Completed segmentation for point " << pointIndex << std::endl;
+                    std::cout << "Completed segmentation for point " << pointIndex << "\n";
                 }
                 
                 // Update progress
@@ -693,7 +687,7 @@ void SeedingWidget::onRunSegmentationClicked()
                          .arg(point.p[1])
                          .arg(point.p[2]);
         
-        std::cout << "Starting job " << pointIndex << ": " << cmd.toStdString() << std::endl;
+        std::cout << "Starting job " << pointIndex << ": " << cmd.toStdString() << "\n";
         
         process->start("nice", QStringList() << "-n" << "19" << "ionice" << "-c" << "3" << executablePath <<
                       QString::fromStdString(volumePath.string()) <<
@@ -754,8 +748,7 @@ QString SeedingWidget::findExecutablePath()
     return QString();
 }
 
-void SeedingWidget::updateParameterPreview()
-{
+void SeedingWidget::updateParameterPreview() const {
     auto focus_points = _point_collection->getPoints("focus");
     if (focus_points.empty() || !currentVolume) {
         return;
@@ -799,8 +792,7 @@ void SeedingWidget::updateParameterPreview()
                            .arg(maxRadius));
 }
 
-void SeedingWidget::updateModeUI()
-{
+void SeedingWidget::updateModeUI() const {
     if (currentMode == Mode::PointMode) {
         castRaysButton->setText("Cast Rays");
         resetPointsButton->setText("Reset Points");
@@ -876,8 +868,7 @@ void SeedingWidget::analyzePaths()
         5000);
 }
 
-void SeedingWidget::findPeaksAlongPath(const PathData& path)
-{
+void SeedingWidget::findPeaksAlongPath(const PathData& path) const {
     if (!currentVolume || path.points.empty()) {
         return;
     }
@@ -979,7 +970,7 @@ void SeedingWidget::findPeaksAlongPath(const PathData& path)
     }
 }
 
-void SeedingWidget::startDrawing(cv::Vec3f startPoint)
+void SeedingWidget::startDrawing(const cv::Vec3f &startPoint)
 {
     isDrawing = true;
     currentPath.points.clear();
@@ -990,7 +981,7 @@ void SeedingWidget::startDrawing(cv::Vec3f startPoint)
     displayPaths();
 }
 
-void SeedingWidget::addPointToPath(cv::Vec3f point)
+void SeedingWidget::addPointToPath(const cv::Vec3f &point)
 {
     if (!isDrawing) {
         return;
@@ -1041,7 +1032,7 @@ void SeedingWidget::finalizePath()
 QColor SeedingWidget::generatePathColor()
 {
     // Generate distinct colors for paths
-    static const QColor colors[] = {
+    static constexpr QColor colors[] = {
         QColor(255, 100, 100),  // Red
         QColor(100, 255, 100),  // Green
         QColor(100, 100, 255),  // Blue
@@ -1079,8 +1070,7 @@ void SeedingWidget::updatePointsDisplay()
     // Send both analysis results (red) and user points (blue) for display
 }
 
-void SeedingWidget::updateInfoLabel()
-{
+void SeedingWidget::updateInfoLabel() const {
     QString infoText;
     
     if (currentMode == Mode::PointMode) {
@@ -1102,8 +1092,7 @@ void SeedingWidget::updateInfoLabel()
     infoLabel->setText(infoText);
 }
 
-void SeedingWidget::updateButtonStates()
-{
+void SeedingWidget::updateButtonStates() const {
     // Enable segmentation if we have any points (analysis results OR user points)
     bool hasAnyPoints = !_point_collection->getPoints("seeding_peaks").empty() || !_point_collection->getPoints("seeding_seeds").empty();
     runSegmentationButton->setEnabled(hasAnyPoints && currentVolume != nullptr);
@@ -1123,7 +1112,7 @@ void SeedingWidget::updateButtonStates()
     }
 }
 
-void SeedingWidget::onMousePress(cv::Vec3f vol_point, cv::Vec3f normal, Qt::MouseButton button, Qt::KeyboardModifiers modifiers)
+void SeedingWidget::onMousePress(const cv::Vec3f &vol_point, cv::Vec3f normal, Qt::MouseButton button, Qt::KeyboardModifiers modifiers)
 {
     if (currentMode != Mode::DrawMode || button != Qt::LeftButton) {
         return;
@@ -1132,7 +1121,7 @@ void SeedingWidget::onMousePress(cv::Vec3f vol_point, cv::Vec3f normal, Qt::Mous
     startDrawing(vol_point);
 }
 
-void SeedingWidget::onMouseMove(cv::Vec3f vol_point, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers)
+void SeedingWidget::onMouseMove(const cv::Vec3f &vol_point, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers)
 {
     if (currentMode != Mode::DrawMode || !isDrawing || !(buttons & Qt::LeftButton)) {
         return;
@@ -1236,9 +1225,9 @@ void SeedingWidget::onExpandSeedsClicked()
                 
                 // Log result
                 if (exitCode != 0) {
-                    std::cerr << "Expansion iteration " << iterationIndex << " failed with exit code: " << exitCode << std::endl;
+                    std::cerr << "Expansion iteration " << iterationIndex << " failed with exit code: " << exitCode << "\n";
                 } else {
-                    std::cout << "Completed expansion iteration " << iterationIndex << std::endl;
+                    std::cout << "Completed expansion iteration " << iterationIndex << "\n";
                 }
                 
                 // Update progress
@@ -1275,7 +1264,7 @@ void SeedingWidget::onExpandSeedsClicked()
                          .arg(QString::fromStdString(pathsDir.string()))
                          .arg(QString::fromStdString(expandJsonPath.string()));
         
-        std::cout << "Starting expansion job " << iterationIndex << ": " << cmd.toStdString() << std::endl;
+        std::cout << "Starting expansion job " << iterationIndex << ": " << cmd.toStdString() << "\n";
         
         process->start("nice", QStringList() << "-n" << "19" << "ionice" << "-c" << "3" << executablePath <<
                       QString::fromStdString(volumePath.string()) <<
@@ -1346,8 +1335,7 @@ void SeedingWidget::onCancelClicked()
     emit sendStatusMessageAvailable("Jobs cancelled by user", 3000);
 }
 
-void SeedingWidget::onSurfacesLoaded()
-{
+void SeedingWidget::onSurfacesLoaded() const {
     // Update button states when surfaces are loaded/reloaded
     updateButtonStates();
 }

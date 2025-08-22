@@ -24,10 +24,6 @@ static int inpaint_back_range;
 
 static float normal_w = 0.3;
 
-static inline cv::Vec2f mul(const cv::Vec2f &a, const cv::Vec2f &b)
-{
-    return{a[0]*b[0],a[1]*b[1]};
-}
 
 static float dot_s(const cv::Vec3f &p)
 {
@@ -40,58 +36,6 @@ float ldist(const E &p, const cv::Vec3f &tgt_o, const cv::Vec3f &tgt_v)
     return cv::norm((p-tgt_o).cross(p-tgt_o-tgt_v))/cv::norm(tgt_v);
 }
 
-template <typename E>
-static float search_min_line(const cv::Mat_<E> &points, cv::Vec2f &loc, cv::Vec3f &out, cv::Vec3f tgt_o, cv::Vec3f tgt_v, cv::Vec2f init_step, float min_step_x)
-{
-    cv::Rect boundary(1,1,points.cols-2,points.rows-2);
-    if (!boundary.contains(cv::Point(loc))) {
-        out = {-1,-1,-1};
-        return -1;
-    }
-    
-    bool changed = true;
-    E val = at_int(points, loc);
-    out = val;
-    float best = ldist(val, tgt_o, tgt_v);
-    float res;
-    
-    //TODO check maybe add more search patterns, compare motion estimatino for video compression, x264/x265, ...
-    std::vector<cv::Vec2f> search = {{0,-1},{0,1},{-1,-1},{-1,0},{-1,1},{1,-1},{1,0},{1,1}};
-    // std::vector<cv::Vec2f> search = {{0,-1},{0,1},{-1,0},{1,0}};
-    cv::Vec2f step = init_step;
-    
-    while (changed) {
-        changed = false;
-        
-        for(auto &off : search) {
-            cv::Vec2f cand = loc+mul(off,step);
-            
-            //just skip if out of bounds
-            if (!boundary.contains(cv::Point(cand)))
-                continue;
-                
-                val = at_int(points, cand);
-                res = ldist(val, tgt_o, tgt_v);
-                if (res < best) {
-                    changed = true;
-                    best = res;
-                    loc = cand;
-                    out = val;
-                }
-        }
-        
-        if (changed)
-            continue;
-        
-        step *= 0.5;
-        changed = true;
-        
-        if (step[0] < min_step_x)
-            break;
-    }
-    
-    return best;
-}
 
 template <typename E>
 float line_off(const E &p, const cv::Vec3f &tgt_o, const cv::Vec3f &tgt_v)
@@ -512,7 +456,7 @@ float min_loc_wind(const cv::Mat_<cv::Vec3f> &points, const cv::Mat_<float> &win
             }
             
             val = at_int(points, cand);
-            // std::cout << "at" << cand << val << std::endl;
+            // std::cout << "at" << cand << val << "\n";
             res = abs(at_int(winding, cand)-tgt_wind)*10;
             res += sdist(val,tgt);
             if (res < best) {
@@ -710,7 +654,7 @@ cv::Mat_<cv::Vec3f> points_hr_grounding(const cv::Mat_<uint8_t> &state, std::vec
             l10 = {l10[1],l10[0]};
             l11 = {l11[1],l11[0]};            
             
-            // std::cout << "succ!" << res << cv::Vec2i(i,j) << l00 << l01 << points_tgt(j,i) << std::endl;
+            // std::cout << "succ!" << res << cv::Vec2i(i,j) << l00 << l01 << points_tgt(j,i) << "\n";
             
             for(int sy=0;sy<=step;sy++)
                 for(int sx=0;sx<=step;sx++) {
@@ -719,7 +663,7 @@ cv::Mat_<cv::Vec3f> points_hr_grounding(const cv::Mat_<uint8_t> &state, std::vec
                     cv::Vec2f l0 = (1-fx)*l00 + fx*l01;
                     cv::Vec2f l1 = (1-fx)*l10 + fx*l11;
                     cv::Vec2f l = (1-fy)*l0 + fy*l1;
-                    // std::cout << l << at_int(points_src, {l[1],l[0]}) << std::endl;
+                    // std::cout << l << at_int(points_src, {l[1],l[0]}) << "\n";
                     points_hr(j*step+sy,i*step+sx) += at_int(points_src, {l[1],l[0]});
                     counts_hr(j*step+sy,i*step+sx) += 1;
                 }
@@ -735,7 +679,7 @@ cv::Mat_<cv::Vec3f> points_hr_grounding(const cv::Mat_<uint8_t> &state, std::vec
                             cv::Vec3f c0 = (1-fx)*points_tgt(j,i) + fx*points_tgt(j,i+1);
                             cv::Vec3f c1 = (1-fx)*points_tgt(j+1,i) + fx*points_tgt(j+1,i+1);
                             cv::Vec3f c = (1-fy)*c0 + fy*c1;
-                            // std::cout << l << at_int(points_src, {l[1],l[0]}) << std::endl;
+                            // std::cout << l << at_int(points_src, {l[1],l[0]}) << "\n";
                             points_hr(j*step+sy,i*step+sx) += c;
                             counts_hr(j*step+sy,i*step+sx) += 1;
                         }
@@ -759,7 +703,7 @@ template <typename E> cv::Mat_<E> pad(const cv::Mat_<E> &src, int amount, const 
     
     src.copyTo(m(cv::Rect(0, amount, src.cols, src.rows)));
     
-    std::cout << "pad " << src.size() << m.size() << std::endl;
+    std::cout << "pad " << src.size() << m.size() << "\n";
     
     return m;
 }
@@ -767,8 +711,8 @@ template <typename E> cv::Mat_<E> pad(const cv::Mat_<E> &src, int amount, const 
 int main(int argc, char *argv[])
 {
     if (argc != 5 && (argc-2) % 3 != 0)  {
-        std::cout << "usage: " << argv[0] << " <params.json> <tiffxyz> <winding> <weight> ..." << std::endl;
-        std::cout << "   multiple triplets of <tiffxyz> <winding> <weight> can be used for a joint optimization" << std::endl;
+        std::cout << "usage: " << argv[0] << " <params.json> <tiffxyz> <winding> <weight> ..." << "\n";
+        std::cout << "   multiple triplets of <tiffxyz> <winding> <weight> can be used for a joint optimization" << "\n";
         return EXIT_SUCCESS;
     }
     
@@ -840,15 +784,15 @@ int main(int argc, char *argv[])
             
             std::sort(offsets.begin(), offsets.end());
             std::sort(offsets_rev.begin(), offsets_rev.end());
-            std::cout << "off 0.1 " << offsets[offsets.size()*0.1] << std::endl;
-            std::cout << "off 0.5 " << offsets[offsets.size()*0.5] << std::endl;
-            std::cout << "off 0.9 " << offsets[offsets.size()*0.9] << std::endl;
+            std::cout << "off 0.1 " << offsets[offsets.size()*0.1] << "\n";
+            std::cout << "off 0.5 " << offsets[offsets.size()*0.5] << "\n";
+            std::cout << "off 0.9 " << offsets[offsets.size()*0.9] << "\n";
             float div_fw = std::abs(offsets[offsets.size()*0.9] - offsets[offsets.size()*0.1]);
             
             
-            std::cout << "off_rev 0.1 " << offsets_rev[offsets_rev.size()*0.1] << std::endl;
-            std::cout << "off_rev 0.5 " << offsets_rev[offsets_rev.size()*0.5] << std::endl;
-            std::cout << "off_rev 0.9 " << offsets_rev[offsets_rev.size()*0.9] << std::endl;
+            std::cout << "off_rev 0.1 " << offsets_rev[offsets_rev.size()*0.1] << "\n";
+            std::cout << "off_rev 0.5 " << offsets_rev[offsets_rev.size()*0.5] << "\n";
+            std::cout << "off_rev 0.9 " << offsets_rev[offsets_rev.size()*0.9] << "\n";
             float div_bw = std::abs(offsets_rev[offsets.size()*0.9] - offsets_rev[offsets.size()*0.1]);
             
             
@@ -934,7 +878,7 @@ int main(int argc, char *argv[])
     cv::Mat_<cv::Vec3f> normals_in = normals.clone();
     cv::Mat_<float> normals_w_in = normals_w.clone();
     
-    std::cout << "wind_step " << nw_step << std::endl;
+    std::cout << "wind_step " << nw_step << "\n";
     for(int r=0;r<50+num_winds;r++) {
         cv::Mat_<cv::Vec3f> normals_out(normals.size(), 0);
         cv::Mat_<float> normals_w_out(normals.size(), 0);
@@ -1069,7 +1013,7 @@ int main(int argc, char *argv[])
         }
     }
     
-    std::cout << "init y range " << col_first << " " << col_last << std::endl;
+    std::cout << "init y range " << col_first << " " << col_last << "\n";
 
     last_miny = col_first;
     last_maxy = col_last;
@@ -1136,7 +1080,7 @@ int main(int argc, char *argv[])
             }
 
         for(int i=first_col.x;i<first_col.br().x;i++) {
-            std::cout << "init wind col " << i << " " << avg_wind[i] / wind_counts[i] << " " << wind_counts[i] << std::endl;
+            std::cout << "init wind col " << i << " " << avg_wind[i] / wind_counts[i] << " " << wind_counts[i] << "\n";
             avg_wind[i] /= wind_counts[i];
             wind_counts[i] = 1;
         }
@@ -1171,7 +1115,7 @@ int main(int argc, char *argv[])
         
         ceres::Solver::Summary summary;
         ceres::Solve(options_col, &problem_init, &summary);
-        std::cout << summary.BriefReport() << std::endl;
+        std::cout << summary.BriefReport() << "\n";
         
         for(int j=first_col.y;j<first_col.br().y;j++) {
             for(int i=first_col.x;i<first_col.br().x;i++) {
@@ -1186,7 +1130,7 @@ int main(int argc, char *argv[])
         problem_init.SetParameterBlockConstant(&surf_locs[0](seed_loc)[0]);
         
         ceres::Solve(options_col, &problem_init, &summary);
-        std::cout << summary.BriefReport() << std::endl;
+        std::cout << summary.BriefReport() << "\n";
         
     }
     
@@ -1213,7 +1157,7 @@ int main(int argc, char *argv[])
         
         float tgt_wind_x_i = (tgt_wind[i]-_min_w)/num_winds*normals.cols;
         
-        std::cout << "wind tgt: " << tgt_wind[i] << " " << avg_wind[i-1] << " " << avg_wind[i-2] << std::endl;
+        std::cout << "wind tgt: " << tgt_wind[i] << " " << avg_wind[i-1] << " " << avg_wind[i-2] << "\n";
         
         if (lower_bound > lower_loc-dilate)
             lower_bound = std::max(lower_loc-dilate,lower_bound-expand_rate);
@@ -1225,7 +1169,7 @@ int main(int argc, char *argv[])
         else if (upper_bound > upper_loc+dilate)
             upper_bound = std::max(upper_loc+dilate,upper_bound - (i % shrink_inv_rate));
         
-        std::cout << "proc col " << i << std::endl;
+        std::cout << "proc col " << i << "\n";
         ceres::Problem problem_col;
 #pragma omp parallel for
         for(int j=std::max(bbox.y,lower_bound);j<std::min(bbox.br().y,upper_bound+1);j++) {
@@ -1257,7 +1201,7 @@ int main(int argc, char *argv[])
             init_errs(p) = sqrt(summary.final_cost/summary.num_residual_blocks);
         }
         
-        std::cout << "init col done " << std::endl;
+        std::cout << "init col done " << "\n";
         
         last_miny--;
         last_maxy++;
@@ -1348,11 +1292,11 @@ int main(int argc, char *argv[])
                         problem_col.SetParameterBlockConstant(&points(j,o)[0]);
         }
             
-        std::cout << "start solve with blocks " << problem_col.NumResidualBlocks() << std::endl;
+        std::cout << "start solve with blocks " << problem_col.NumResidualBlocks() << "\n";
         ceres::Solver::Summary summary;
         ceres::Solve(options_col, &problem_col, &summary);
         
-        std::cout << summary.BriefReport() << std::endl;
+        std::cout << summary.BriefReport() << "\n";
         
         for(int x=i-opt_w+1;x<=i;x++)
             for(int j=bbox.y;j<bbox.br().y;j++) {
@@ -1364,7 +1308,7 @@ int main(int argc, char *argv[])
             
         ceres::Solve(options_col, &problem_col, &summary);
         
-        std::cout << summary.BriefReport() << std::endl;
+        std::cout << summary.BriefReport() << "\n";
 
         bool stop = false;
         float min_w = 1000, max_w = -1000;
@@ -1394,11 +1338,11 @@ int main(int argc, char *argv[])
                                 
                             }
                             else
-                                std::cout << "wind th " << abs(at_int(winds[s], {surf_locs[s](p)[1],surf_locs[s](p)[0]}) - tgt_wind[x]) << " " << at_int(winds[s], {surf_locs[s](p)[1],surf_locs[s](p)[0]}) << tgt_wind[x] << " " << std::endl;
+                                std::cout << "wind th " << abs(at_int(winds[s], {surf_locs[s](p)[1],surf_locs[s](p)[0]}) - tgt_wind[x]) << " " << at_int(winds[s], {surf_locs[s](p)[1],surf_locs[s](p)[0]}) << tgt_wind[x] << " " << "\n";
                         }
                         else
                         {
-                            std::cout << "lost a point! " << p << " " << s << " " << surf_locs[s](p) << std::endl;
+                            std::cout << "lost a point! " << p << " " << s << " " << surf_locs[s](p) << "\n";
                         }
                     }
                 }
@@ -1412,7 +1356,7 @@ int main(int argc, char *argv[])
             
         if (avg_wind[i-1] < avg_wind[i-2] - wind_th/2) {
             stop = true;
-            std::cout << "stopping wind is wrong! " << avg_wind[i-2] << " " << avg_wind[i-1]  << std::endl;
+            std::cout << "stopping wind is wrong! " << avg_wind[i-2] << " " << avg_wind[i-1]  << "\n";
         }
             
         if (i % 10 == 0 || !wind_counts[i] || i == bbox.br().x-1 || stop) {
@@ -1429,7 +1373,7 @@ int main(int argc, char *argv[])
         }
             
         if (!wind_counts[i]) {
-            std::cout << "stopping as zero valid locations found! " << i << std::endl;
+            std::cout << "stopping as zero valid locations found! " << i << "\n";
             break;
         }
         
@@ -1437,7 +1381,7 @@ int main(int argc, char *argv[])
             break;
         
         
-        std::cout << "avg wind number for col " << i << " : " << avg_wind[i] << " ( tgt was " << tgt_wind[i] << " ) using #" << wind_counts[i]  << " spread " << min_w << " - " << max_w << std::endl;
+        std::cout << "avg wind number for col " << i << " : " << avg_wind[i] << " ( tgt was " << tgt_wind[i] << " ) using #" << wind_counts[i]  << " spread " << min_w << " - " << max_w << "\n";
         wind_counts[i] = 1;
 
     }
@@ -1450,7 +1394,7 @@ int main(int argc, char *argv[])
         std::string name_prefix = "fuse_fill_";
         std::string uuid = name_prefix + time_str();
         std::filesystem::path seg_dir = tgt_dir / uuid;
-        std::cout << "saving " << seg_dir << std::endl;
+        std::cout << "saving " << seg_dir << "\n";
         surf_full->save(seg_dir, uuid);
         
         cv::Mat_<float> winding_ideal(winding.size(), NAN);
@@ -1470,7 +1414,7 @@ int main(int argc, char *argv[])
     //     std::string name_prefix = "testing_fill_hr_";
     //     std::string uuid = name_prefix + time_str();
     //     std::filesystem::path seg_dir = tgt_dir / uuid;
-    //     std::cout << "saving " << seg_dir << std::endl;
+    //     std::cout << "saving " << seg_dir << "\n";
     //     surf_hr->save(seg_dir, uuid);
     // }
 

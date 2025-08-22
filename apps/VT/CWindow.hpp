@@ -50,12 +50,13 @@ signals:
     void sendVolumeClosing(); // Signal to notify viewers before closing volume
 
 public slots:
-    void onShowStatusMessage(QString text, int timeout);
-    void onLocChanged(void);
-    void onManualPlaneChanged(void);
-    void onVolumeClicked(cv::Vec3f vol_loc, cv::Vec3f normal, Surface *surf, Qt::MouseButton buttons, Qt::KeyboardModifiers modifiers);
-    void onOpChainChanged(OpChain *chain);
-    void onTagChanged(void);
+    void onShowStatusMessage(const QString& text, int timeout) const;
+
+    static void onLocChanged();
+    void onManualPlaneChanged() const;
+    void onVolumeClicked(const cv::Vec3f& vol_loc, const cv::Vec3f& normal, Surface *surf, Qt::MouseButton buttons, Qt::KeyboardModifiers modifiers) const;
+    void onOpChainChanged(OpChain *chain) const;
+    void onTagChanged();
     void onSurfaceContextMenuRequested(const QPoint& pos);
     void onRenderSegment(const std::string& segmentId);
     void onGrowSegmentFromSegment(const std::string& segmentId);
@@ -66,16 +67,16 @@ public slots:
     void onToggleConsoleOutput();
     void onDeleteSegments(const std::vector<std::string>& segmentIds);
     void onVoxelizePaths();
-   void onFocusPOIChanged(std::string name, POI* poi);
-    void onPointDoubleClicked(uint64_t pointId);
+   void onFocusPOIChanged(const std::string& name, POI* poi);
+    void onPointDoubleClicked(uint64_t pointId) const;
 
 public:
     CWindow();
-    ~CWindow(void);
+    ~CWindow(void) override;
     
     // Helper method to get the current volume path
     QString getCurrentVolumePath() const;
-    VCCollection* pointCollection() { return _point_collection; }
+    VCCollection* pointCollection() const { return _point_collection; }
 
 protected:
     void keyPressEvent(QKeyEvent* event) override;
@@ -89,22 +90,21 @@ private:
     void UpdateSurfaceTreeIcon(SurfaceTreeWidgetItem *item);
 
     void UpdateView(void);
-    void UpdateVolpkgLabel(int filterCounter);
+    void UpdateVolpkgLabel(int filterCounter) const;
 
-    void UpdateRecentVolpkgActions(void);
-    void UpdateRecentVolpkgList(const QString& path);
-    void RemoveEntryFromRecentVolpkg(const QString& path);
+    void UpdateRecentVolpkgActions(void) const;
+    void UpdateRecentVolpkgList(const QString& path) const;
+    void RemoveEntryFromRecentVolpkg(const QString& path) const;
     
     // Helper method for command line tools
     bool initializeCommandLineRunner(void);
 
-    CVolumeViewer *newConnectedCVolumeViewer(std::string surfaceName, QString title, QMdiArea *mdiArea);
-    void closeEvent(QCloseEvent* event);
+    CVolumeViewer *newConnectedCVolumeViewer(const std::string& surfaceName, const QString& title, QMdiArea *mdiArea);
+    void closeEvent(QCloseEvent* event) override;
 
-    void setWidgetsEnabled(bool state);
+    void setWidgetsEnabled(bool state) const;
 
     bool InitializeVolumePkg(const std::string& nVpkgPath);
-    void setDefaultWindowWidth(std::shared_ptr<Volume> volume);
 
     void OpenVolume(const QString& path);
     void CloseVolume(void);
@@ -120,10 +120,7 @@ private:
     void RemoveSingleSegmentation(const std::string& segId);
     void LoadSurfacesIncremental();
 
-    static void audio_callback(void *user_data, uint8_t *raw_buffer, int bytes);
-    void playPing();
-
-    void setVolume(std::shared_ptr<Volume> newvol);
+    void setVolume(const std::shared_ptr<Volume>& newvol);
 
 private slots:
     void Open(void);
@@ -132,17 +129,17 @@ private slots:
     void Keybindings(void);
     void About(void);
     void ShowSettings();
-    void ResetSegmentationViews();
+    void ResetSegmentationViews() const;
     void onSurfaceSelected();
     void onSegFilterChanged(int index);
     void onSegmentationDirChanged(int index);
-    void onEditMaskPressed();
+    void onEditMaskPressed() const;
     void onRefreshSurfaces();
     void onGenerateReviewReport();
     void onManualLocationChanged();
-    void onZoomIn();
-    void onZoomOut();
-    void onCopyCoordinates();
+    void onZoomIn() const;
+    void onZoomOut() const;
+    void onCopyCoordinates() const;
 
 private:
     bool appInitComplete{false};
@@ -155,8 +152,8 @@ private:
     std::string currentVolumeId;
     int loc[3] = {0,0,0};
 
-    static const int AMPLITUDE = 28000;
-    static const int FREQUENCY = 44100;
+    static constexpr int AMPLITUDE = 28000;
+    static constexpr int FREQUENCY = 44100;
 
     // window components
     QMenu* fFileMenu;
@@ -221,7 +218,7 @@ private:
     Ui_VCMainWindow ui;
     QMdiArea *mdiArea;
 
-    bool can_change_volume_();
+    bool can_change_volume_() const;
     
     ChunkCache *chunk_cache;
     std::vector<CVolumeViewer*> _viewers;

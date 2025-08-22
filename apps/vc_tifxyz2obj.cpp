@@ -141,7 +141,7 @@ static void surf_write_obj(QuadSurface *surf, const std::filesystem::path &out_f
 
     std::cout << "Point dims: " << points.size()
               << " cols: " << points.cols
-              << " rows: " << points.rows << std::endl;
+              << " rows: " << points.rows << "\n";
 
     // Derive UV scale from meta: surf->scale() is typically micrometers-per-pixel (or similar).
     // You asked to use the reciprocal (1/scale) as the multiplier.
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
         surf = load_quad_from_tifxyz(seg_path);
     }
     catch (...) {
-        std::cerr << "error when loading: " << seg_path << std::endl;
+        std::cerr << "error when loading: " << seg_path << "\n";
         return EXIT_FAILURE;
     }
 

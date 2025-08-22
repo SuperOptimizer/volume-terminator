@@ -43,7 +43,7 @@ cv::Vec3f parse_vec3f(std::string line, std::string type = "")
     std::istringstream iss(line);
     std::string t;
     if (!(iss >> t >> v[0] >> v[1] >> v[2]) || (type.size() && t != type)) {
-        std::cout << t << v << type << line << std::endl;
+        std::cout << t << v << type << line << "\n";
         throw std::runtime_error("error in parse_vec3f()");
     }
     return v;
@@ -131,7 +131,7 @@ int process_obj(const std::string &src, const std::string &tgt, DSReader &reader
                 vns.push_back(normal);
         }
         // if (vs.size() % 10000 == 0)
-            // std::cout << vs.size() << std::endl;
+            // std::cout << vs.size() << "\n";
     }
 
     if (vs.size() != vns.size())
@@ -196,7 +196,7 @@ public:
     ~MeasureLife()
     {
         auto end = std::chrono::high_resolution_clock::now();
-        std::cout << " took " << std::chrono::duration<double>(end-start).count() << " s" << std::endl;
+        std::cout << " took " << std::chrono::duration<double>(end-start).count() << " s" << "\n";
     }
 private:
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
@@ -205,7 +205,7 @@ private:
 int main(int argc, char *argv[])
 {
     if (argc != 5) {
-        std::cout << "usage: " << argv[0] << " <zarr-volume> <src-obj> <out-obj> <json-params>" << std::endl;
+        std::cout << "usage: " << argv[0] << " <zarr-volume> <src-obj> <out-obj> <json-params>" << "\n";
         return EXIT_SUCCESS;
     }
 
@@ -221,8 +221,8 @@ int main(int argc, char *argv[])
     z5::filesystem::handle::Dataset ds_handle(group, "1", "/");
     std::unique_ptr<z5::Dataset> ds = z5::filesystem::openDataset(ds_handle);
 
-    std::cout << "zarr dataset size for scale group 1 " << ds->shape() << std::endl;
-    std::cout << "chunk shape shape " << ds->chunking().blockShape() << std::endl;
+    std::cout << "zarr dataset size for scale group 1 " << ds->shape() << "\n";
+    std::cout << "chunk shape shape " << ds->chunking().blockShape() << "\n";
 
     ChunkCache chunk_cache(10e9);
 

@@ -141,9 +141,9 @@ void VCCollection::addPoints(const std::string& collectionName, const std::vecto
 
 void VCCollection::updatePoint(const ColPoint& point)
 {
-    if (_points.count(point.id)) {
+    if (_points.contains(point.id)) {
         _points[point.id] = point;
-        if (_collections.count(point.collectionId)) {
+        if (_collections.contains(point.collectionId)) {
             _collections.at(point.collectionId).points[point.id] = point;
         }
         emit pointChanged(point);
@@ -152,10 +152,10 @@ void VCCollection::updatePoint(const ColPoint& point)
 
 void VCCollection::removePoint(uint64_t pointId)
 {
-    if (_points.count(pointId)) {
+    if (_points.contains(pointId)) {
         uint64_t collection_id = _points.at(pointId).collectionId;
         _points.erase(pointId);
-        if (_collections.count(collection_id)) {
+        if (_collections.contains(collection_id)) {
             _collections.at(collection_id).points.erase(pointId);
         }
         emit pointRemoved(pointId);
@@ -164,11 +164,11 @@ void VCCollection::removePoint(uint64_t pointId)
 
 void VCCollection::clearCollection(uint64_t collectionId)
 {
-    if (_collections.count(collectionId)) {
+    if (_collections.contains(collectionId)) {
         auto& collection = _collections.at(collectionId);
-        for (const auto& pair : collection.points) {
-            _points.erase(pair.first);
-            emit pointRemoved(pair.first);
+        for (const auto &key: collection.points | std::views::keys) {
+            _points.erase(key);
+            emit pointRemoved(key);
         }
         _collections.erase(collectionId);
         emit collectionRemoved(collectionId);
@@ -177,8 +177,8 @@ void VCCollection::clearCollection(uint64_t collectionId)
 
 void VCCollection::clearAll()
 {
-    for (auto& point_pair : _points) {
-        emit pointRemoved(point_pair.first);
+    for (const auto &key: _points | std::views::keys) {
+        emit pointRemoved(key);
     }
     _collections.clear();
     _points.clear();
@@ -187,7 +187,7 @@ void VCCollection::clearAll()
 
 void VCCollection::renameCollection(uint64_t collectionId, const std::string& newName)
 {
-    if (_collections.count(collectionId)) {
+    if (_collections.contains(collectionId)) {
         _collections.at(collectionId).name = newName;
         emit collectionChanged(collectionId);
     }
@@ -206,7 +206,7 @@ const std::unordered_map<uint64_t, VCCollection::Collection>& VCCollection::getA
 
 void VCCollection::setCollectionMetadata(uint64_t collectionId, const CollectionMetadata& metadata)
 {
-    if (_collections.count(collectionId)) {
+    if (_collections.contains(collectionId)) {
         _collections.at(collectionId).metadata = metadata;
         emit collectionChanged(collectionId);
     }
@@ -214,7 +214,7 @@ void VCCollection::setCollectionMetadata(uint64_t collectionId, const Collection
 
 void VCCollection::setCollectionColor(uint64_t collectionId, const cv::Vec3f& color)
 {
-    if (_collections.count(collectionId)) {
+    if (_collections.contains(collectionId)) {
         _collections.at(collectionId).color = color;
         emit collectionChanged(collectionId);
     }
@@ -222,7 +222,7 @@ void VCCollection::setCollectionColor(uint64_t collectionId, const cv::Vec3f& co
 
 std::optional<ColPoint> VCCollection::getPoint(uint64_t pointId) const
 {
-    if (_points.count(pointId)) {
+    if (_points.contains(pointId)) {
         return _points.at(pointId);
     }
     return std::nullopt;
@@ -231,11 +231,10 @@ std::optional<ColPoint> VCCollection::getPoint(uint64_t pointId) const
 std::vector<ColPoint> VCCollection::getPoints(const std::string& collectionName) const
 {
     std::vector<ColPoint> points;
-    auto collection_id_opt = findCollectionByName(collectionName);
-    if (collection_id_opt) {
+    if (auto collection_id_opt = findCollectionByName(collectionName)) {
         const auto& collection = _collections.at(*collection_id_opt);
-        for (const auto& pair : collection.points) {
-            points.push_back(pair.second);
+        for (const auto &val: collection.points | std::views::values) {
+            points.push_back(val);
         }
     }
     return points;
@@ -248,8 +247,8 @@ std::string VCCollection::generateNewCollectionName(const std::string& prefix) c
     do {
         new_name = prefix + std::to_string(i++);
         bool name_exists = false;
-        for(const auto& pair : _collections) {
-            if (pair.second.name == new_name) {
+        for(const auto &val: _collections | std::views::values) {
+            if (val.name == new_name) {
                 name_exists = true;
                 break;
             }
@@ -261,18 +260,18 @@ std::string VCCollection::generateNewCollectionName(const std::string& prefix) c
 
 void VCCollection::autoFillWindingNumbers(uint64_t collectionId, WindingFillMode mode)
 {
-    if (_collections.count(collectionId)) {
+    if (_collections.contains(collectionId)) {
         auto& collection = _collections.at(collectionId);
         
         std::vector<ColPoint*> points_to_sort;
-        for(auto& pair : collection.points) {
-            points_to_sort.push_back(&pair.second);
+        for(auto &val: collection.points | std::views::values) {
+            points_to_sort.push_back(&val);
         }
 
-        std::sort(points_to_sort.begin(), points_to_sort.end(),
-            [](const ColPoint* a, const ColPoint* b) {
-                return a->id < b->id;
-            });
+        std::ranges::sort(points_to_sort,
+                          [](const ColPoint* a, const ColPoint* b) {
+                              return a->id < b->id;
+                          });
 
         float winding_counter;
         if (mode == WindingFillMode::Decremental) {
@@ -353,8 +352,8 @@ bool VCCollection::loadFromJSON(const std::string& filename)
             Collection col = col_json.get<Collection>();
             col.id = id;
             _collections[col.id] = col;
-            for (auto& point_pair : _collections.at(col.id).points) {
-                point_pair.second.collectionId = col.id;
+            for (auto &val: _collections.at(col.id).points | std::views::values) {
+                val.collectionId = col.id;
             }
         }
 
@@ -370,25 +369,25 @@ bool VCCollection::loadFromJSON(const std::string& filename)
         if (col_pair.first >= _next_collection_id) {
             _next_collection_id = col_pair.first + 1;
         }
-        for (const auto& point_pair : col_pair.second.points) {
-            if (point_pair.first >= _next_point_id) {
-                _next_point_id = point_pair.first + 1;
+        for (const auto &key: col_pair.second.points | std::views::keys) {
+            if (key >= _next_point_id) {
+                _next_point_id = key + 1;
             }
         }
     }
  
     // Rebuild the _points map
     _points.clear();
-    for (const auto& col_pair : _collections) {
-        for (const auto& point_pair : col_pair.second.points) {
+    for (const auto &val: _collections | std::views::values) {
+        for (const auto& point_pair : val.points) {
             _points[point_pair.first] = point_pair.second;
         }
     }
  
     for (const auto& col_pair : _collections) {
         emit collectionAdded(col_pair.first);
-        for (const auto& point_pair : col_pair.second.points) {
-            emit pointAdded(point_pair.second);
+        for (const auto &val: col_pair.second.points | std::views::values) {
+            emit pointAdded(val);
         }
     }
  
@@ -417,8 +416,7 @@ std::optional<uint64_t> VCCollection::findCollectionByName(const std::string& na
 
 uint64_t VCCollection::findOrCreateCollectionByName(const std::string& name)
 {
-    auto existing_id = findCollectionByName(name);
-    if (existing_id) {
+    if (auto existing_id = findCollectionByName(name)) {
         return *existing_id;
     }
 

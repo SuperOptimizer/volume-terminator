@@ -50,13 +50,12 @@ public:
             std::cout << " took " << std::chrono::duration<double>(end-start).count() << " s";
 
         if (unit)
-            std::cout << " " << unit/std::chrono::duration<double>(end-start).count() << unit_string << "/s" << std::endl;
+            std::cout << " " << unit/std::chrono::duration<double>(end-start).count() << unit_string << "/s" << "\n";
         else
-            std::cout << std::endl;
+            std::cout << "\n";
 
     }
-    double seconds()
-    {
+    double seconds() const {
         auto end = std::chrono::high_resolution_clock::now();
         return std::chrono::duration<double>(end-start).count();
     }
@@ -71,10 +70,10 @@ static cv::Vec3f at_int_inv(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f p)
     float fx = p[1]-x;
     float fy = p[0]-y;
 
-    cv::Vec3f p00 = points(y,x);
-    cv::Vec3f p01 = points(y,x+1);
-    cv::Vec3f p10 = points(y+1,x);
-    cv::Vec3f p11 = points(y+1,x+1);
+    const cv::Vec3f& p00 = points(y,x);
+    const cv::Vec3f& p01 = points(y,x+1);
+    const cv::Vec3f& p10 = points(y+1,x);
+    const cv::Vec3f& p11 = points(y+1,x+1);
 
     cv::Vec3f p0 = (1-fx)*p00 + fx*p01;
     cv::Vec3f p1 = (1-fx)*p10 + fx*p11;
@@ -195,7 +194,7 @@ struct vec2i_hash {
     }
 };
 
-static void freeze_inner_params(ceres::Problem &problem, int edge_dist, cv::Mat_<uint8_t> &state, cv::Mat_<cv::Vec3d> &out,
+static void freeze_inner_params(ceres::Problem &problem, int edge_dist, const cv::Mat_<uint8_t> &state, cv::Mat_<cv::Vec3d> &out,
     cv::Mat_<cv::Vec2d> &loc, cv::Mat_<uint16_t> &loss_status, int inner_flags)
 {
     cv::Mat_<float> dist(state.size());
@@ -420,14 +419,14 @@ static float local_optimization(int radius, const cv::Vec2i &p, cv::Mat_<uint8_t
             options.use_mixed_precision_solves = true;
         }
     } else {
-        std::cerr << "Warning: CUDA_SPARSE requested but Ceres was not built with CUDA sparse support. Falling back to default solver." << std::endl;
+        std::cerr << "Warning: CUDA_SPARSE requested but Ceres was not built with CUDA sparse support. Falling back to default solver." << "\n";
     }
 #endif
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
 
     if (!quiet)
-        std::cout << "local solve radius " << radius << " " << summary.BriefReport() << std::endl;
+        std::cout << "local solve radius " << radius << " " << summary.BriefReport() << "\n";
 
     return sqrt(summary.final_cost/summary.num_residual_blocks);
 }
@@ -627,7 +626,7 @@ QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *c
     passTroughComputor pass;
     Chunked3d<uint8_t,passTroughComputor> dbg_tensor(pass, ds, cache);
     std::cout << "seed val " << origin << " " <<
-    (int)dbg_tensor(origin[2],origin[1],origin[0]) << std::endl;
+    (int)dbg_tensor(origin[2],origin[1],origin[0]) << "\n";
 
     ALifeTime *timer = new ALifeTime("search & optimization ...");
 
@@ -681,7 +680,7 @@ QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *c
     loss_count += emptytrace_create_missing_centered_losses(big_problem, loss_status, {y0,x0+1}, state, locs,  interp_global, proc_tensor, Ts);
     loss_count += emptytrace_create_missing_centered_losses(big_problem, loss_status, {y0+1,x0+1}, state, locs,  interp_global, proc_tensor, Ts);
 
-    std::cout << "init loss count " << loss_count << std::endl;
+    std::cout << "init loss count " << loss_count << "\n";
 
     ceres::Solver::Options options_big;
     options_big.linear_solver_type = ceres::SPARSE_SCHUR;
@@ -697,7 +696,7 @@ QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *c
             options_big.use_mixed_precision_solves = true;
         }
     } else {
-        std::cerr << "Warning: CUDA_SPARSE requested but Ceres was not built with CUDA sparse support. Falling back to default solver." << std::endl;
+        std::cerr << "Warning: CUDA_SPARSE requested but Ceres was not built with CUDA sparse support. Falling back to default solver." << "\n";
     }
 #endif
     options_big.minimizer_progress_to_stdout = false;
@@ -752,11 +751,11 @@ QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *c
 
         // For every point in the fringe (where we might expand the patch outwards), add to cands all
         // new 2D points we might add to the patch (and later find the corresponding 3D point for)
-        for(auto p : fringe)
+        for(const auto& p : fringe)
         {
             if ((state(p) & STATE_LOC_VALID) == 0) {
                 if (state(p) & STATE_COORD_VALID)
-                    for(auto n : neighs)
+                    for(const auto& n : neighs)
                         if (bounds.contains(cv::Point(p+n))
                             && (state(p+n) & (STATE_PROCESSING | STATE_LOC_VALID | STATE_COORD_VALID)) == 0) {
                             rest_ps.push_back(p+n);
@@ -764,7 +763,7 @@ QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *c
                 continue;
             }
 
-            for(auto n : neighs)
+            for(const auto& n : neighs)
                 if (bounds.contains(cv::Point(p+n))
                     && (state(p+n) & STATE_PROCESSING) == 0
                     && (state(p+n) & STATE_LOC_VALID) == 0) {
@@ -772,10 +771,10 @@ QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *c
                     cands.push_back(p+n);
                 }
         }
-        std::cout << "gen " << generation << " processing " << cands.size() << " fringe cands (total done " << succ << " fringe: " << fringe.size() << ")" << std::endl;
+        std::cout << "gen " << generation << " processing " << cands.size() << " fringe cands (total done " << succ << " fringe: " << fringe.size() << ")" << "\n";
         fringe.resize(0);
 
-        std::cout << "cands " << cands.size() << std::endl;
+        std::cout << "cands " << cands.size() << "\n";
         
         if (generation % 10 == 0)
             curr_ref_min = std::min(curr_ref_min, 5);
@@ -861,7 +860,7 @@ QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *c
                 ceres::Problem problem;
 
                 state(p) = STATE_LOC_VALID | STATE_COORD_VALID;
-                int local_loss_count = emptytrace_create_centered_losses(problem, p, state, locs, interp, proc_tensor, Ts);
+                //int local_loss_count = emptytrace_create_centered_losses(problem, p, state, locs, interp, proc_tensor, Ts);
 
                 ceres::Solver::Summary summary;
                 ceres::Solve(options, &problem, &summary);
@@ -945,7 +944,7 @@ QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *c
                                 break;
                         }
                         if (err > phys_fail_th) {
-                            std::cout << "local phys fail! " << err << std::endl;
+                            std::cout << "local phys fail! " << err << "\n";
 #pragma omp atomic
                             phys_fail_count++;
 #pragma omp atomic
@@ -984,20 +983,20 @@ QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *c
         // If there are now no fringe points, reduce the required compactness when considering cands for the next generation
         if (!fringe.size() && curr_ref_min > 2) {
             curr_ref_min--;
-            std::cout << used_area << std::endl;
+            std::cout << used_area << "\n";
             for(int j=used_area.y;j<used_area.br().y;j++)
                 for(int i=used_area.x;i<used_area.br().x;i++) {
                     if (state(j, i) & STATE_LOC_VALID)
                         fringe.push_back({j,i});
                 }
-            std::cout << "new limit " << curr_ref_min << " " << fringe.size() << std::endl;
+            std::cout << "new limit " << curr_ref_min << " " << fringe.size() << "\n";
         }
         else if (fringe.size())
             curr_ref_min = ref_max;
 
-        for(auto p: fringe)
+        for(const auto& p: fringe)
             if (locs(p)[0] == -1)
-                std::cout << "impossible! " << p << " " << cv::Vec2i(y0,x0) << std::endl;
+                std::cout << "impossible! " << p << " " << cv::Vec2i(y0,x0) << "\n";
 
         if (generation >= 3) {
             options_big.max_num_iterations = 10;
@@ -1036,10 +1035,10 @@ QuadSurface *space_tracing_quad_phys(z5::Dataset *ds, float scale, ChunkCache *c
         }
         else {
             // For early generations, re-solve the big problem, jointly optimising the locations of all points in the patch
-            std::cout << "running big solve" << std::endl;
+            std::cout << "running big solve" << "\n";
             ceres::Solve(options_big, &big_problem, &big_summary);
             std::cout << big_summary.BriefReport() << "\n";
-            std::cout << "avg err: " << sqrt(big_summary.final_cost/big_summary.num_residual_blocks) << std::endl;
+            std::cout << "avg err: " << sqrt(big_summary.final_cost/big_summary.num_residual_blocks) << "\n";
         }
 
         if (generation > 10 && global_opt) {
@@ -1126,7 +1125,7 @@ class resId_t
 {
 public:
     resId_t() {};
-    resId_t(int type, QuadSurface* qs, cv::Vec2i p) : _type(type), _sm(qs), _p(p) {};
+    resId_t(int type, QuadSurface* qs, const cv::Vec2i& p) : _type(type), _sm(qs), _p(p) {};
     resId_t(int type, QuadSurface* qs, const cv::Vec2i &a, const cv::Vec2i &b) : _type(type), _sm(qs)
     {
         if (a[0] == b[0]) {
@@ -1205,7 +1204,7 @@ public:
     }
     bool hasResId(const resId_t &id)
     {
-        // std::cout << "check hasResId " << id._sm << " " << id._type << " " << id._p << std::endl;
+        // std::cout << "check hasResId " << id._sm << " " << id._type << " " << id._p << "\n";
         return _res_blocks.count(id);
     }
     bool has(QuadSurface *qs, const cv::Vec2i &loc)
@@ -1289,7 +1288,7 @@ public:
     }
     void flip_x(int x0)
     {
-        std::cout << " src sizes " << _data.size() << " " << _surfs.size() << std::endl;
+        std::cout << " src sizes " << _data.size() << " " << _surfs.size() << "\n";
         SurfTrackerData old = *this;
         _data.clear();
         _res_blocks.clear();
@@ -1301,7 +1300,7 @@ public:
         for(auto &it : old._surfs)
             _surfs[{it.first[0],x0+x0-it.first[1]}] = it.second;
         
-        std::cout << " flipped sizes " << _data.size() << " " << _surfs.size() << std::endl;
+        std::cout << " flipped sizes " << _data.size() << " " << _surfs.size() << "\n";
     }
 // protected:
     std::unordered_map<SurfPoint,cv::Vec2d,SurfPoint_hash> _data;
@@ -1380,7 +1379,7 @@ static int add_surftrack_distloss_3D(cv::Mat_<cv::Vec3d> &points, const cv::Vec2
     float weight = (w == 2.0f) ? dist_loss_3d_w : w;
     ceres::ResidualBlockId tmp = problem.AddResidualBlock(DistLoss::Create(unit*cv::norm(off), weight), nullptr, &points(p)[0], &points(p+off)[0]);
 
-    // std::cout << cv::norm(points(p)-points(p+off)) << " tgt " << unit << points(p) << points(p+off) << std::endl;
+    // std::cout << cv::norm(points(p)-points(p+off)) << " tgt " << unit << points(p) << points(p+off) << "\n";
     if (res)
         *res = tmp;
 
@@ -1430,7 +1429,7 @@ static int add_surftrack_straightloss(QuadSurface *qs, const cv::Vec2i &p, const
     // Always use the global straight_weight for 2D
     w = straight_weight;
 
-    // std::cout << "add straight " << qs << p << o1 << o2 << o3 << std::endl;
+    // std::cout << "add straight " << qs << p << o1 << o2 << o3 << "\n";
     problem.AddResidualBlock(StraightLoss2D::Create(w), nullptr, &data.loc(qs, p+o1)[0], &data.loc(qs, p+o2)[0], &data.loc(qs, p+o3)[0]);
 
     if ((flags & OPTIMIZE_ALL) == 0) {
@@ -1458,7 +1457,7 @@ static int add_surftrack_straightloss_3D(const cv::Vec2i &p, const cv::Vec2i &o1
     // Always use the global straight_weight_3D for 3D
     w = straight_weight_3D;
 
-    // std::cout << "add straight " << qs << p << o1 << o2 << o3 << std::endl;
+    // std::cout << "add straight " << qs << p << o1 << o2 << o3 << "\n";
     ceres::ResidualBlockId tmp =
     problem.AddResidualBlock(StraightLoss::Create(w), nullptr, &points(p+o1)[0], &points(p+o2)[0], &points(p+o3)[0]);
     if (res)
@@ -1492,7 +1491,7 @@ static int cond_surftrack_straightloss_3D(int type, QuadSurface *qs, const cv::V
     return count;
 }
 
-static int add_surftrack_surfloss(QuadSurface *qs, const cv::Vec2i p, SurfTrackerData &data, ceres::Problem &problem, const cv::Mat_<uint8_t> &state,
+static int add_surftrack_surfloss(QuadSurface *qs, const cv::Vec2i& p, SurfTrackerData &data, ceres::Problem &problem, const cv::Mat_<uint8_t> &state,
     cv::Mat_<cv::Vec3d> &points, float step, ceres::ResidualBlockId *res = nullptr, float w = 0.1)
 {
     if ((state(p) & STATE_LOC_VALID) == 0 || !data.valid_int(qs, p))
@@ -1508,7 +1507,7 @@ static int add_surftrack_surfloss(QuadSurface *qs, const cv::Vec2i p, SurfTracke
 }
 
 //gen straigt loss given point and 3 offsets
-static int cond_surftrack_surfloss(int type, QuadSurface *qs, const cv::Vec2i p, SurfTrackerData &data, ceres::Problem &problem,
+static int cond_surftrack_surfloss(int type, QuadSurface *qs, const cv::Vec2i& p, SurfTrackerData &data, ceres::Problem &problem,
     const cv::Mat_<uint8_t> &state, cv::Mat_<cv::Vec3d> &points, float step)
 {
     resId_t id(type, qs, p);
@@ -1525,7 +1524,7 @@ static int cond_surftrack_surfloss(int type, QuadSurface *qs, const cv::Vec2i p,
 }
 
 //will optimize only the center point
-static int surftrack_add_local(QuadSurface *qs, const cv::Vec2i p, SurfTrackerData &data, ceres::Problem &problem,
+static int surftrack_add_local(QuadSurface *qs, const cv::Vec2i& p, SurfTrackerData &data, ceres::Problem &problem,
     const cv::Mat_<uint8_t> &state, cv::Mat_<cv::Vec3d> &points, float step, float src_step, int flags = 0, int *straigh_count_ptr = nullptr)
 {
     int count = 0;
@@ -1594,7 +1593,7 @@ static int surftrack_add_local(QuadSurface *qs, const cv::Vec2i p, SurfTrackerDa
 }
 
 //will optimize only the center point
-static int surftrack_add_global(QuadSurface *qs, const cv::Vec2i p, SurfTrackerData &data, ceres::Problem &problem, const cv::Mat_<uint8_t> &state,
+static int surftrack_add_global(QuadSurface *qs, const cv::Vec2i& p, SurfTrackerData &data, ceres::Problem &problem, const cv::Mat_<uint8_t> &state,
     cv::Mat_<cv::Vec3d> &points, float step, int flags = 0, float step_onsurf = 0)
 {
     if ((state(p) & (STATE_LOC_VALID | STATE_COORD_VALID)) == 0)
@@ -1661,7 +1660,7 @@ static int surftrack_add_global(QuadSurface *qs, const cv::Vec2i p, SurfTrackerD
     return count;
 }
 
-static double local_cost_destructive(QuadSurface *qs, const cv::Vec2i p, SurfTrackerData &data, cv::Mat_<uint8_t> &state,
+static double local_cost_destructive(QuadSurface *qs, const cv::Vec2i& p, SurfTrackerData &data, cv::Mat_<uint8_t> &state,
     cv::Mat_<cv::Vec3d> &points, float step, float src_step, cv::Vec3f loc, int *ref_count = nullptr, int *straight_count_ptr = nullptr)
 {
     uint8_t state_old = state(p);
@@ -1693,7 +1692,7 @@ static double local_cost_destructive(QuadSurface *qs, const cv::Vec2i p, SurfTra
 }
 
 
-static double local_cost(QuadSurface *qs, const cv::Vec2i p, SurfTrackerData &data, cv::Mat_<uint8_t> &state, cv::Mat_<cv::Vec3d> &points,
+static double local_cost(QuadSurface *qs, const cv::Vec2i& p, SurfTrackerData &data, cv::Mat_<uint8_t> &state, cv::Mat_<cv::Vec3d> &points,
     float step, float src_step, int *ref_count = nullptr, int *straight_count_ptr = nullptr)
 {
     int count;
@@ -1716,7 +1715,7 @@ static double local_cost(QuadSurface *qs, const cv::Vec2i p, SurfTrackerData &da
         return sqrt(test_loss/count);
 }
 
-static double local_solve(QuadSurface *qs, const cv::Vec2i p, SurfTrackerData &data, cv::Mat_<uint8_t> &state, cv::Mat_<cv::Vec3d> &points,
+static double local_solve(QuadSurface *qs, const cv::Vec2i& p, SurfTrackerData &data, cv::Mat_<uint8_t> &state, cv::Mat_<cv::Vec3d> &points,
     float step, float src_step, int flags)
 {
     ceres::Problem problem;
@@ -1776,10 +1775,10 @@ static cv::Mat_<cv::Vec3d> surftrack_genpoints_hr(SurfTrackerData &data, cv::Mat
                 }
             }
             if (!counts_hr(j*step+1,i*step+1) && inpaint) {
-                cv::Vec3d c00 = points(j,i);
-                cv::Vec3d c01 = points(j,i+1);
-                cv::Vec3d c10 = points(j+1,i);
-                cv::Vec3d c11 = points(j+1,i+1);
+                const cv::Vec3d& c00 = points(j,i);
+                const cv::Vec3d& c01 = points(j,i+1);
+                const cv::Vec3d& c10 = points(j+1,i);
+                const cv::Vec3d& c11 = points(j+1,i+1);
             
                 for(int sy=0;sy<=step;sy++)
                     for(int sx=0;sx<=step;sx++) {
@@ -1827,7 +1826,7 @@ static void optimize_surface_mapping(SurfTrackerData &data, cv::Mat_<uint8_t> &s
     cv::Rect static_bounds, float step, float src_step, const cv::Vec2i &seed, int closing_r, bool keep_inpainted = false, 
     const std::filesystem::path& tgt_dir = std::filesystem::path())
 {
-    std::cout << "optimizer: optimizing surface " << state.size() << " " << used_area <<  " " << static_bounds << std::endl;
+    std::cout << "optimizer: optimizing surface " << state.size() << " " << used_area <<  " " << static_bounds << "\n";
 
     cv::Mat_<cv::Vec3d> points_new = points.clone();
     QuadSurface* qs = new QuadSurface(points, {1,1});
@@ -1855,7 +1854,7 @@ static void optimize_surface_mapping(SurfTrackerData &data, cv::Mat_<uint8_t> &s
             options.use_mixed_precision_solves = true;
         }
     } else {
-        std::cerr << "Warning: CUDA_SPARSE requested but Ceres was not built with CUDA sparse support. Falling back to default solver." << std::endl;
+        std::cerr << "Warning: CUDA_SPARSE requested but Ceres was not built with CUDA sparse support. Falling back to default solver." << "\n";
     }
 #endif
     options.minimizer_progress_to_stdout = false;
@@ -1892,7 +1891,7 @@ static void optimize_surface_mapping(SurfTrackerData &data, cv::Mat_<uint8_t> &s
                     new_state(j, i) = STATE_COORD_VALID;
                     points_new(j,i) = {-3,-2,-4};
                     //TODO add local area solve
-                    double err = local_solve(qs, {j,i}, data_new, new_state, points_new, step, src_step, LOSS_3D_INDIRECT | SURF_LOSS);
+                    //double err = local_solve(qs, {j,i}, data_new, new_state, points_new, step, src_step, LOSS_3D_INDIRECT | SURF_LOSS);
                     if (points_new(j,i)[0] == -3) {
                         //FIXME actually check for solver failure?
                         new_state(j, i) = 0;
@@ -1910,7 +1909,7 @@ static void optimize_surface_mapping(SurfTrackerData &data, cv::Mat_<uint8_t> &s
                     problem_inpaint.SetParameterBlockConstant(&points_new(j,i)[0]);
     
     ceres::Solve(options, &problem_inpaint, &summary);
-    std::cout << summary.BriefReport() << std::endl;
+    std::cout << summary.BriefReport() << "\n";
     
     cv::Mat_<cv::Vec3d> points_inpainted = points_new.clone();
     
@@ -1929,7 +1928,7 @@ static void optimize_surface_mapping(SurfTrackerData &data, cv::Mat_<uint8_t> &s
             
     ceres::Problem problem;
         
-    std::cout << "optimizer: using " << used_area.tl() << used_area.br() << std::endl;
+    std::cout << "optimizer: using " << used_area.tl() << used_area.br() << "\n";
         
     int fix_points = 0;
     for(int j=used_area.y;j<used_area.br().y;j++)
@@ -1940,7 +1939,7 @@ static void optimize_surface_mapping(SurfTrackerData &data, cv::Mat_<uint8_t> &s
                 problem.AddResidualBlock(LinChkDistLoss::Create(data_inp.loc(sm_inp, {j,i}), 1.0), nullptr, &data_inp.loc(sm_inp, {j,i})[0]);
         }
         
-    std::cout << "optimizer: num fix points " << fix_points << std::endl;
+    std::cout << "optimizer: num fix points " << fix_points << "\n";
             
     data_inp.seed_loc = seed;
     data_inp.seed_coord = points_new(seed);
@@ -1953,7 +1952,7 @@ static void optimize_surface_mapping(SurfTrackerData &data, cv::Mat_<uint8_t> &s
                 problem.AddResidualBlock(ZLocationLoss<cv::Vec3d>::Create(points_new, data_inp.seed_coord[2] - (j-data.seed_loc[0])*step*src_step, z_loc_loss_w), new ceres::HuberLoss(1.0), &data_inp.loc(sm_inp, {j,i})[0]);
         }
         
-    std::cout << "optimizer: optimizing " << res_count << " residuals, seed " << seed << std::endl;
+    std::cout << "optimizer: optimizing " << res_count << " residuals, seed " << seed << "\n";
             
     for(int j=used_area.y;j<used_area.br().y;j++)
         for(int i=used_area.x;i<used_area.br().x;i++)
@@ -1968,8 +1967,8 @@ static void optimize_surface_mapping(SurfTrackerData &data, cv::Mat_<uint8_t> &s
     options.use_nonmonotonic_steps = true;
     options.use_inner_iterations = true;
     ceres::Solve(options, &problem, &summary);
-    std::cout << summary.FullReport() << std::endl;
-    std::cout << "optimizer: rms " << sqrt(summary.final_cost/summary.num_residual_blocks) << " count " << summary.num_residual_blocks << std::endl;
+    std::cout << summary.FullReport() << "\n";
+    std::cout << "optimizer: rms " << sqrt(summary.final_cost/summary.num_residual_blocks) << " count " << summary.num_residual_blocks << "\n";
     
     {
         cv::Mat_<cv::Vec3d> points_hr_inp = surftrack_genpoints_hr(data, new_state, points_inpainted, used_area, step, src_step, true);
@@ -1980,7 +1979,7 @@ static void optimize_surface_mapping(SurfTrackerData &data, cv::Mat_<uint8_t> &s
             delete dbg_surf;
         } catch (cv::Exception) {
             // We did not find a valid region of interest to expand to
-            std::cout << "optimizer: no valid region of interest found" << std::endl;   
+            std::cout << "optimizer: no valid region of interest found" << "\n";
         }        
     }
             
@@ -2114,7 +2113,7 @@ static void optimize_surface_mapping(SurfTrackerData &data, cv::Mat_<uint8_t> &s
                                 fringe_next(y,x) = 1;
                     }
                 }
-        std::cout << "optimizer: added " << added << std::endl;
+        std::cout << "optimizer: added " << added << "\n";
     }
                      
     //reset unsupported points
@@ -2149,7 +2148,7 @@ static void optimize_surface_mapping(SurfTrackerData &data, cv::Mat_<uint8_t> &s
             delete dbg_surf;
         } catch (cv::Exception) {
             // We did not find a valid region of interest to expand to
-            std::cout << "optimizer: no valid region of interest found" << std::endl;
+            std::cout << "optimizer: no valid region of interest found" << "\n";
         }        
     }
             
@@ -2162,8 +2161,8 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
     int global_steps_per_window = params.value("global_steps_per_window", 0);
 
 
-    std::cout << "global_steps_per_window: " << global_steps_per_window << std::endl;
-    std::cout << "flip_x: " << flip_x << std::endl;
+    std::cout << "global_steps_per_window: " << global_steps_per_window << "\n";
+    std::cout << "flip_x: " << flip_x << "\n";
     std::filesystem::path tgt_dir = params["tgt_dir"];
     
     std::unordered_map<std::string,QuadSurface*> surfs;
@@ -2182,18 +2181,18 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
     straight_min_count = params.value("straight_min_count", 1.0f);      // Minimum number of straight constraints
     inlier_base_threshold = params.value("inlier_base_threshold", 20);  // Starting threshold for inliers
 
-    std::cout << "  local_cost_inl_th: " << local_cost_inl_th << std::endl;
-    std::cout << "  same_surface_th: " << same_surface_th << std::endl;
-    std::cout << "  straight_weight: " << straight_weight << std::endl;
-    std::cout << "  straight_weight_3D: " << straight_weight_3D << std::endl;
-    std::cout << "  straight_min_count: " << straight_min_count << std::endl;
-    std::cout << "  inlier_base_threshold: " << inlier_base_threshold << std::endl;
-    std::cout << "  sliding_w_scale: " << sliding_w_scale << std::endl;
-    std::cout << "  z_loc_loss_w: " << z_loc_loss_w << std::endl;
-    std::cout << "  dist_loss_2d_w: " << dist_loss_2d_w << std::endl;
-    std::cout << "  dist_loss_3d_w: " << dist_loss_3d_w << std::endl;
+    std::cout << "  local_cost_inl_th: " << local_cost_inl_th << "\n";
+    std::cout << "  same_surface_th: " << same_surface_th << "\n";
+    std::cout << "  straight_weight: " << straight_weight << "\n";
+    std::cout << "  straight_weight_3D: " << straight_weight_3D << "\n";
+    std::cout << "  straight_min_count: " << straight_min_count << "\n";
+    std::cout << "  inlier_base_threshold: " << inlier_base_threshold << "\n";
+    std::cout << "  sliding_w_scale: " << sliding_w_scale << "\n";
+    std::cout << "  z_loc_loss_w: " << z_loc_loss_w << "\n";
+    std::cout << "  dist_loss_2d_w: " << dist_loss_2d_w << "\n";
+    std::cout << "  dist_loss_3d_w: " << dist_loss_3d_w << "\n";
 
-    std::cout << "total surface count: " << surfs_v.size() << std::endl;
+    std::cout << "total surface count: " << surfs_v.size() << "\n";
 
     std::set<QuadSurface*> approved_sm;
 
@@ -2210,16 +2209,16 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
     }
     
     for(auto qs : approved_sm)
-        std::cout << "approved: " << qs->name() << std::endl;
+        std::cout << "approved: " << qs->name() << "\n";
 
     for(auto &qs : surfs_v)
-        for(auto name : qs->overlapping_str)
+        for(const auto& name : qs->overlapping_str)
             if (surfs.count(name))
                 qs->overlapping.insert(surfs[name]);
 
-    std::cout << "total surface count (after defective filter): " << surfs.size() << std::endl;
+    std::cout << "total surface count (after defective filter): " << surfs.size() << "\n";
     std::cout << "seed " << seed << " name " << seed->name() << " seed overlapping: " 
-              << seed->overlapping.size() << "/" << seed->overlapping_str.size() << std::endl;
+              << seed->overlapping.size() << "/" << seed->overlapping_str.size() << "\n";
 
     cv::Mat_<cv::Vec3f> seed_points = seed->rawPoints();
 
@@ -2242,7 +2241,7 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
     int y0 = h/2;
     int r = 1;
     
-    std::cout << "starting with size " << size << " seed " << cv::Vec2i(y0,x0) << std::endl;
+    std::cout << "starting with size " << size << " seed " << cv::Vec2i(y0,x0) << "\n";
 
     std::vector<cv::Vec2i> neighs = {{1,0},{0,1},{-1,0},{0,-1}};
 
@@ -2261,7 +2260,7 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
     
     while (seed_points(seed_loc)[0] == -1) {
         seed_loc = {rand() % seed_points.rows, rand() % seed_points.cols };
-        std::cout << "try loc " << seed_loc << std::endl;
+        std::cout << "try loc " << seed_loc << "\n";
     }
 
     data.loc(seed,{y0,x0}) = {seed_loc[0], seed_loc[1]};
@@ -2272,16 +2271,16 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
     data.seed_coord = points(y0,x0);
     data.seed_loc = cv::Point2i(y0,x0);
     
-    std::cout << "seed coord " << data.seed_coord << " at " << data.seed_loc << std::endl;
+    std::cout << "seed coord " << data.seed_coord << " at " << data.seed_loc << "\n";
 
     state(y0,x0) = STATE_LOC_VALID | STATE_COORD_VALID;
     fringe.insert(cv::Vec2i(y0,x0));
 
     //insert initial surfs per location
-    for(auto p : fringe) {
+    for(const auto& p : fringe) {
         data.surfs(p).insert(seed);
         cv::Vec3f coord = points(p);
-        std::cout << "testing " << p << " from cands: " << seed->overlapping.size() << coord << std::endl;
+        std::cout << "testing " << p << " from cands: " << seed->overlapping.size() << coord << "\n";
         for(auto s : seed->overlapping) {
             auto ptr = s->pointer();
             if (s->pointTo(ptr, coord, same_surface_th) <= same_surface_th) {
@@ -2290,10 +2289,10 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
                 data.loc(s, p) = {loc[1], loc[0]};
             }
         }
-        std::cout << "fringe point " << p << " surfcount " << data.surfs(p).size() << " init " << data.loc(seed, p) << data.lookup_int(seed, p) << std::endl;
+        std::cout << "fringe point " << p << " surfcount " << data.surfs(p).size() << " init " << data.loc(seed, p) << data.lookup_int(seed, p) << "\n";
     }
 
-    std::cout << "starting from " << x0 << " " << y0 << std::endl;
+    std::cout << "starting from " << x0 << " " << y0 << "\n";
 
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_QR;
@@ -2319,12 +2318,12 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
             cands.insert(cv::Vec2i(y0-1,x0));
         }
         else
-            for(auto p : fringe)
+            for(const auto& p : fringe)
             {
                 if ((state(p) & STATE_LOC_VALID) == 0)
                     continue;
 
-                for(auto n : neighs) {
+                for(const auto& n : neighs) {
                     cv::Vec2i pn = p+n;
                     if (save_bounds_inv.contains(cv::Point(pn))
                         && (state(pn) & STATE_PROCESSING) == 0
@@ -2340,7 +2339,7 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
             }
             fringe.clear();
 
-            std::cout << "go with cands " << cands.size() << " inl_th " << curr_best_inl_th << std::endl;
+            std::cout << "go with cands " << cands.size() << " inl_th " << curr_best_inl_th << "\n";
 
             OmpThreadPointCol threadcol(3, cands);
 
@@ -2364,12 +2363,11 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
             
             mutex.lock_shared();
             SurfTrackerData &data_th = data_ths[omp_get_thread_num()];
-            int misses = 0;
-            for(auto added : added_points_threads[omp_get_thread_num()]) {
+            for(const auto& added : added_points_threads[omp_get_thread_num()]) {
                 data_th.surfs(added) = data.surfs(added);
                 for (auto &s : data.surfsC(added)) {
                     if (!data.has(s, added))
-                        std::cout << "where the heck is our data?" << std::endl;
+                        std::cout << "where the heck is our data?" << "\n";
                     else
                         data_th.loc(s, added) = data.loc(s, added);
                 }
@@ -2396,14 +2394,12 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
             for(auto ref_surf : local_surfs) {
                 int ref_count = 0;
                 cv::Vec2d avg = {0,0};
-                cv::Vec3d any_p = {0,0,0};
                 bool ref_seed = false;
                 for(int oy=std::max(p[0]-r,0);oy<=std::min(p[0]+r,h-1);oy++)
                     for(int ox=std::max(p[1]-r,0);ox<=std::min(p[1]+r,w-1);ox++)
                         if ((state(oy,ox) & STATE_LOC_VALID) && data_th.valid_int(ref_surf,{oy,ox})) {
                             ref_count++;
                             avg += data_th.loc(ref_surf,{oy,ox});
-                            any_p = points(cv::Vec2i(data_th.loc(ref_surf,{oy,ox})));
                             if (data_th.seed_loc == cv::Vec2i(oy,ox))
                                 ref_seed = true;
                         }
@@ -2423,7 +2419,6 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
                 int count_init = surftrack_add_local(ref_surf, p, data_th, problem, state, points, step, src_step, LOSS_ZLOC, &straight_count_init);
                 ceres::Solver::Summary summary;
                 ceres::Solve(options, &problem, &summary);
-                float cost_init = sqrt(summary.final_cost/count_init);
 
                 bool fail = false;
                 cv::Vec2d ref_loc = data_th.loc(ref_surf,p);
@@ -2451,12 +2446,12 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
 
                 //TODO could also have priorities!
                 if (approved_sm.count(ref_surf) && straight_count_init >= 2 && count_init >= 4) {
-                    std::cout << "found approved qs " << ref_surf->name() << std::endl;
+                    std::cout << "found approved qs " << ref_surf->name() << "\n";
 
                     // Log approved surface if not already logged
                     if (used_approved_names.insert(ref_surf->name()).second) {
                         mutex.lock();
-                        approved_log << ref_surf->name() << std::endl;
+                        approved_log << ref_surf->name() << "\n";
                         approved_log.flush();
                         mutex.unlock();
                     }
@@ -2701,7 +2696,6 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
         if (update_mapping) {
             dbg_counter = generation;
             SurfTrackerData opt_data = data;
-            cv::Rect all(0,0,w, h);
             cv::Mat_<uint8_t> opt_state = state.clone();
             cv::Mat_<cv::Vec3d> opt_points = points.clone(); 
             
@@ -2754,9 +2748,9 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
         if (!fringe.size() && w < max_width/step)
         {
             at_right_border = false;
-            std::cout << "expanding by " << sliding_w << std::endl;
+            std::cout << "expanding by " << sliding_w << "\n";
             
-            std::cout << size << bounds << save_bounds_inv << used_area << active_bounds << (used_area & active_bounds) << static_bounds << std::endl;
+            std::cout << size << bounds << save_bounds_inv << used_area << active_bounds << (used_area & active_bounds) << static_bounds << "\n";
             final_opts = global_steps_per_window;
             w += sliding_w;
             size = {w,h};
@@ -2781,7 +2775,7 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
 
             cv::Rect active = active_bounds & used_area;
 
-            std::cout << size << bounds << save_bounds_inv << used_area << active_bounds << (used_area & active_bounds) << static_bounds << std::endl;
+            std::cout << size << bounds << save_bounds_inv << used_area << active_bounds << (used_area & active_bounds) << static_bounds << "\n";
             fringe.clear();
             curr_best_inl_th = inlier_base_threshold;
             for(int j=active.y-2;j<=active.br().y+2;j++)
@@ -2801,7 +2795,7 @@ QuadSurface *grow_surf_from_surfs(QuadSurface *seed, const std::vector<QuadSurfa
     
     float const area_est_vx2 = loc_valid_count*src_step*src_step*step*step;
     float const area_est_cm2 = area_est_vx2 * voxelsize * voxelsize / 1e8;
-    std::cout << "area est: " << area_est_vx2 << " vx^2 (" << area_est_cm2 << " cm^2)" << std::endl;
+    std::cout << "area est: " << area_est_vx2 << " vx^2 (" << area_est_cm2 << " cm^2)" << "\n";
 
     cv::Mat_<cv::Vec3d> points_hr = surftrack_genpoints_hr(data, state, points, used_area, step, src_step);
 

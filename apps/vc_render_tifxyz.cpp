@@ -425,9 +425,9 @@ int main(int argc, char *argv[])
         try {
             affineTransform = loadAffineTransform(affineFile);
             hasAffine = true;
-            std::cout << "Loaded affine transform from: " << affineFile << std::endl;
+            std::cout << "Loaded affine transform from: " << affineFile << "\n";
         } catch (const std::exception& e) {
-            std::cerr << "Error loading affine transform: " << e.what() << std::endl;
+            std::cerr << "Error loading affine transform: " << e.what() << "\n";
             return EXIT_FAILURE;
         }
     }
@@ -436,15 +436,15 @@ int main(int argc, char *argv[])
     z5::filesystem::handle::Dataset ds_handle(group, std::to_string(group_idx), json::parse(std::ifstream(vol_path/std::to_string(group_idx)/".zarray")).value<std::string>("dimension_separator","."));
     std::unique_ptr<z5::Dataset> ds = z5::filesystem::openDataset(ds_handle);
 
-    std::cout << "zarr dataset size for scale group " << group_idx << ds->shape() << std::endl;
-    std::cout << "chunk shape shape " << ds->chunking().blockShape() << std::endl;
-    std::cout << "saving output to " << tgt_ptn << std::endl;
+    std::cout << "zarr dataset size for scale group " << group_idx << ds->shape() << "\n";
+    std::cout << "chunk shape shape " << ds->chunking().blockShape() << "\n";
+    std::cout << "saving output to " << tgt_ptn << "\n";
 
     if (std::abs(rotate_angle) > 1e-6) {
-        std::cout << "Rotation: " << rotate_angle << " degrees" << std::endl;
+        std::cout << "Rotation: " << rotate_angle << " degrees" << "\n";
     }
     if (flip_axis >= 0) {
-        std::cout << "Flip: " << (flip_axis == 0 ? "Vertical" : flip_axis == 1 ? "Horizontal" : "Both") << std::endl;
+        std::cout << "Flip: " << (flip_axis == 0 ? "Vertical" : flip_axis == 1 ? "Horizontal" : "Both") << "\n";
     }
 
     std::filesystem::path output_path(tgt_ptn);
@@ -457,7 +457,7 @@ int main(int argc, char *argv[])
         surf = load_quad_from_tifxyz(seg_path);
     }
     catch (...) {
-        std::cout << "error when loading: " << seg_path << std::endl;
+        std::cout << "error when loading: " << seg_path << "\n";
         return EXIT_FAILURE;
     }
 
@@ -485,7 +485,7 @@ int main(int argc, char *argv[])
         tgt_size = crop.size();
     }        
     
-    std::cout << "rendering size " << tgt_size << " at scale " << tgt_scale << " crop " << crop << std::endl;
+    std::cout << "rendering size " << tgt_size << " at scale " << tgt_scale << " crop " << crop << "\n";
     
     cv::Mat_<cv::Vec3f> points, normals;
     
@@ -512,9 +512,9 @@ int main(int argc, char *argv[])
             applyAffineTransform(points, normals, affineTransform);
         }
         if (globalFlipDecision) {
-            std::cout << "Orienting normals to point consistently (flipped)" << std::endl;
+            std::cout << "Orienting normals to point consistently (flipped)" << "\n";
         } else {
-            std::cout << "Orienting normals to point consistently (not flipped)" << std::endl;
+            std::cout << "Orienting normals to point consistently (not flipped)" << "\n";
         }
     }
 
@@ -562,9 +562,9 @@ int main(int argc, char *argv[])
                         orientationDetermined = true;
 
                         if (globalFlipDecision) {
-                            std::cout << "Orienting normals to point consistently (flipped) - determined from first chunk" << std::endl;
+                            std::cout << "Orienting normals to point consistently (flipped) - determined from first chunk" << "\n";
                         } else {
-                            std::cout << "Orienting normals to point consistently (not flipped) - determined from first chunk" << std::endl;
+                            std::cout << "Orienting normals to point consistently (not flipped) - determined from first chunk" << "\n";
                         }
                     }
 

@@ -30,16 +30,13 @@ static float find_intersection_direct(QuadSurface* surface, cv::Vec2f& loc, cons
     cv::Mat_<cv::Vec3f> points = surface->rawPoints();
     cv::Rect bounds = {0, 0, points.cols - 1, points.rows - 1};
 
-    bool changed = true;
     cv::Vec3f surface_point = surface->coord(ptr_loc);
     float best_dist_sq = dist_point_segment_sq(surface_point, p1, p2);
-    float current_dist_sq;
 
     std::vector<cv::Vec2f> search = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
     float step = init_step;
 
     while (true) {
-        changed = false;
 
         for (auto& off : search) {
             cv::Vec2f cand_loc_2f = loc + off * step;
@@ -52,24 +49,21 @@ static float find_intersection_direct(QuadSurface* surface, cv::Vec2f& loc, cons
                 continue;
 
             surface_point = surface->coord(cand_ptr_loc);
-            current_dist_sq = dist_point_segment_sq(surface_point, p1, p2);
+            float current_dist_sq = dist_point_segment_sq(surface_point, p1, p2);
 
             if (current_dist_sq < best_dist_sq) {
-                changed = true;
                 best_dist_sq = current_dist_sq;
                 loc = cand_loc_2f;
             }
         }
 
-        if (changed)
-            continue;
 
         step *= 0.5;
         if (step < min_step)
             break;
     }
 
-    return sqrt(best_dist_sq);
+    return sqrtf(best_dist_sq);
 }
 
 static cv::Vec2f find_closest_intersection(QuadSurface* surface, const cv::Vec3f& p1, const cv::Vec3f& p2, const cv::Vec3f& proximity_point, float& line_dist, float& prox_dist)
@@ -84,7 +78,7 @@ static cv::Vec2f find_closest_intersection(QuadSurface* surface, const cv::Vec3f
     cv::Vec3f zero_ptr(0, 0, 0);
     cv::Vec3f center_in_points = surface->loc_raw(zero_ptr);
 
-    srand(time(NULL));
+    srand(time(nullptr));
 
     for (int i = 0; i < 1000; ++i) { // 1000 random trials
         cv::Vec2f nominal_loc = {

@@ -28,37 +28,37 @@ signals:
     void pointDoubleClicked(uint64_t pointId);
 
 public slots:
-    void selectCollection(uint64_t collectionId);
-    void selectPoint(uint64_t pointId);
+    void selectCollection(uint64_t collectionId) const;
+    void selectPoint(uint64_t pointId) const;
 
 private slots:
-    void refreshTree();
-    void onCollectionAdded(uint64_t collectionId);
-    void onCollectionChanged(uint64_t collectionId);
-    void onCollectionRemoved(uint64_t collectionId);
-    void onPointAdded(const ColPoint& point);
-    void onPointChanged(const ColPoint& point);
-    void onPointRemoved(uint64_t pointId);
+    void refreshTree() const;
+    void onCollectionAdded(uint64_t collectionId) const;
+    void onCollectionChanged(uint64_t collectionId) const;
+    void onCollectionRemoved(uint64_t collectionId) const;
+    void onPointAdded(const ColPoint& point) const;
+    void onPointChanged(const ColPoint& point) const;
+    void onPointRemoved(uint64_t pointId) const;
 
-    void onResetClicked();
+    void onResetClicked() const;
     void onSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
-    void onNewNameClicked();
-    void onNameEdited(const QString &name);
-    void onAbsoluteWindingChanged(int state);
+    void onNewNameClicked() const;
+    void onNameEdited(const QString &name) const;
+    void onAbsoluteWindingChanged(int state) const;
     void onColorButtonClicked();
-    void onWindingEdited(double value);
-    void onWindingEnabledChanged(int state);
-    void onFillWindingPlusClicked();
-    void onFillWindingMinusClicked();
-    void onFillWindingEqualsClicked();
+    void onWindingEdited(double value) const;
+    void onWindingEnabledChanged(int state) const;
+    void onFillWindingPlusClicked() const;
+    void onFillWindingMinusClicked() const;
+    void onFillWindingEqualsClicked() const;
     void onSaveClicked();
     void onLoadClicked();
   
  private:
     void keyPressEvent(QKeyEvent *event) override;
     void setupUi();
-    void updateMetadataWidgets();
-    QStandardItem* findCollectionItem(uint64_t collectionId);
+    void updateMetadataWidgets() const;
+    QStandardItem* findCollectionItem(uint64_t collectionId) const;
 
     VCCollection *_point_collection = nullptr;
     uint64_t _selected_collection_id = 0;

@@ -11,14 +11,14 @@ class ConsoleOutputWidget : public QWidget
 
 public:
     explicit ConsoleOutputWidget(QWidget* parent = nullptr);
-    ~ConsoleOutputWidget();
-    void appendOutput(const QString& text);
+    ~ConsoleOutputWidget() override;
+    void appendOutput(const QString& text) const;
 
-    void clear();
-    void setTitle(const QString& title);
+    void clear() const;
+    void setTitle(const QString& title) const;
 
 public slots:
-    void copyToClipboard();
+    void copyToClipboard() const;
 
 private:
     QPlainTextEdit* _textEdit;

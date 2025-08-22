@@ -46,8 +46,7 @@ ConsoleOutputWidget::~ConsoleOutputWidget()
 {
 }
 
-void ConsoleOutputWidget::appendOutput(const QString& text)
-{
+void ConsoleOutputWidget::appendOutput(const QString& text) const {
     _textEdit->appendPlainText(text);
     
     // auto-scroll 
@@ -55,18 +54,15 @@ void ConsoleOutputWidget::appendOutput(const QString& text)
     scrollBar->setValue(scrollBar->maximum());
 }
 
-void ConsoleOutputWidget::clear()
-{
+void ConsoleOutputWidget::clear() const {
     _textEdit->clear();
 }
 
-void ConsoleOutputWidget::copyToClipboard()
-{
+void ConsoleOutputWidget::copyToClipboard() const {
     QApplication::clipboard()->setText(_textEdit->toPlainText());
 }
 
-void ConsoleOutputWidget::setTitle(const QString& title)
-{
+void ConsoleOutputWidget::setTitle(const QString& title) const {
     _titleLabel->setText(title);
 }
 

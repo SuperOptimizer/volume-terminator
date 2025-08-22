@@ -10,7 +10,7 @@ class SegmentRenderThread : public QThread
 
 public:
     SegmentRenderThread(QObject *parent = nullptr);
-    ~SegmentRenderThread();
+    ~SegmentRenderThread() override;
 
     void setParameters(
         const QString& volumePath,

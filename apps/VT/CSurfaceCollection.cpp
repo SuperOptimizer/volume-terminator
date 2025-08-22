@@ -5,16 +5,16 @@
 
 CSurfaceCollection::~CSurfaceCollection()
 {
-    for (auto& pair : _surfs) {
-        delete pair.second;
+    for (auto &val: _surfs | std::views::values) {
+        delete val;
     }
 
-    for (auto& pair : _pois) {
-        delete pair.second;
+    for (auto &val: _pois | std::views::values) {
+        delete val;
     }
 
-    for (auto& pair : _intersections) {
-        delete pair.second;
+    for (auto &val: _intersections | std::views::values) {
+        delete val;
     }
 }
 
@@ -34,56 +34,52 @@ void CSurfaceCollection::setPOI(const std::string &name, POI *poi)
 
 Surface* CSurfaceCollection::surface(const std::string &name)
 {
-    if (!_surfs.count(name))
+    if (!_surfs.contains(name))
         return nullptr;
     return _surfs[name];
 }
 
 POI *CSurfaceCollection::poi(const std::string &name)
 {
-    if (!_pois.count(name))
+    if (!_pois.contains(name))
         return nullptr;
     return _pois[name];
 }
 
-std::vector<Surface*> CSurfaceCollection::surfaces()
-{
+std::vector<Surface*> CSurfaceCollection::surfaces() const {
     std::vector<Surface*> surfaces;
     surfaces.reserve(_surfs.size());
 
-    for(auto surface : _surfs) {
-        surfaces.push_back(surface.second);  
+    for(const auto &val: _surfs | std::views::values) {
+        surfaces.push_back(val);
     } 
 
     return surfaces;
 }
 
-std::vector<POI*> CSurfaceCollection::pois()
-{
+std::vector<POI*> CSurfaceCollection::pois() const {
     std::vector<POI*> pois;
     pois.reserve(_pois.size());
 
-    for(auto poi : _pois) {
-        pois.push_back(poi.second);  
+    for(const auto &val: _pois | std::views::values) {
+        pois.push_back(val);
     } 
 
     return pois;
 }
 
-std::vector<std::string> CSurfaceCollection::surfaceNames()
-{
+std::vector<std::string> CSurfaceCollection::surfaceNames() const {
     std::vector<std::string> keys;
-    for(auto &it : _surfs)
-        keys.push_back(it.first);
+    for(const auto &key: _surfs | std::views::keys)
+        keys.push_back(key);
     
     return keys;
 }
 
-std::vector<std::string> CSurfaceCollection::poiNames()
-{
+std::vector<std::string> CSurfaceCollection::poiNames() const {
     std::vector<std::string> keys;
-    for(auto &it : _pois)
-        keys.push_back(it.first);
+    for(const auto &key: _pois | std::views::keys)
+        keys.push_back(key);
 
     return keys;
 }
@@ -96,29 +92,28 @@ void CSurfaceCollection::setIntersection(const std::string &a, const std::string
 
 Intersection *CSurfaceCollection::intersection(const std::string &a, const std::string &b)
 {
-    if (_intersections.count({a,b}))
+    if (_intersections.contains({a,b}))
         return _intersections[{a,b}];
         
-    if (_intersections.count({b,a}))
+    if (_intersections.contains({b,a}))
         return _intersections[{b,a}];
     
     return nullptr;
 }
 
-std::vector<std::pair<std::string,std::string>> CSurfaceCollection::intersections(const std::string &a)
-{
+std::vector<std::pair<std::string,std::string>> CSurfaceCollection::intersections(const std::string &a) const {
     std::vector<std::pair<std::string,std::string>> res;
 
     if (!a.size()) {
-        for(auto item : _intersections)
-            res.push_back(item.first);
+        for(const auto &key: _intersections | std::views::keys)
+            res.push_back(key);
     }
     else
-        for(auto item : _intersections) {
-            if (item.first.first == a)
-                res.push_back(item.first);
-            else if (item.first.second == a)
-                res.push_back(item.first);
+        for(const auto &key: _intersections | std::views::keys) {
+            if (key.first == a)
+                res.push_back(key);
+            else if (key.second == a)
+                res.push_back(key);
         }
     return res;
 }

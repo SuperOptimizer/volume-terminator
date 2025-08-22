@@ -16,12 +16,12 @@ struct DistLoss {
     bool operator()(const T* const a, const T* const b, T* residual) const {
         if (val(a[0]) == -1 && val(a[1]) == -1 && val(a[2]) == -1) {
             residual[0] = T(0);
-            std::cout << "invalid DistLoss CORNER" << std::endl;
+            std::cout << "invalid DistLoss CORNER" << "\n";
             return true;
         }
         if (val(b[0]) == -1 && val(b[1]) == -1 && val(b[2]) == -1) {
             residual[0] = T(0);
-            std::cout << "invalid DistLoss CORNER" << std::endl;
+            std::cout << "invalid DistLoss CORNER" << "\n";
             return true;
         }
 
@@ -60,12 +60,12 @@ struct DistLoss2D {
     bool operator()(const T* const a, const T* const b, T* residual) const {
         if (val(a[0]) == -1 && val(a[1]) == -1 && val(a[2]) == -1) {
             residual[0] = T(0);
-            std::cout << "invalid DistLoss2D CORNER" << std::endl;
+            std::cout << "invalid DistLoss2D CORNER" << "\n";
             return true;
         }
         if (val(b[0]) == -1 && val(b[1]) == -1 && val(b[2]) == -1) {
             residual[0] = T(0);
-            std::cout << "invalid DistLoss2D CORNER" << std::endl;
+            std::cout << "invalid DistLoss2D CORNER" << "\n";
             return true;
         }
 
@@ -77,7 +77,7 @@ struct DistLoss2D {
 
         if (dist <= T(0)) {
             residual[0] = T(_w)*(d[0]*d[0] + d[1]*d[1] - T(1));
-            std::cout << "uhohh" << std::endl;
+            std::cout << "uhohh" << "\n";
         }
         else {
             if (dist < T(_d))
@@ -171,7 +171,7 @@ struct StraightLoss2D {
 
         if (l1 <= T(0) || l2 <= T(0)) {
             residual[0] = T(_w)*((d1[0]*d1[0] + d1[1]*d1[1])*(d2[0]*d2[0] + d2[1]*d2[1]) - T(1));
-            std::cout << "uhohh2" << std::endl;
+            std::cout << "uhohh2" << "\n";
             return true;
         }
 

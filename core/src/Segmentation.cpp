@@ -5,7 +5,7 @@
 static const std::filesystem::path METADATA_FILE = "meta.json";
 
 
-Segmentation::Segmentation(std::filesystem::path path)
+Segmentation::Segmentation(const std::filesystem::path& path)
 {
 _path = path;
     _uuid = path.stem();
@@ -14,7 +14,7 @@ _path = path;
     //_metadata = Metadata(path / METADATA_FILE);
 }
 
-Segmentation::Segmentation(std::filesystem::path path, std::string uuid, std::string name)
+Segmentation::Segmentation(const std::filesystem::path &path, const std::string &uuid, const std::string &name)
 {
 _path = path;
     _uuid = uuid;
@@ -22,19 +22,14 @@ _path = path;
     _format = "tifxyz"; //FIXME: pull this from metadata
 }
 
-auto Segmentation::New(std::filesystem::path path) -> std::shared_ptr<Segmentation>
+auto Segmentation::New(const std::filesystem::path& path) -> std::shared_ptr<Segmentation>
 {
     return std::make_shared<Segmentation>(path);
 }
 
-auto Segmentation::New(std::filesystem::path path, std::string uuid, std::string name)
+auto Segmentation::New(const std::filesystem::path& path, const std::string& uuid, const std::string& name)
     -> std::shared_ptr<Segmentation>
 {
     return std::make_shared<Segmentation>(path, uuid, name);
 }
 
-
-
-
-template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
-template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;

@@ -111,7 +111,7 @@ IntersectVec getIntersects(const cv::Vec2i &seed, const cv::Mat_<cv::Vec3f> &poi
         if (!loc_valid_xy(points,loc))
             continue;
         
-        // std::cout << dist << res << loc << std::endl;
+        // std::cout << dist << res << loc << "\n";
         
         bool found = false;
         for(auto l : locs) {
@@ -137,7 +137,7 @@ IntersectVec getIntersects(const cv::Vec2i &seed, const cv::Mat_<cv::Vec3f> &poi
     //we could have two groups (other part of the scroll), in that case the x locations should be between the ones of the first group!
 
     // for(auto p : dist_locs)
-        // std::cout << p.first << p.second << std::endl;
+        // std::cout << p.first << p.second << "\n";
     
     bool two_halves = false;
     for(int i=1;i<dist_locs.size()-1;i++) 
@@ -145,11 +145,11 @@ IntersectVec getIntersects(const cv::Vec2i &seed, const cv::Mat_<cv::Vec3f> &poi
             two_halves = true;
         }
         
-    // std::cout << "two " << two_halves << std::endl;
+    // std::cout << "two " << two_halves << "\n";
     
     if (!two_halves) {
         std::sort(dist_locs.begin(), dist_locs.end(), [](auto a, auto b) {return a.second[0] < b.second[0]; });
-        // std::cout << std::endl;
+        // std::cout << "\n";
         return dist_locs;
     }
 
@@ -163,7 +163,7 @@ IntersectVec getIntersects(const cv::Vec2i &seed, const cv::Mat_<cv::Vec3f> &poi
     bool seed_in_a = (a.back().first == 0.01);
     
     for(auto pair : dist_locs) {
-        // std::cout << pair.first << std::endl;
+        // std::cout << pair.first << "\n";
         if (abs(pair.first - a.back().first) < abs(pair.first - b.back().first)) {
             a.push_back(pair);
             if (pair.first == 0.01)
@@ -173,7 +173,7 @@ IntersectVec getIntersects(const cv::Vec2i &seed, const cv::Mat_<cv::Vec3f> &poi
             b.push_back(pair);
     }
     
-    // std::cout << "seed " << seed_in_a << std::endl;
+    // std::cout << "seed " << seed_in_a << "\n";
      
     if (seed_in_a) {
         dist_locs = a;
@@ -182,11 +182,11 @@ IntersectVec getIntersects(const cv::Vec2i &seed, const cv::Mat_<cv::Vec3f> &poi
         dist_locs = b;
     
     std::sort(dist_locs.begin(), dist_locs.end(), [](auto a, auto b) {return a.second[0] < b.second[0]; });
-    // std::cout << "out" << std::endl;
+    // std::cout << "out" << "\n";
     // for(auto p : dist_locs)
-        // std::cout << p.first << p.second << std::endl;
+        // std::cout << p.first << p.second << "\n";
         
-    // std::cout << std::endl;
+    // std::cout << "\n";
     return dist_locs;
 }
 
@@ -274,8 +274,8 @@ std::string time_str()
 int main(int argc, char *argv[])
 {
     if (argc != 2 && argc != 6) {
-        std::cout << "usage: " << argv[0] << " <tiffxyz>" << std::endl;
-        std::cout << "or: " << argv[0] << " <tiffxyz> <cropx> <cropy> <cropyw> <croph>" << std::endl;
+        std::cout << "usage: " << argv[0] << " <tiffxyz>" << "\n";
+        std::cout << "or: " << argv[0] << " <tiffxyz> <cropx> <cropy> <cropyw> <croph>" << "\n";
         return EXIT_SUCCESS;
     }
     
@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
         surf = load_quad_from_tifxyz(seg_path);
     }
     catch (...) {
-        std::cout << "error when loading: " << seg_path << std::endl;
+        std::cout << "error when loading: " << seg_path << "\n";
         return EXIT_FAILURE;
     }
 
@@ -317,17 +317,17 @@ int main(int argc, char *argv[])
     }
     
     // for(auto pair : intersects) {
-    //     std::cout << pair.first << pair.second << std::endl;
+    //     std::cout << pair.first << pair.second << "\n";
     // }
     
     for(auto &iv : intersects) {
         cv::Vec3b col = {50+rand() % 155,50+rand() % 155,50+rand() % 155};
         for(auto &pair : iv) {
             // img(pair.second[1],pair.second[0]) = col;
-            // std::cout << pair.first << pair.second << std::endl;
+            // std::cout << pair.first << pair.second << "\n";
             cv::circle(img, cv::Point(pair.second), 3, col, -1);
         }
-        // std::cout << std::endl;
+        // std::cout << "\n";
     }
     cv::imwrite("dbg.tif", img);
     
@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
     
     std::vector<std::vector<int>> wind_dists_x(points.cols/wind_sd+1);
     
-    std::cout << "x size " << wind_dists_x.size() << std::endl;
+    std::cout << "x size " << wind_dists_x.size() << "\n";
     
     for(auto &iv : intersects) {
         if (iv.size() > 4)
@@ -343,7 +343,7 @@ int main(int argc, char *argv[])
                 int x1 = iv[n].second[0];
                 int x2 = iv[n+1].second[0];
                 float dist = x2-x1;
-                // std::cout << dist << std::endl;
+                // std::cout << dist << "\n";
                 wind_dists_x[x1/wind_sd].push_back(dist);
                 wind_dists_x[x2/wind_sd].push_back(dist);
             }
@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
     
     std::vector<int> wind_x_ref(wind_dists_x.size());
     
-    std::cout << "final out " << wind_dists_x.size() << std::endl;
+    std::cout << "final out " << wind_dists_x.size() << "\n";
     int last = 0;
     int first = 0;
     for(int i=0;i<wind_dists_x.size();i++) {
@@ -372,8 +372,8 @@ int main(int argc, char *argv[])
     }
     
     for(auto w : wind_x_ref)
-        std::cout << "wind x step: " << w << std::endl;
-    // std::cout << dists[dists.size()/2] << std::endl;
+        std::cout << "wind x step: " << w << "\n";
+    // std::cout << dists[dists.size()/2] << "\n";
     
     cv::Mat_<float> winding(points.size(), 0);
     cv::Mat_<float> wind_w(points.size(), 0);
@@ -427,17 +427,17 @@ int main(int argc, char *argv[])
                 
                 int ref_x = wind_x_ref[std::min<int>((x1+x2)/wind_sd, wind_x_ref.size()-1)];
                 
-                // std::cout << abs(x2-x1 - ref_x) << " " << x2-x1 << " vs " << ref_x << " wot " << x1 << " " << x2 << p1i << p2i << std::endl;
+                // std::cout << abs(x2-x1 - ref_x) << " " << x2-x1 << " vs " << ref_x << " wot " << x1 << " " << x2 << p1i << p2i << "\n";
                 
                 if (abs(x2-x1 - ref_x) > ref_x/3)
                     continue;
                 
                 if (wind_w(p1i) == 0 && wind_w(p2i) == 0) {
-                    // std::cout << "both 0" << std::endl;
+                    // std::cout << "both 0" << "\n";
                     continue;
                 }
                 
-                // std::cout << "go" << std::endl;
+                // std::cout << "go" << "\n";
                 
                 if (wind_w(p2i) == 0) {
                     expanded = true;
@@ -470,7 +470,7 @@ int main(int argc, char *argv[])
             wind_w_out.copyTo(wind_w);
         }
         else {
-            // std::cout << "w " << rough_w << std::endl;
+            // std::cout << "w " << rough_w << "\n";
             winding = winding_out*rough_w + winding*(1-rough_w);
             wind_w = wind_w_out*rough_w + wind_w*(1-rough_w);
         }
@@ -532,7 +532,7 @@ int main(int argc, char *argv[])
             
         if (it % 50 == 0 || ramp == -50) {
             cv::imwrite("wind_w.tif", wind_w);
-            std::cout << "finished it " << it << std::endl;
+            std::cout << "finished it " << it << "\n";
             
             cv::Mat_<cv::Vec3b> vis(points.size(), {0,0,0});
             cv::Mat_<float> winding_err(points.size());

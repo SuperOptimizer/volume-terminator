@@ -166,13 +166,11 @@ void CSegmentationEditorWindow::onStepSizeChanged(int value)
     onOffsetChanged(offsetSlider->value());
 }
 
-void CSegmentationEditorWindow::onMoveForward()
-{
+void CSegmentationEditorWindow::onMoveForward() const {
     offsetSlider->setValue(offsetSlider->value() + 1);
 }
 
-void CSegmentationEditorWindow::onMoveBackward()
-{
+void CSegmentationEditorWindow::onMoveBackward() const {
     offsetSlider->setValue(offsetSlider->value() - 1);
 }
 

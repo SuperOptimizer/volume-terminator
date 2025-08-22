@@ -16,15 +16,15 @@ class CSegmentationEditorWindow : public QMainWindow
 
 public:
     CSegmentationEditorWindow(CSurfaceCollection* surfCol, QWidget* parent = nullptr);
-    ~CSegmentationEditorWindow();
+    ~CSegmentationEditorWindow() override;
 
     void setSegmentationSurface(const std::string& name);
 
 private slots:
     void onOffsetChanged(int value);
     void onStepSizeChanged(int value);
-    void onMoveForward();
-    void onMoveBackward();
+    void onMoveForward() const;
+    void onMoveBackward() const;
     void onReset();
 
 signals:

@@ -48,7 +48,7 @@ public:
     };
 
     explicit VCCollection(QObject* parent = nullptr);
-    ~VCCollection();
+    ~VCCollection() override;
 
     uint64_t addCollection(const std::string& name);
     ColPoint addPoint(const std::string& collectionName, const cv::Vec3f& point);

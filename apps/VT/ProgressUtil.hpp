@@ -13,7 +13,7 @@ class ProgressUtil : public QObject
 public:
     explicit ProgressUtil(QStatusBar* statusBar, QObject* parent = nullptr);
     
-    ~ProgressUtil();
+    ~ProgressUtil() override;
 
     /**
      * @brief Start a progress animation in the status bar
@@ -26,7 +26,7 @@ public:
      * @param message The final message to display
      * @param timeout How long to display the message (in ms, 0 for indefinite)
      */
-    void stopAnimation(const QString& message, int timeout = 15000);
+    void stopAnimation(const QString& message, int timeout = 15000) const;
 
 private slots:
     void updateAnimation();

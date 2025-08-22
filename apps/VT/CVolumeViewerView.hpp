@@ -8,14 +8,14 @@ class CVolumeViewerView : public QGraphicsView
     Q_OBJECT
     
 public:
-    CVolumeViewerView(QWidget* parent = 0);
-    void mouseReleaseEvent(QMouseEvent *event);
-    void mousePressEvent(QMouseEvent *event);
-    void mouseMoveEvent(QMouseEvent *event);
-    void wheelEvent(QWheelEvent *event);
-    void scrollContentsBy(int dx, int dy);
-    void keyPressEvent(QKeyEvent *event);
-    void keyReleaseEvent(QKeyEvent *event);
+    CVolumeViewerView(QWidget* parent = nullptr);
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
+    void scrollContentsBy(int dx, int dy) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
     /// Set physical voxel size (units per scene-unit, e.g. µm/pixel).
     /// Call this after you load your Zarr spacing metadata.
@@ -43,7 +43,7 @@ protected:
 
  private:
     /// Round “ideal” length to 1,2 or 5 × 10^n
-    double chooseNiceLength(double nominal) const;
+    static double chooseNiceLength(double nominal);
 
     // µm per scene-unit (pixel)  
     double m_vx = 32.0, m_vy = 32.0;

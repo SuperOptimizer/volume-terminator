@@ -23,13 +23,13 @@ class DrawingWidget : public QWidget
     
 public:
     explicit DrawingWidget(QWidget* parent = nullptr);
-    ~DrawingWidget();
+    ~DrawingWidget() override;
     
     /** Set the volume package */
-    void setVolumePkg(std::shared_ptr<VolumePkg> vpkg);
+    void setVolumePkg(const std::shared_ptr<VolumePkg> &vpkg);
     
     /** Set the current volume */
-    void setCurrentVolume(std::shared_ptr<Volume> volume);
+    void setCurrentVolume(const std::shared_ptr<Volume> &volume);
     
     /** Set the cache for volume data access */
     void setCache(ChunkCache* cache);
@@ -53,23 +53,23 @@ public:
     PathData::BrushShape getBrushShape() const { return brushShape; }
     
     /** Toggle drawing mode */
-    void toggleDrawingMode();
+    void toggleDrawingMode() const;
 
 public slots:
     /** Handle volume change */
-    void onVolumeChanged(std::shared_ptr<Volume> vol);
-    void onVolumeChanged(std::shared_ptr<Volume> vol, const std::string& volumeId);
+    void onVolumeChanged(const std::shared_ptr<Volume>& vol);
+    void onVolumeChanged(const std::shared_ptr<Volume> &vol, const std::string& volumeId);
     
     /** Handle mouse events from volume viewers */
-    void onMousePress(cv::Vec3f vol_point, cv::Vec3f normal, Qt::MouseButton button, Qt::KeyboardModifiers modifiers);
-    void onMouseMove(cv::Vec3f vol_point, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers);
-    void onMouseRelease(cv::Vec3f vol_point, Qt::MouseButton button, Qt::KeyboardModifiers modifiers);
+    void onMousePress(const cv::Vec3f& vol_point, const cv::Vec3f& normal, Qt::MouseButton button, Qt::KeyboardModifiers modifiers);
+    void onMouseMove(const cv::Vec3f &vol_point, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers);
+    void onMouseRelease(const cv::Vec3f& vol_point, Qt::MouseButton button, Qt::KeyboardModifiers modifiers);
     
     /** Handle Z-slice changes */
     void updateCurrentZSlice(int z);
     
     /** Handle surface reload */
-    void onSurfacesLoaded();
+    void onSurfacesLoaded() const;
 
 signals:
     /** Emitted when paths change */
@@ -97,13 +97,13 @@ private:
     void setupUI();
     
     /** Update UI based on current state */
-    void updateUI();
+    void updateUI() const;
     
     /** Start drawing a new path */
-    void startDrawing(cv::Vec3f startPoint);
+    void startDrawing(const cv::Vec3f& startPoint);
     
     /** Add point to current path */
-    void addPointToPath(cv::Vec3f point);
+    void addPointToPath(const cv::Vec3f &point);
     
     /** Finalize current path */
     void finalizePath();
@@ -115,23 +115,23 @@ private:
     void updateColorPreview();
     
     /** Generate mask from drawn paths */
-    cv::Mat generateMask();
+    cv::Mat generateMask() const;
     
     /** Save mask to file */
-    void saveMask(const cv::Mat& mask, const std::string& filename);
+    static void saveMask(const cv::Mat& mask, const std::string& filename);
     
     /** Check if a volume point is valid (within bounds and not -1) */
     bool isValidVolumePoint(const cv::Vec3f& point) const;
     
     /** Process paths to apply eraser operations */
-    QList<PathData> processPathsWithErasers(const QList<PathData>& rawPaths) const;
+    static QList<PathData> processPathsWithErasers(const QList<PathData>& rawPaths);
     
     /** Calculate distance from point to line segment */
-    float pointToSegmentDistance(const cv::Vec3f& point, const cv::Vec3f& segStart, const cv::Vec3f& segEnd) const;
+    static float pointToSegmentDistance(const cv::Vec3f& point, const cv::Vec3f& segStart, const cv::Vec3f& segEnd);
     
     /** Check if a point is within eraser brush */
-    bool isPointInEraserBrush(const cv::Vec3f& point, const cv::Vec3f& eraserPoint, 
-                              float eraserRadius, PathData::BrushShape brushShape) const;
+    static bool isPointInEraserBrush(const cv::Vec3f& point, const cv::Vec3f& eraserPoint,
+                                     float eraserRadius, PathData::BrushShape brushShape);
 
 private:
     // Volume data

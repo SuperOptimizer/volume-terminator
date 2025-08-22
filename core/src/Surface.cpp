@@ -9,7 +9,6 @@
 #include <opencv2/calib3d.hpp>
 #include <opencv2/highgui.hpp>
 
-#include <unordered_map>
 #include <nlohmann/json.hpp>
 
 void write_overlapping_json(const std::filesystem::path& seg_path, const std::set<std::string>& overlapping_names) {
@@ -17,7 +16,7 @@ void write_overlapping_json(const std::filesystem::path& seg_path, const std::se
     overlap_json["overlapping"] = std::vector<std::string>(overlapping_names.begin(), overlapping_names.end());
 
     std::ofstream o(seg_path / "overlapping.json");
-    o << std::setw(4) << overlap_json << std::endl;
+    o << std::setw(4) << overlap_json << '\n';
 }
 
 std::set<std::string> read_overlapping_json(const std::filesystem::path& seg_path) {
@@ -58,19 +57,19 @@ Surface::~Surface()
     }
 }
 
-PlaneSurface::PlaneSurface(cv::Vec3f origin_, cv::Vec3f normal) : _origin(origin_)
+PlaneSurface::PlaneSurface(const cv::Vec3f& origin_, const cv::Vec3f &normal) : _origin(origin_)
 {
     cv::normalize(normal, _normal);
     update();
 };
 
-void PlaneSurface::setNormal(cv::Vec3f normal)
+void PlaneSurface::setNormal(const cv::Vec3f& normal)
 {
     cv::normalize(normal, _normal);
     update();
 }
 
-void PlaneSurface::setOrigin(cv::Vec3f origin)
+void PlaneSurface::setOrigin(const cv::Vec3f& origin)
 {
     _origin = origin;
     update();
@@ -81,8 +80,7 @@ cv::Vec3f PlaneSurface::origin()
     return _origin;
 }
 
-float PlaneSurface::pointDist(cv::Vec3f wp)
-{
+float PlaneSurface::pointDist(const cv::Vec3f& wp) const {
     float plane_off = _origin.dot(_normal);
     float scalarp = wp.dot(_normal) - plane_off /*- _z_off*/;
 
@@ -131,7 +129,7 @@ static cv::Vec3f vy_from_orig_norm(const cv::Vec3f &o, const cv::Vec3f &n)
     return {v[1],v[0],v[2]};
 }
 
-static void vxy_from_normal(cv::Vec3f orig, cv::Vec3f normal, cv::Vec3f &vx, cv::Vec3f &vy)
+static void vxy_from_normal(const cv::Vec3f& orig, const cv::Vec3f& normal, cv::Vec3f &vx, cv::Vec3f &vy)
 {
     vx = vx_from_orig_norm(orig, normal);
     vy = vy_from_orig_norm(orig, normal);
@@ -166,15 +164,14 @@ void PlaneSurface::update()
     _T = transf({3,0,1,3});
 }
 
-cv::Vec3f PlaneSurface::project(cv::Vec3f wp, float render_scale, float coord_scale)
-{
+cv::Vec3f PlaneSurface::project(const cv::Vec3f& wp, float render_scale, float coord_scale) const {
     cv::Vec3d res = _M*cv::Vec3d(wp)+_T;
     res *= render_scale*coord_scale;
 
     return {res(0), res(1), res(2)};
 }
 
-float PlaneSurface::scalarp(cv::Vec3f point) const
+float PlaneSurface::scalarp(const cv::Vec3f& point) const
 {
     return point.dot(_normal) - _origin.dot(_normal);
 }
@@ -306,8 +303,7 @@ cv::Vec3f QuadSurface::loc(const cv::Vec3f &ptr, const cv::Vec3f &offset)
     return nominal_loc(offset, ptr, _scale);
 }
 
-cv::Vec3f QuadSurface::loc_raw(const cv::Vec3f &ptr)
-{
+cv::Vec3f QuadSurface::loc_raw(const cv::Vec3f &ptr) const {
     return internal_loc(_center, ptr, _scale);
 }
 
@@ -401,7 +397,7 @@ static float tdist_sum(const cv::Vec3f &v, const std::vector<cv::Vec3f> &tgts, c
 //search location in points where we minimize error to multiple objectives using iterated local search
 //tgts,tds -> distance to some POIs
 //plane -> stay on plane
-float min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f &out, const std::vector<cv::Vec3f> &tgts, const std::vector<float> &tds, PlaneSurface *plane, float init_step, float min_step)
+float min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f &out, const std::vector<cv::Vec3f> &tgts, const std::vector<float> &tds, const PlaneSurface *plane, float init_step, float min_step)
 {
     if (!loc_valid(points, {loc[1],loc[0]})) {
         out = {-1,-1,-1};
@@ -416,7 +412,6 @@ float min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f &out,
         float d = plane->pointDist(val);
         best += d*d;
     }
-    float res;
 
     // std::vector<cv::Vec2f> search = {{0,-1},{0,1},{-1,-1},{-1,0},{-1,1},{1,-1},{1,0},{1,1}};
     std::vector<cv::Vec2f> search = {{0,-1},{0,1},{-1,0},{1,0}};
@@ -438,8 +433,8 @@ float min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f &out,
             }
 
             val = at_int(points, cand);
-            // std::cout << "at" << cand << val << std::endl;
-            res = tdist_sum(val, tgts, tds);
+            // std::cout << "at" << cand << val << "\n";
+            float res = tdist_sum(val, tgts, tds);
             if (plane) {
                 float d = plane->pointDist(val);
                 res += d*d;
@@ -465,12 +460,12 @@ float min_loc(const cv::Mat_<cv::Vec3f> &points, cv::Vec2f &loc, cv::Vec3f &out,
             break;
     }
 
-    // std::cout << "best" << best << out << "\n" <<  std::endl;
+    // std::cout << "best" << best << out << "\n" <<  "\n";
     return best;
 }
 
 template <typename E>
-static float search_min_loc(const cv::Mat_<E> &points, cv::Vec2f &loc, cv::Vec3f &out, cv::Vec3f tgt, cv::Vec2f init_step, float min_step_x)
+static float search_min_loc(const cv::Mat_<E> &points, cv::Vec2f &loc, cv::Vec3f &out, const cv::Vec3f& tgt, const cv::Vec2f& init_step, float min_step_x)
 {
     cv::Rect boundary(1,1,points.cols-2,points.rows-2);
     if (!boundary.contains(cv::Point(loc))) {
@@ -482,8 +477,7 @@ static float search_min_loc(const cv::Mat_<E> &points, cv::Vec2f &loc, cv::Vec3f
     E val = at_int(points, loc);
     out = val;
     float best = sdist(val, tgt);
-    float res;
-    
+
     //TODO check maybe add more search patterns, compare motion estimatino for video compression, x264/x265, ...
     std::vector<cv::Vec2f> search = {{0,-1},{0,1},{-1,-1},{-1,0},{-1,1},{1,-1},{1,0},{1,1}};
     // std::vector<cv::Vec2f> search = {{0,-1},{0,1},{-1,0},{1,0}};
@@ -500,7 +494,7 @@ static float search_min_loc(const cv::Mat_<E> &points, cv::Vec2f &loc, cv::Vec3f
                 continue;
             
             val = at_int(points, cand);
-            res = sdist(val, tgt);
+            float res = sdist(val, tgt);
             if (res < best) {
                 changed = true;
                 best = res;
@@ -689,14 +683,14 @@ float DeltaSurface::pointTo(cv::Vec3f &ptr, const cv::Vec3f &tgt, float th, int 
     return _base->pointTo(ptr, tgt, th, max_iters);
 }
 
-void ControlPointSurface::addControlPoint(const cv::Vec3f &base_ptr, cv::Vec3f control_point)
+void ControlPointSurface::addControlPoint(const cv::Vec3f &base_ptr, const cv::Vec3f& control_point)
 {
     _controls.push_back(SurfaceControlPoint(this, base_ptr, control_point));
 }
 
 void ControlPointSurface::gen(cv::Mat_<cv::Vec3f> *coords_, cv::Mat_<cv::Vec3f> *normals_, cv::Size size, const cv::Vec3f &ptr, float scale, const cv::Vec3f &offset)
 {
-    std::cout << "corr gen " << _controls.size() << std::endl;
+    std::cout << "corr gen " << _controls.size() << '\n';
     cv::Mat_<cv::Vec3f> _coords_local;
 
     cv::Mat_<cv::Vec3f> *coords = coords_;
@@ -712,12 +706,11 @@ void ControlPointSurface::gen(cv::Mat_<cv::Vec3f> *coords_, cv::Mat_<cv::Vec3f> 
 
     cv::Vec3f upper_left_nominal = nominal_loc(offset/scale, ptr, dynamic_cast<QuadSurface*>(_base)->_scale);
 
-    float z_offset = upper_left_nominal[2];
     upper_left_nominal[2] = 0;
 
-    for(auto p : _controls) {
+    for(const auto& p : _controls) {
         cv::Vec3f p_loc = nominal_loc(loc(p.ptr), ptr, dynamic_cast<QuadSurface*>(_base)->_scale) - upper_left_nominal;
-        std::cout << p_loc << p_loc*scale << loc(p.ptr) << ptr << std::endl;
+        std::cout << p_loc << p_loc*scale << loc(p.ptr) << ptr << '\n';
         p_loc *= scale;
         cv::Rect roi(p_loc[0]-40, p_loc[1]-40, 80, 80);
         cv::Rect area = roi & bounds;
@@ -726,7 +719,7 @@ void ControlPointSurface::gen(cv::Mat_<cv::Vec3f> *coords_, cv::Mat_<cv::Vec3f> 
         float delta = plane.scalarp(coord(p.ptr));
         cv::Vec3f move = delta*p.normal;
 
-        std::cout << area << roi << bounds << move << p.control_point << p.normal << coord(p.ptr) << std::endl;
+        std::cout << area << roi << bounds << move << p.control_point << p.normal << coord(p.ptr) << '\n';
 
         for(int j=area.y; j<area.y+area.height; j++)
             for(int i=area.x; i<area.x+area.width; i++) {
@@ -744,7 +737,7 @@ void ControlPointSurface::setBase(Surface *base)
     assert(dynamic_cast<QuadSurface*>(base));
     
     //FIXME reset control points?
-    std::cout << "ERROR implement search for ControlPointSurface::setBase()" << std::endl;
+    std::cout << "ERROR implement search for ControlPointSurface::setBase()" << '\n';
 }
 
 RefineCompSurface::RefineCompSurface(z5::Dataset *ds, ChunkCache *cache, QuadSurface *base)
@@ -801,7 +794,7 @@ void RefineCompSurface::gen(cv::Mat_<cv::Vec3f> *coords_, cv::Mat_<cv::Vec3f> *n
 
     cv::Mat mul;
     cv::cvtColor(integ_z, mul, cv::COLOR_GRAY2BGR);
-    *coords += (*normals).mul(mul+1+offset[2]);
+    *coords += normals->mul(mul+1+offset[2]);
 }
 
 //TODO check if this actually works?!
@@ -854,7 +847,6 @@ void find_intersect_segments(std::vector<std::vector<cv::Vec3f>> &seg_vol, std::
         std::vector<cv::Vec2f> seg_loc2;
         cv::Vec2f loc;
         cv::Vec2f loc2;
-        cv::Vec2f loc3;
         cv::Vec3f point;
         cv::Vec3f point2;
         cv::Vec3f point3;
@@ -918,8 +910,6 @@ void find_intersect_segments(std::vector<std::vector<cv::Vec3f>> &seg_vol, std::
 
                 point3 = at_int(points, loc3);
 
-                //search point close to prediction + dist 1 to last point
-                dist = min_loc(points, loc3, point3, {point,point2,point3}, {2*step,step,0}, plane, 0.01, 0.0001);
 
                 //then refine
                 dist = min_loc(points, loc3, point3, {point2}, {step}, plane, 0.01, 0.0001);
@@ -929,7 +919,6 @@ void find_intersect_segments(std::vector<std::vector<cv::Vec3f>> &seg_vol, std::
 
             seg.push_back(point3);
             seg_loc.push_back(loc3);
-            point = point2;
             point2 = point3;
             loc = loc2;
             loc2 = loc3;
@@ -946,7 +935,6 @@ void find_intersect_segments(std::vector<std::vector<cv::Vec3f>> &seg_vol, std::
         loc2 = seg_loc[0];
         loc = seg_loc[1];
         point2 = seg[0];
-        point = seg[1];
 
         last_plane_loc = plane->project(point2);
 
@@ -960,8 +948,6 @@ void find_intersect_segments(std::vector<std::vector<cv::Vec3f>> &seg_vol, std::
 
                 point3 = at_int(points, loc3);
 
-                //search point close to prediction + dist 1 to last point
-                dist = min_loc(points, loc3, point3, {point,point2,point3}, {2*step,step,0}, plane, 0.01, 0.0001);
 
                 //then refine
                 dist = min_loc(points, loc3, point3, {point2}, {step}, plane, 0.01, 0.0001);
@@ -971,7 +957,6 @@ void find_intersect_segments(std::vector<std::vector<cv::Vec3f>> &seg_vol, std::
 
             seg2.push_back(point3);
             seg_loc2.push_back(loc3);
-            point = point2;
             point2 = point3;
             loc = loc2;
             loc2 = loc3;
@@ -1026,7 +1011,7 @@ struct DSReader
 };
 
 
-void QuadSurface::save(std::filesystem::path &path_)
+void QuadSurface::save(const std::filesystem::path &path_)
 {
     if (path_.filename().empty())
         save(path_, path_.parent_path().filename());
@@ -1063,21 +1048,20 @@ void QuadSurface::save(const std::string &path_, const std::string &uuid)
     (*meta)["format"] = "tifxyz";
     (*meta)["scale"] = {_scale[0], _scale[1]};
     std::ofstream o(path/"meta.json.tmp");
-    o << std::setw(4) << (*meta) << std::endl;
+    o << std::setw(4) << (*meta) << '\n';
 
     //rename to make creation atomic
     std::filesystem::rename(path/"meta.json.tmp", path/+"meta.json");
 }
 
-void QuadSurface::save_meta()
-{
+void QuadSurface::save_meta() const {
     if (!meta)
         throw std::runtime_error("can't save_meta() without metadata!");
     if (path.empty())
         throw std::runtime_error("no storage path for QuadSurface");
 
     std::ofstream o(path/"meta.json.tmp");
-    o << std::setw(4) << (*meta) << std::endl;
+    o << std::setw(4) << (*meta) << '\n';
     
     //rename to make creation atomic
     std::filesystem::rename(path/"meta.json.tmp", path/"meta.json");
@@ -1186,7 +1170,7 @@ bool overlap(Surface &a, Surface &b, int max_iters)
     cv::Mat_<cv::Vec3f> points = quad_a->rawPoints();
     for(int r=0; r<std::max(10, max_iters/10); r++) {
         cv::Vec2f p = {rand() % points.cols, rand() % points.rows};
-        cv::Vec3f loc = points(p[1], p[0]);
+        const cv::Vec3f& loc = points(p[1], p[0]);
         if (loc[0] == -1)
             continue;
 
@@ -1339,8 +1323,7 @@ void QuadSurface::initFromPoints()
     _center = {_points->cols/2.0f/_scale[0], _points->rows/2.0f/_scale[1], 0};
 }
 
-cv::Mat_<cv::Vec3f> QuadSurface::rawPoints()
-{
+cv::Mat_<cv::Vec3f> QuadSurface::rawPoints() const {
     ensureLoaded();
     if (!_points) {
         throw std::runtime_error("QuadSurface points not loaded");
@@ -1348,8 +1331,7 @@ cv::Mat_<cv::Vec3f> QuadSurface::rawPoints()
     return *_points;
 }
 
-cv::Mat_<cv::Vec3f>* QuadSurface::rawPointsPtr()
-{
+cv::Mat_<cv::Vec3f>* QuadSurface::rawPointsPtr() const {
     ensureLoaded();
     return _points;
 }

@@ -23,10 +23,10 @@ class SeedingWidget : public QWidget {
     
 public:
     explicit SeedingWidget(VCCollection* point_collection, CSurfaceCollection* surface_collection, QWidget* parent = nullptr);
-    ~SeedingWidget();
+    ~SeedingWidget() override;
     
-    void setVolumePkg(std::shared_ptr<VolumePkg> vpkg);
-    void setCurrentVolume(std::shared_ptr<Volume> volume);
+    void setVolumePkg(const std::shared_ptr<VolumePkg> &vpkg);
+    void setCurrentVolume(const std::shared_ptr<Volume> &volume);
     void setCache(ChunkCache* cache);
     
 signals:
@@ -34,23 +34,23 @@ signals:
     void sendStatusMessageAvailable(QString text, int timeout);
     
 public slots:
-    void onSurfacesLoaded();  // Called when surfaces have been loaded/reloaded
-    void onCollectionAdded(uint64_t collectionId);
-    void onCollectionChanged(uint64_t collectionId);
-    void onCollectionRemoved(uint64_t collectionId);
+    void onSurfacesLoaded() const;  // Called when surfaces have been loaded/reloaded
+    void onCollectionAdded(uint64_t collectionId) const;
+    void onCollectionChanged(uint64_t collectionId) const;
+    void onCollectionRemoved(uint64_t collectionId) const;
     
 public slots:
-    void onVolumeChanged(std::shared_ptr<Volume> vol, const std::string& volumeId);
+    void onVolumeChanged(const std::shared_ptr<Volume> &vol, const std::string& volumeId);
     void updateCurrentZSlice(int z);
-    void onMousePress(cv::Vec3f vol_point, cv::Vec3f normal, Qt::MouseButton button, Qt::KeyboardModifiers modifiers);
-    void onMouseMove(cv::Vec3f vol_point, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers);
+    void onMousePress(const cv::Vec3f &vol_point, cv::Vec3f normal, Qt::MouseButton button, Qt::KeyboardModifiers modifiers);
+    void onMouseMove(const cv::Vec3f &vol_point, Qt::MouseButtons buttons, Qt::KeyboardModifiers modifiers);
     void onMouseRelease(cv::Vec3f vol_point, Qt::MouseButton button, Qt::KeyboardModifiers modifiers);
     
 private slots:
     void onPreviewRaysClicked();
-    void onClearPreviewClicked();
+    void onClearPreviewClicked() const;
     void onCastRaysClicked();
-    void onClearPeaksClicked();
+    void onClearPeaksClicked() const;
     void onRunSegmentationClicked();
     void onExpandSeedsClicked();
     void onResetPointsClicked();
@@ -66,21 +66,22 @@ private:
     void setupUI();
     void computeDistanceTransform();
     void castRays();
-    void findPeaksAlongRay(const cv::Vec2f& rayDir, const cv::Vec3f& startPoint);
-    void runSegmentation();
-    QString findExecutablePath();
-    void updateParameterPreview();
-    void updateModeUI();
+    void findPeaksAlongRay(const cv::Vec2f& rayDir, const cv::Vec3f& startPoint) const;
+
+    static QString findExecutablePath();
+    void updateParameterPreview() const;
+    void updateModeUI() const;
     void analyzePaths();
-    void findPeaksAlongPath(const PathData& path);
-    void startDrawing(cv::Vec3f startPoint);
-    void addPointToPath(cv::Vec3f point);
+    void findPeaksAlongPath(const PathData& path) const;
+    void startDrawing(const cv::Vec3f &startPoint);
+    void addPointToPath(const cv::Vec3f &point);
     void finalizePath();
     QColor generatePathColor();
     void displayPaths();
-    void updatePointsDisplay();
-    void updateInfoLabel();
-    void updateButtonStates();
+
+    static void updatePointsDisplay();
+    void updateInfoLabel() const;
+    void updateButtonStates() const;
     
 private:
     

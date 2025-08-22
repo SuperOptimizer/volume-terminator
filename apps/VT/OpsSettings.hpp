@@ -12,7 +12,7 @@ class OpsSettings : public QWidget
 
 public:
     explicit OpsSettings(QWidget* parent = nullptr);
-    ~OpsSettings() = default;
+    ~OpsSettings() override = default;
 
 public slots:
     void onOpSelected(Surface *op, OpChain *chain);

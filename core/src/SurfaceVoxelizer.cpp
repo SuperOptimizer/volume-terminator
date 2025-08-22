@@ -32,9 +32,9 @@ void SurfaceVoxelizer::voxelizeSurfaces(
     size_t nz = volumeInfo.depth;
 
     std::cout << "Creating voxel grid with volume dimensions: "
-              << nx << " x " << ny << " x " << nz << std::endl;
-    std::cout << "Voxel size: " << volumeInfo.voxelSize << " mm" << std::endl;
-    std::cout << "Using chunk-based processing with chunk size: " << params.chunkSize << std::endl;
+              << nx << " x " << ny << " x " << nz << "\n";
+    std::cout << "Voxel size: " << volumeInfo.voxelSize << " mm" << "\n";
+    std::cout << "Using chunk-based processing with chunk size: " << params.chunkSize << "\n";
 
     // Create zarr file structure
     z5::filesystem::handle::File zarrFile(outputPath);

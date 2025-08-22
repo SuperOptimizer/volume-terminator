@@ -1,21 +1,21 @@
 #include "CVolumeViewer.hpp"
 #include "UDataManipulateUtils.hpp"
 
-#include <QGraphicsView>
 #include <QGraphicsScene>
+#include <QGraphicsView>
 
-#include "CVolumeViewerView.hpp"
-#include "CSurfaceCollection.hpp"
-#include "VCCollection.hpp"
 #include "COutlinedTextItem.hpp"
+#include "CSurfaceCollection.hpp"
+#include "CVolumeViewerView.hpp"
+#include "VCCollection.hpp"
 
-#include "VolumePkg.hpp"
-#include "Surface.hpp"
 #include "Slicing.hpp"
+#include "Surface.hpp"
+#include "VolumePkg.hpp"
 
-#include <omp.h>
 #include <QSettings>
 #include <QVBoxLayout>
+#include <omp.h>
 
 #include "OpChain.hpp"
 
@@ -33,21 +33,18 @@
 #define COLOR_SEG_XZ Qt::red
 #define COLOR_SEG_XY QColor(255, 140, 0)
 
-constexpr float MIN_ZOOM = 0.03125f;
+constexpr float MIN_ZOOM = 0.03125F;
 constexpr float MAX_ZOOM = 4.0f;
 
 
 CVolumeViewer::CVolumeViewer(CSurfaceCollection *col, QWidget* parent)
     : QWidget(parent)
-    , fGraphicsView(nullptr)
+    , fGraphicsView(new CVolumeViewerView(this))
     , fBaseImageItem(nullptr)
-    , _surf_col(col)
-    , _highlighted_point_id(0)
-    , _selected_point_id(0)
-    , _dragged_point_id(0)
+    , _lbl(new QLabel(this)), _surf_col(col), _overlayUpdateTimer(new QTimer(this))
 {
     // Create graphics view
-    fGraphicsView = new CVolumeViewerView(this);
+
     
     fGraphicsView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     fGraphicsView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -74,7 +71,7 @@ CVolumeViewer::CVolumeViewer(CSurfaceCollection *col, QWidget* parent)
     // Set the scene
     fGraphicsView->setScene(fScene);
 
-    QSettings settings("VC.ini", QSettings::IniFormat);
+    QSettings const settings("VC.ini", QSettings::IniFormat);
     // fCenterOnZoomEnabled = settings.value("viewer/center_on_zoom", false).toInt() != 0;
     // fScrollSpeed = settings.value("viewer/scroll_speed", false).toInt();
     fSkipImageFormatConv = settings.value("perf/chkSkipImageFormatConvExp", false).toBool();
@@ -85,12 +82,12 @@ CVolumeViewer::CVolumeViewer(CSurfaceCollection *col, QWidget* parent)
 
     setLayout(aWidgetLayout);
 
-    _overlayUpdateTimer = new QTimer(this);
+
     _overlayUpdateTimer->setSingleShot(true);
     _overlayUpdateTimer->setInterval(50);
     connect(_overlayUpdateTimer, &QTimer::timeout, this, &CVolumeViewer::updateAllOverlays);
 
-    _lbl = new QLabel(this);
+
     _lbl->setStyleSheet("QLabel { color : white; }");
     _lbl->move(10,5);
 }
@@ -104,23 +101,22 @@ CVolumeViewer::~CVolumeViewer(void)
 
 void round_scale(float &scale)
 {
-    if (abs(scale-round(log2(scale))) < 0.02f)
-        scale = pow(2,round(log2(scale)));
+    if (abs(scale-roundf(log2f(scale))) < 0.02f)
+        scale = pow(2,roundf(log2f(scale)));
     // the most reduced OME zarr projection is 32x so make the min zoom out 1/32 = 0.03125
     if (scale < MIN_ZOOM) scale = MIN_ZOOM;
     if (scale > MAX_ZOOM) scale = MAX_ZOOM;
 }
 
 //get center of current visible area in scene coordinates
-QPointF visible_center(QGraphicsView *view)
+QPointF visible_center(const QGraphicsView *view)
 {
     QRectF bbox = view->mapToScene(view->viewport()->geometry()).boundingRect();
     return bbox.topLeft() + QPointF(bbox.width(),bbox.height())*0.5;
 }
 
 
-QPointF CVolumeViewer::volumeToScene(const cv::Vec3f& vol_point)
-{
+QPointF CVolumeViewer::volumeToScene(const cv::Vec3f& vol_point) const {
     PlaneSurface* plane = dynamic_cast<PlaneSurface*>(_surf);
     QuadSurface* quad = dynamic_cast<QuadSurface*>(_surf);
     cv::Vec3f p;
@@ -152,7 +148,7 @@ bool scene2vol(cv::Vec3f &p, cv::Vec3f &n, Surface *_surf, const std::string &_s
         
         n = _surf->normal(ptr, surf_loc);
         p = _surf->coord(ptr, surf_loc);
-    } catch (const cv::Exception& e) {
+    } catch (const cv::Exception&) {
         return false;
     }
     return true;
@@ -195,7 +191,7 @@ void CVolumeViewer::onCursorMove(QPointF scene_loc)
         uint64_t old_highlighted_id = _highlighted_point_id;
         _highlighted_point_id = 0;
 
-        const float highlight_dist_threshold = 10.0f;
+        constexpr float highlight_dist_threshold = 10.0f;
         float min_dist_sq = highlight_dist_threshold * highlight_dist_threshold;
 
         for (const auto& item_pair : _points_items) {
@@ -254,8 +250,8 @@ void CVolumeViewer::onZoom(int steps, QPointF scene_loc, Qt::KeyboardModifiers m
     if (!_surf)
         return;
 
-    for(auto &col : _intersect_items)
-        for(auto &item : col.second)
+    for(auto &val: _intersect_items | std::views::values)
+        for(auto &item : val)
             item->setVisible(false);
 
     if (modifiers & Qt::ShiftModifier) {
@@ -308,7 +304,7 @@ void CVolumeViewer::onZoom(int steps, QPointF scene_loc, Qt::KeyboardModifiers m
     _overlayUpdateTimer->start();
 }
 
-void CVolumeViewer::OnVolumeChanged(std::shared_ptr<Volume> volume_)
+void CVolumeViewer::OnVolumeChanged(const std::shared_ptr<Volume> &volume_)
 {
     volume = volume_;
     
@@ -358,9 +354,7 @@ void CVolumeViewer::onVolumeClicked(QPointF scene_loc, Qt::MouseButton buttons, 
         return;
 
     if (buttons == Qt::LeftButton) {
-        bool isShift = modifiers.testFlag(Qt::ShiftModifier);
-
-        if (isShift) {
+        if (modifiers.testFlag(Qt::ShiftModifier)) {
             // If a collection is selected, add to it.
             if (_selected_collection_id != 0) {
                 const auto& collections = _point_collection->getAllCollections();
@@ -386,7 +380,7 @@ void CVolumeViewer::onVolumeClicked(QPointF scene_loc, Qt::MouseButton buttons, 
     else if (_surf_name == "segmentation")
         sendVolumeClicked(p, n, _surf_col->surface("segmentation"), buttons, modifiers);
     else
-        std::cout << "FIXME: onVolumeClicked()" << std::endl;
+        std::cout << "FIXME: onVolumeClicked()" << "\n";
 }
 
 void CVolumeViewer::setCache(ChunkCache *cache_)
@@ -426,15 +420,15 @@ void CVolumeViewer::invalidateVis()
 void CVolumeViewer::invalidateIntersect(const std::string &name)
 {
     if (!name.size() || name == _surf_name) {
-        for(auto &pair : _intersect_items) {
-            for(auto &item : pair.second) {
+        for(auto &val: _intersect_items | std::views::values) {
+            for(auto &item : val) {
                 fScene->removeItem(item);
                 delete item;
             }
         }
         _intersect_items.clear();
     }
-    else if (_intersect_items.count(name)) {
+    else if (_intersect_items.contains(name)) {
         for(auto &item : _intersect_items[name]) {
             fScene->removeItem(item);
             delete item;
@@ -444,12 +438,12 @@ void CVolumeViewer::invalidateIntersect(const std::string &name)
 }
 
 
-void CVolumeViewer::onIntersectionChanged(std::string a, std::string b, Intersection *intersection)
+void CVolumeViewer::onIntersectionChanged(const std::string& a, const std::string& b, const Intersection *intersection)
 {
     if (_ignore_intersect_change && intersection == _ignore_intersect_change)
         return;
 
-    if (!_intersect_tgts.count(a) || !_intersect_tgts.count(b))
+    if (!_intersect_tgts.contains(a) || !_intersect_tgts.contains(b))
         return;
 
     //FIXME fix segmentation vs visible_segmentation naming and usage ..., think about dependency chain ..
@@ -487,8 +481,7 @@ void CVolumeViewer::fitSurfaceInView()
         bbox = quadSurf->bbox();
         haveBounds = true;
     } else if (auto* opChain = dynamic_cast<OpChain*>(_surf)) {
-        QuadSurface* src = opChain->src();
-        if (src) {
+        if (QuadSurface* src = opChain->src()) {
             bbox = src->bbox();
             haveBounds = true;
         }
@@ -540,7 +533,7 @@ void CVolumeViewer::fitSurfaceInView()
 }
 
 
-void CVolumeViewer::onSurfaceChanged(std::string name, Surface *surf)
+void CVolumeViewer::onSurfaceChanged(const std::string& name, Surface *surf)
 {
     if (_surf_name == name) {
         _surf = surf;
@@ -638,17 +631,12 @@ QGraphicsItem *crossItem()
 }
 
 //TODO make poi tracking optional and configurable
-void CVolumeViewer::onPOIChanged(std::string name, POI *poi)
+void CVolumeViewer::onPOIChanged(const std::string& name, const POI *poi)
 {    
     if (!poi || !_surf)
         return;
     
     if (name == "focus") {
-        // Add safety check before dynamic_cast
-        if (!_surf) {
-            return;
-        }
-        
         if (auto* plane = dynamic_cast<PlaneSurface*>(_surf)) {
             fGraphicsView->centerOn(0,0);
             if (poi->p == plane->origin())
@@ -677,11 +665,6 @@ void CVolumeViewer::onPOIChanged(std::string name, POI *poi)
         }
     }
     else if (name == "cursor") {
-        // Add safety check before dynamic_cast
-        if (!_surf) {
-            return;
-        }
-        
         PlaneSurface *slice_plane = dynamic_cast<PlaneSurface*>(_surf);
         // QuadSurface *crop = dynamic_cast<QuadSurface*>(_surf_col->surface("visible_segmentation"));
         QuadSurface *crop = dynamic_cast<QuadSurface*>(_surf_col->surface("segmentation"));
@@ -858,7 +841,7 @@ cv::Mat CVolumeViewer::render_area(const cv::Rect &roi)
 class LifeTime
 {
 public:
-    LifeTime(std::string msg)
+    LifeTime(const std::string& msg)
     {
         std::cout << msg << std::flush;
         start = std::chrono::high_resolution_clock::now();
@@ -866,7 +849,7 @@ public:
     ~LifeTime()
     {
         auto end = std::chrono::high_resolution_clock::now();
-        std::cout << " took " << std::chrono::duration<double>(end-start).count() << " s" << std::endl;
+        std::cout << " took " << std::chrono::duration<double>(end-start).count() << " s" << "\n";
     }
 private:
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
@@ -923,26 +906,23 @@ struct vec3f_hash {
 
 void CVolumeViewer::renderIntersections()
 {
-    return;
     if (!volume || !volume->zarrDataset() || !_surf)
         return;
     
     std::vector<std::string> remove;
     for (auto &pair : _intersect_items)
-        if (!_intersect_tgts.count(pair.first)) {
+        if (!_intersect_tgts.contains(pair.first)) {
             for(auto &item : pair.second) {
                 fScene->removeItem(item);
                 delete item;
             }
             remove.push_back(pair.first);
         }
-    for(auto key : remove)
+    for(const auto& key : remove)
         _intersect_items.erase(key);
 
-    PlaneSurface *plane = dynamic_cast<PlaneSurface*>(_surf);
 
-    
-    if (plane) {
+    if (PlaneSurface *plane = dynamic_cast<PlaneSurface*>(_surf)) {
         cv::Rect plane_roi = {curr_img_area.x()/_scale, curr_img_area.y()/_scale, curr_img_area.width()/_scale, curr_img_area.height()/_scale};
 
         cv::Vec3f corner = plane->coord(cv::Vec3f(0,0,0), {plane_roi.x, plane_roi.y, 0.0});
@@ -954,15 +934,15 @@ void CVolumeViewer::renderIntersections()
         std::vector<std::string> intersect_cands;
         std::vector<std::string> intersect_tgts_v;
 
-        for (auto key : _intersect_tgts)
+        for (const auto& key : _intersect_tgts)
             intersect_tgts_v.push_back(key);
 
 #pragma omp parallel for
         for(int n=0;n<intersect_tgts_v.size();n++) {
-            std::string key = intersect_tgts_v[n];
+            const std::string& key = intersect_tgts_v[n];
             bool haskey;
 #pragma omp critical
-            haskey = _intersect_items.count(key);
+            haskey = _intersect_items.contains(key);
             if (!haskey && dynamic_cast<QuadSurface*>(_surf_col->surface(key))) {
                 QuadSurface *segmentation = dynamic_cast<QuadSurface*>(_surf_col->surface(key));
 
@@ -979,7 +959,7 @@ void CVolumeViewer::renderIntersections()
 
 #pragma omp parallel for
         for(int n=0;n<intersect_cands.size();n++) {
-            std::string key = intersect_cands[n];
+            const std::string& key = intersect_cands[n];
             QuadSurface *segmentation = dynamic_cast<QuadSurface*>(_surf_col->surface(key));
 
             std::vector<std::vector<cv::Vec2f>> xy_seg_;
@@ -991,10 +971,9 @@ void CVolumeViewer::renderIntersections()
 
         }
 
-        std::hash<std::string> str_hasher;
-
         for(int n=0;n<intersect_cands.size();n++) {
-            std::string key = intersect_cands[n];
+            std::hash<std::string> str_hasher;
+            const std::string& key = intersect_cands[n];
 
             if (!intersections.size()) {
                 _intersect_items[key] = {};
@@ -1022,16 +1001,15 @@ void CVolumeViewer::renderIntersections()
             }
 
 
-            QuadSurface *segmentation = dynamic_cast<QuadSurface*>(_surf_col->surface(intersect_cands[n]));
             std::vector<QGraphicsItem*> items;
 
             int len = 0;
-            for (auto seg : intersections[n]) {
+            for (const auto& seg : intersections[n]) {
                 QPainterPath path;
 
                 bool first = true;
                 cv::Vec3f last = {-1,-1,-1};
-                for (auto wp : seg)
+                for (const auto& wp : seg)
                 {
                     len++;
                     cv::Vec3f p = plane->project(wp, 1.0, _scale);
@@ -1065,19 +1043,19 @@ void CVolumeViewer::renderIntersections()
 
         //TODO make configurable, for now just show everything!
         std::vector<std::pair<std::string,std::string>> intersects = _surf_col->intersections("segmentation");
-        for(auto pair : intersects) {
+        for(const auto& pair : intersects) {
             std::string key = pair.first;
             if (key == "segmentation")
                 key = pair.second;
             
-            if (_intersect_items.count(key) || !_intersect_tgts.count(key))
+            if (_intersect_items.contains(key) || !_intersect_tgts.contains(key))
                 continue;
             
             std::unordered_map<cv::Vec3f,cv::Vec3f,vec3f_hash> location_cache;
             std::vector<cv::Vec3f> src_locations;
 
-            for (auto seg : _surf_col->intersection(pair.first, pair.second)->lines)
-                for (auto wp : seg)
+            for (const auto& seg : _surf_col->intersection(pair.first, pair.second)->lines)
+                for (const auto& wp : seg)
                     src_locations.push_back(wp);
             
 #pragma omp parallel
@@ -1085,7 +1063,7 @@ void CVolumeViewer::renderIntersections()
                 // SurfacePointer *ptr = crop->pointer();
                 auto ptr = _surf->pointer();
 #pragma omp for
-                for (auto wp : src_locations) {
+                for (const auto& wp : src_locations) {
                     // float res = crop->pointTo(ptr, wp, 2.0, 100);
                     // cv::Vec3f p = crop->loc(ptr)*_ds_scale + cv::Vec3f(_vis_center[0],_vis_center[1],0);
                     float res = _surf->pointTo(ptr, wp, 2.0, 100);
@@ -1093,19 +1071,19 @@ void CVolumeViewer::renderIntersections()
                     //FIXME still happening?
                     if (res >= 2.0)
                         p = {-1,-1,-1};
-                        // std::cout << "WARNING pointTo() high residual in renderIntersections()" << std::endl;
+                        // std::cout << "WARNING pointTo() high residual in renderIntersections()" << "\n";
 #pragma omp critical
                     location_cache[wp] = p;
                 }
             }
             
             std::vector<QGraphicsItem*> items;
-            for (auto seg : _surf_col->intersection(pair.first, pair.second)->lines) {
+            for (const auto& seg : _surf_col->intersection(pair.first, pair.second)->lines) {
                 QPainterPath path;
                 
                 bool first = true;
                 cv::Vec3f last = {-1,-1,-1};
-                for (auto wp : seg)
+                for (const auto& wp : seg)
                 {
                     cv::Vec3f p = location_cache[wp];
                     
@@ -1320,7 +1298,7 @@ void CVolumeViewer::renderOrUpdatePoint(const ColPoint& point)
     }
 
     if (z_dist >= 0) {
-        const float fade_threshold = 10.0f; // Fade over N units
+        constexpr float fade_threshold = 10.0f; // Fade over N units
         if (z_dist < fade_threshold) {
             opacity = 1.0f - (z_dist / fade_threshold);
         } else {
@@ -1352,7 +1330,7 @@ void CVolumeViewer::renderOrUpdatePoint(const ColPoint& point)
     }
 
     PointGraphics pg;
-    bool exists = _points_items.count(point.id);
+    bool exists = _points_items.contains(point.id);
     if (exists) {
         pg = _points_items[point.id];
     }
@@ -1480,7 +1458,7 @@ void CVolumeViewer::onMouseRelease(QPointF scene_loc, Qt::MouseButton button, Qt
         else if (_surf_name == "segmentation")
             emit sendMouseReleaseVolume(p, button, modifiers);
         else
-            std::cout << "FIXME: onMouseRelease()" << std::endl;
+            std::cout << "FIXME: onMouseRelease()" << "\n";
     }
 }
 
@@ -1648,8 +1626,7 @@ void CVolumeViewer::onDrawingModeActive(bool active, float brushSize, bool isSqu
     }
     
     // Force cursor update
-    POI *cursor = _surf_col->poi("cursor");
-    if (cursor) {
+    if (POI *cursor = _surf_col->poi("cursor")) {
         onPOIChanged("cursor", cursor);
     }
 }
@@ -1660,9 +1637,9 @@ void CVolumeViewer::refreshPointPositions()
         return;
     }
 
-    for (const auto& col_pair : _point_collection->getAllCollections()) {
-        for (const auto& point_pair : col_pair.second.points) {
-            if (_points_items.count(point_pair.first)) {
+    for (const auto &val: _point_collection->getAllCollections() | std::views::values) {
+        for (const auto& point_pair : val.points) {
+            if (_points_items.contains(point_pair.first)) {
                 renderOrUpdatePoint(point_pair.second);
             }
         }
@@ -1680,7 +1657,7 @@ void CVolumeViewer::onPointChanged(const ColPoint& point)
 
 void CVolumeViewer::onPointRemoved(uint64_t pointId)
 {
-    if (_points_items.count(pointId)) {
+    if (_points_items.contains(pointId)) {
         auto& pg = _points_items[pointId];
         fScene->removeItem(pg.circle);
         fScene->removeItem(pg.text);
@@ -1705,8 +1682,8 @@ void CVolumeViewer::onCollectionChanged(uint64_t collectionId)
     auto it = collections.find(collectionId);
     if (it != collections.end()) {
         const auto& collection = it->second;
-        for (const auto& point_pair : collection.points) {
-            renderOrUpdatePoint(point_pair.second);
+        for (const auto &val: collection.points | std::views::values) {
+            renderOrUpdatePoint(val);
         }
     }
 }
@@ -1743,8 +1720,7 @@ void CVolumeViewer::setResetViewOnSurfaceChange(bool reset)
 void CVolumeViewer::updateAllOverlays()
 {
     if (auto* plane = dynamic_cast<PlaneSurface*>(_surf)) {
-        POI *poi = _surf_col->poi("focus");
-        if (poi) {
+        if (POI *poi = _surf_col->poi("focus")) {
             cv::Vec3f planeOrigin = plane->origin();
             // If plane origin differs from POI, update POI
             if (std::abs(poi->p[2] - planeOrigin[2]) > 0.01) {
@@ -1771,7 +1747,7 @@ void CVolumeViewer::updateAllOverlays()
         uint64_t old_highlighted_id = _highlighted_point_id;
         _highlighted_point_id = 0;
 
-        const float highlight_dist_threshold = 10.0f;
+        constexpr float highlight_dist_threshold = 10.0f;
         float min_dist_sq = highlight_dist_threshold * highlight_dist_threshold;
 
         for (const auto& item_pair : _points_items) {

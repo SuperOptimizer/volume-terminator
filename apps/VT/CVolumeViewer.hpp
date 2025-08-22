@@ -18,8 +18,8 @@ class CVolumeViewer : public QWidget
     Q_OBJECT
 
 public:
-    CVolumeViewer(CSurfaceCollection *col, QWidget* parent = 0);
-    ~CVolumeViewer(void);
+    CVolumeViewer(CSurfaceCollection *col, QWidget* parent = nullptr);
+    ~CVolumeViewer(void) override;
 
     void setCache(ChunkCache *cache);
     void setPointCollection(VCCollection* point_collection);
@@ -55,22 +55,21 @@ public:
 
     // Get current scale for coordinate transformation
     float getCurrentScale() const { return _scale; }
-    // Transform scene coordinates to volume coordinates
-    cv::Vec3f sceneToVolume(const QPointF& scenePoint) const;
     
     CVolumeViewerView* fGraphicsView;
 
 public slots:
-    void OnVolumeChanged(std::shared_ptr<Volume> vol);
+    void OnVolumeChanged(const std::shared_ptr<Volume> &vol);
     void onVolumeClicked(QPointF scene_loc,Qt::MouseButton buttons, Qt::KeyboardModifiers modifiers);
     void onPanRelease(Qt::MouseButton buttons, Qt::KeyboardModifiers modifiers);
     void onPanStart(Qt::MouseButton buttons, Qt::KeyboardModifiers modifiers);
     void onCollectionSelected(uint64_t collectionId);
     void onCollectionChanged(uint64_t collectionId);
-    void onSurfaceChanged(std::string name, Surface *surf);
-    void onPOIChanged(std::string name, POI *poi);
-    void onIntersectionChanged(std::string a, std::string b, Intersection *intersection);
-    void onScrolled();
+    void onSurfaceChanged(const std::string& name, Surface *surf);
+    void onPOIChanged(const std::string& name, const POI *poi);
+    void onIntersectionChanged(const std::string& a, const std::string& b, const Intersection *intersection);
+
+    static void onScrolled();
     void onResized();
     void onZoom(int steps, QPointF scene_point, Qt::KeyboardModifiers modifiers);
     void onCursorMove(QPointF);
@@ -104,20 +103,16 @@ signals:
     void pointClicked(uint64_t pointId);
 
 protected:
-    void ScaleImage(double nFactor);
-    void CenterOn(const QPointF& point);
-    QPointF volumeToScene(const cv::Vec3f& vol_point);
+    QPointF volumeToScene(const cv::Vec3f& vol_point) const;
     void refreshPointPositions();
     void renderOrUpdatePoint(const ColPoint& point);
-
-    void performDeferredUpdates();
 
 protected:
     // widget components
     QGraphicsScene* fScene;
 
     // data
-    QImage* fImgQImage;
+    QImage* fImgQImage{};
     bool fSkipImageFormatConv;
 
     QGraphicsPixmapItem* fBaseImageItem;

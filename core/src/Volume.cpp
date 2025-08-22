@@ -16,7 +16,7 @@ static const std::filesystem::path CONFIG_FILE = "meta.json";
 
 
 // Load a Volume from disk
-Volume::Volume(std::filesystem::path path)
+Volume::Volume(const std::filesystem::path& path)
 {
     _path = path;
     _uuid = path.stem();
@@ -39,7 +39,7 @@ Volume::Volume(std::filesystem::path path)
 }
 
 // Setup a Volume from a folder of slices
-Volume::Volume(std::filesystem::path path, std::string uuid, std::string name)
+Volume::Volume(const std::filesystem::path &path, const std::string &uuid, const std::string &name)
 {
     _path = path;
     _uuid = uuid;
@@ -56,10 +56,10 @@ void Volume::zarrOpen()
     
     std::vector<std::string> groups;
     _zarrFile->keys(groups);
-    std::sort(groups.begin(), groups.end());
+    std::ranges::sort(groups);
     
     //FIXME hardcoded assumption that groups correspond to power-2 scaledowns ...
-    for(auto name : groups) {
+    for(const auto& name : groups) {
         z5::filesystem::handle::Dataset ds_handle(group, name, nlohmann::json::parse(std::ifstream(_path/name/".zarray")).value<std::string>("dimension_separator","."));
 
         _zarrDs.push_back(z5::filesystem::openDataset(ds_handle));
@@ -69,13 +69,13 @@ void Volume::zarrOpen()
 }
 
 // Load a Volume from disk, return a pointer
-auto Volume::New(std::filesystem::path path) -> std::shared_ptr<Volume>
+auto Volume::New(const std::filesystem::path& path) -> std::shared_ptr<Volume>
 {
     return std::make_shared<Volume>(path);
 }
 
 // Set a Volume from a folder of slices, return a pointer
-auto Volume::New(std::filesystem::path path, std::string uuid, std::string name)
+auto Volume::New(const std::filesystem::path& path, const std::string& uuid, const std::string& name)
     -> std::shared_ptr<Volume>
 {
     return std::make_shared<Volume>(path, uuid, name);
@@ -102,7 +102,7 @@ bool Volume::isInBounds(const cv::Vec3d& v) const
     return isInBounds(v(0), v(1), v(2));
 }
 
-void throw_run_path(const std::filesystem::path &path, const std::string msg)
+void throw_run_path(const std::filesystem::path &path, const std::string& msg)
 {
     throw std::runtime_error(msg + " for " + path.string());
 }

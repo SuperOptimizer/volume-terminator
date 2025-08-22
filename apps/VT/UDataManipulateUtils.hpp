@@ -1,7 +1,6 @@
 #pragma once
 
 #include <qimage.h>
-#include <cstddef>
 #include <cstdint>
 
 #include <opencv2/core.hpp>

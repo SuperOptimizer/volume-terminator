@@ -12,8 +12,7 @@
 #include <QCursor>
 
 
-double CVolumeViewerView::chooseNiceLength(double nominal) const
-{
+double CVolumeViewerView::chooseNiceLength(double nominal) {
     double expn = std::floor(std::log10(nominal));
     double base = std::pow(10.0, expn);
     double d    = nominal / base;
@@ -44,7 +43,6 @@ void CVolumeViewerView::drawForeground(QPainter* p, const QRectF& sceneRect)
 
     constexpr int M = 10;  // margin in px
     // transform: scene units → view pixels
-    QTransform t = transform();
     const double dpr = devicePixelRatioF();
 
     // 1) how many device-px per scene‐unit

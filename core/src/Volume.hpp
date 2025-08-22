@@ -20,11 +20,11 @@ public:
 
     Volume() = delete;
 
-    explicit Volume(std::filesystem::path path);
-    Volume(std::filesystem::path path, std::string uuid, std::string name);
-    static  std::shared_ptr<Volume> New(std::filesystem::path path);
+    explicit Volume(const std::filesystem::path& path);
+    Volume(const std::filesystem::path &path, const std::string &uuid, const std::string &name);
+    static  std::shared_ptr<Volume> New(const std::filesystem::path& path);
     static  std::shared_ptr<Volume> New(
-        std::filesystem::path path, std::string uuid, std::string name);
+        const std::filesystem::path& path, const std::string& uuid, const std::string& name);
 
     bool isZarr{false};
 

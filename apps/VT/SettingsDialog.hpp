@@ -19,15 +19,16 @@ public:
     SettingsDialog(QWidget* parent = nullptr);
 
     static std::vector<int> expandSettingToIntRange(const QString& setting);
-    void updateVolumeList(const QStringList& volumeIds);
+    void updateVolumeList(const QStringList& volumeIds) const;
 
 protected slots:
     void accept() override;
 
 private:
     void setupUi();
-    void loadSettings();
-    void showTooltip(QPushButton* btn);
+    void loadSettings() const;
+
+    static void showTooltip(const QPushButton* btn);
 
     // Volume Packages
     QLineEdit* edtDefaultPathVolpkg;

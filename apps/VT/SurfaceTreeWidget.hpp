@@ -13,8 +13,7 @@ public:
     void updateItemIcon(bool approved, bool defective);
 
 private:
-    bool operator<(const QTreeWidgetItem& other) const
-    {
+    bool operator<(const QTreeWidgetItem& other) const override {
         int column = treeWidget()->sortColumn();
         // Column 0 = icon (sort entries without one at the bottom)
         if (column == 0)
@@ -35,5 +34,5 @@ public:
         setContextMenuPolicy(Qt::CustomContextMenu);
     }
     
-    SurfaceTreeWidgetItem* findItemForSurface(std::string id);
+    SurfaceTreeWidgetItem* findItemForSurface(const std::string &id);
 };

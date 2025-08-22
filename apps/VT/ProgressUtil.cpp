@@ -33,8 +33,7 @@ void ProgressUtil::startAnimation(const QString& message)
     _animTimer->start(300); // updates every 300 ms 
 }
 
-void ProgressUtil::stopAnimation(const QString& message, int timeout)
-{
+void ProgressUtil::stopAnimation(const QString& message, int timeout) const {
     if (_animTimer && _animTimer->isActive()) {
         _animTimer->stop();
     }
@@ -44,7 +43,7 @@ void ProgressUtil::stopAnimation(const QString& message, int timeout)
 
 void ProgressUtil::updateAnimation()
 {
-    static const QChar animChars[] = {'|', '/', '-', '\\'};
+    static constexpr QChar animChars[] = {'|', '/', '-', '\\'};
     _animFrame = (_animFrame + 1) % 4;
     if (_statusBar) _statusBar->showMessage(_message + " " + animChars[_animFrame], 0);
 }

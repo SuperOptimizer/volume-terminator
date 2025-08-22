@@ -16,11 +16,10 @@ public:
 
     VolumePkg(std::filesystem::path fileLocation, int version);
     explicit VolumePkg(const std::filesystem::path& fileLocation);
-    static std::shared_ptr<VolumePkg> New(std::filesystem::path fileLocation, int version);
-    static std::shared_ptr<VolumePkg> New(std::filesystem::path fileLocation);
+    static std::shared_ptr<VolumePkg> New(const std::filesystem::path& fileLocation, int version);
+    static std::shared_ptr<VolumePkg> New(const std::filesystem::path& fileLocation);
     [[nodiscard]] std::string name() const;
     [[nodiscard]] int version() const;
-    [[nodiscard]] double materialThickness() const;
     void saveMetadata();
     void saveMetadata(const std::filesystem::path& filePath);
     bool hasVolumes() const;
@@ -29,15 +28,15 @@ public:
     [[nodiscard]]  std::vector<std::string> volumeIDs() const;
     [[nodiscard]] std::vector<std::string> volumeNames() const;
     std::shared_ptr<Volume> newVolume(std::string name = "");
-    [[nodiscard]] const std::shared_ptr<Volume> volume() const;
+    [[nodiscard]] std::shared_ptr<Volume> volume() const;
     std::shared_ptr<Volume> volume();
-    [[nodiscard]] const std::shared_ptr<Volume> volume(const std::string& id) const;
+    [[nodiscard]] std::shared_ptr<Volume> volume(const std::string &id) const;
     std::shared_ptr<Volume> volume(const std::string& id);
     bool hasSegmentations() const;
     std::size_t numberOfSegmentations() const;
     [[nodiscard]] std::vector<std::string> segmentationIDs() const;
     [[nodiscard]] std::vector<std::string> segmentationNames() const;
-    [[nodiscard]] const std::shared_ptr<Segmentation> segmentation(const std::string& id) const;
+    [[nodiscard]] std::shared_ptr<Segmentation> segmentation(const std::string &id) const;
     std::vector<std::filesystem::path> segmentationFiles();
     std::shared_ptr<Segmentation> segmentation(const std::string& id);
     void removeSegmentation(const std::string& id);

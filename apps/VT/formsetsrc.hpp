@@ -12,7 +12,7 @@ class FormSetSrc : public QWidget
 
 public:
     explicit FormSetSrc(Surface *op, QWidget* parent = nullptr);
-    ~FormSetSrc() = default;
+    ~FormSetSrc() override = default;
 
 private slots:
     void onAlgoIdxChanged(int index);
