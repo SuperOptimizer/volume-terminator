@@ -13,7 +13,10 @@ option(VC_USE_OPENMP "Enable OpenMP support" OFF)
 set(CHUNK_CACHE_SIZE_GB "10" CACHE STRING "size of the chunk cache in gigabytes")
 add_definitions(-DCHUNK_CACHE_SIZE_GB=${CHUNK_CACHE_SIZE_GB})
 
-set(CMAKE_CXX_FLAGS " -Wno-narrowing -std=c++23 -DWITH_BLOSC=1 -DWITH_ZLIB=1 -g3 -gdwarf-5 -funwind-tables -fasynchronous-unwind-tables -ferror-limit=1000 " )
+set(CMAKE_CXX_FLAGS " -Wall -Wextra -Weverything -march=native -std=c++23 -DWITH_BLOSC=1 -DWITH_ZLIB=1 -g3 -gdwarf-5 -funwind-tables -fasynchronous-unwind-tables -ferror-limit=1000 " )
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++98-compat -Wno-shadow -Wno-exit-time-destructors -Wno-global-constructors -Wno-c++98-compat-pedantic -Wno-unused-parameter -Wno-padded -Wno-unused-const-variable -Wno-shorten-64-to-32 -Wno-float-conversion -Wno-implicit-int-float-conversion -Wno-c++11-narrowing -Wno-unsafe-buffer-usage -Wno-double-promotion -Wno-old-style-cast -Wno-sign-compare -Wno-implicit-float-conversion -Wno-missing-prototypes -Wno-sign-conversion -Wno-float-equal -Wno-unused-variable -Wno-misleading-indentation -Wno-source-uses-openmp -Wno-missing-noreturn -Wno-extra-semi -Wno-reserved-identifier -Wno-inconsistent-missing-destructor-override -Wno-newline-eof -Wno-implicit-int-conversion -Wno-reorder-ctor -Wno-unused-but-set-variable -Wno-implicit-int-conversion -Wno-suggest-destructor-override -Wno-logical-op-parentheses -Wno-missing-variable-declarations -Wno-extra-semi-stmt -Wno-c++20-compat -Wno-switch-default -Wno-suggest-override -Wno-deprecated-declarations -Wno-unused-value -Wno-weak-vtables -Wno-inconsistent-missing-override -Wno-zero-as-null-pointer-constant -Wno-covered-switch-default -Wno-switch-enum -Wno-tautological-unsigned-zero-compare -Wno-unused-exception-parameter -Wno-unused-macros")
+
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -g3 -gdwarf-5 -rdynamic")
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -164,7 +167,6 @@ target_link_libraries(vcui vc_core Qt6::Core Qt6::Gui Qt6::Widgets)
 add_executable(VT
         apps/VT/VCAppMain.cpp
         apps/VT/CWindow.cpp
-        apps/VT/UDataManipulateUtils.cpp
         apps/VT/CVolumeViewer.cpp
         apps/VT/CVolumeViewerView.cpp
         apps/VT/SettingsDialog.cpp

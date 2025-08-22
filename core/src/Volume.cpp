@@ -81,23 +81,23 @@ auto Volume::New(std::filesystem::path path, std::string uuid, std::string name)
     return std::make_shared<Volume>(path, uuid, name);
 }
 
-auto Volume::sliceWidth() const -> int { return _width; }
-auto Volume::sliceHeight() const -> int { return _height; }
-auto Volume::numSlices() const -> int { return _slices; }
-auto Volume::voxelSize() const -> double { return 1.0; }
-auto Volume::min() const -> double { return 0.0; }
-auto Volume::max() const -> double { return 65536.0; }
+int Volume::sliceWidth() const { return _width; }
+int Volume::sliceHeight() const { return _height; }
+int Volume::numSlices() const { return _slices; }
+double Volume::voxelSize() const { return 1.0; }
+double Volume::min() const { return 0.0; }
+double Volume::max() const { return 65536.0; }
 
 
 
 
-auto Volume::isInBounds(double x, double y, double z) const -> bool
+bool Volume::isInBounds(double x, double y, double z) const
 {
     return x >= 0 && x < _width && y >= 0 && y < _height && z >= 0 &&
            z < _slices;
 }
 
-auto Volume::isInBounds(const cv::Vec3d& v) const -> bool
+bool Volume::isInBounds(const cv::Vec3d& v) const
 {
     return isInBounds(v(0), v(1), v(2));
 }

@@ -18,8 +18,6 @@ struct Rect3D {
 bool intersect(const Rect3D &a, const Rect3D &b);
 Rect3D expand_rect(const Rect3D &a, const cv::Vec3f &p);
 
-cv::Vec3f vx_from_orig_norm(const cv::Vec3f &o, const cv::Vec3f &n);
-cv::Vec3f vy_from_orig_norm(const cv::Vec3f &o, const cv::Vec3f &n);
 
 // Base surface class with lazy loading support
 class Surface
@@ -231,7 +229,6 @@ protected:
 };
 
 // Utility functions
-Rect3D rect_from_json(const nlohmann::json &json);
 bool overlap(Surface &a, Surface &b, int max_iters = 1000);
 bool contains(Surface &a, const cv::Vec3f &loc, int max_iters = 1000);
 bool contains(Surface &a, const std::vector<cv::Vec3f> &locs);

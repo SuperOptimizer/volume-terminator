@@ -29,7 +29,7 @@ struct vec4i_hash {
 class ChunkCache
 {
 public:
-    ChunkCache(size_t size) : _size(size) {};
+    ChunkCache(size_t size) : _size(size) {}
     ~ChunkCache();
     
     //get key for a subvolume - should be uniqueley identified between all groups and volumes that use this cache.

@@ -52,7 +52,7 @@ static uint64_t chunk_compute_total = 0;
 
 template <typename T, typename C> class Chunked3dAccessor;
 
-static std::string tmp_name_proc_thread()
+static inline std::string tmp_name_proc_thread()
 {
     std::stringstream ss;
     ss << "tmp_" << getpid() << "_" << std::this_thread::get_id();
@@ -417,8 +417,6 @@ public:
     std::vector<int> _shape;
 };
 
-void print_accessor_stats();
-
 template <typename T, typename C>
 class Chunked3dAccessor
 {
@@ -631,3 +629,8 @@ private:
     std::vector<int>    _shape;
 };
 
+static inline void print_accessor_stats()
+{
+    std::cout << "acc miss/total " << miss << " " << total << " " << double(miss)/total << std::endl;
+    std::cout << "chunk compute overhead/total " << chunk_compute_collisions << " " << chunk_compute_total << " " << double(chunk_compute_collisions)/chunk_compute_total << std::endl;
+}
