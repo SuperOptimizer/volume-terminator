@@ -25,7 +25,6 @@
 #include <QDesktopServices>
 #include <QClipboard>
 #include <QStatusBar>
-#include <QStatusBar>
 
 #include <atomic>
 #include <omp.h>
@@ -62,18 +61,18 @@ CWindow::CWindow() :
     _seedingWidget(nullptr),
     _drawingWidget(nullptr),
     _point_collection_widget(nullptr),
-    _cmdRunner(nullptr)
+    _surf_col(new CSurfaceCollection()), chunk_cache(new ChunkCache(((size_t)CHUNK_CACHE_SIZE_GB)*1024ULL*1024ULL*1024ULL)), _point_collection(new VCCollection(this)), _cmdRunner(nullptr)
 {
-    _point_collection = new VCCollection(this);
+
     const QSettings settings("VC.ini", QSettings::IniFormat);
     setWindowIcon(QPixmap(":/images/logo.png"));
     ui.setupUi(this);
     // setAttribute(Qt::WA_DeleteOnClose);
 
-    chunk_cache = new ChunkCache(CHUNK_CACHE_SIZE_GB*1024*1024*1024);
+
     std::cout << "chunk cache size is " << CHUNK_CACHE_SIZE_GB << " gigabytes " << std::endl;
     
-    _surf_col = new CSurfaceCollection();
+
     
     //_surf_col->setSurface("manual plane", new PlaneSurface({2000,2000,2000},{1,1,1}));
     _surf_col->setSurface("xy plane", new PlaneSurface({2000,2000,2000},{0,0,1}));
@@ -2986,7 +2985,7 @@ void CWindow::onGrowSeeds(const std::string& segmentId, bool isExpand, bool isRa
     int seedX = 0, seedY = 0, seedZ = 0;
     if (!isExpand && !isRandomSeed) {
         POI *poi = _surf_col->poi("focus");
-        if (!poi) {
+        if (poi == nullptr) {
             QMessageBox::warning(this, tr("Error"), tr("No focus point selected. Click on a volume with Ctrl key to set a seed point."));
             return;
         }
@@ -3009,7 +3008,7 @@ void CWindow::onGrowSeeds(const std::string& segmentId, bool isExpand, bool isRa
 
     _cmdRunner->execute(CommandLineToolRunner::Tool::GrowSegFromSeeds);
 
-    QString modeDesc = isExpand ? "expand mode" :
+    QString const modeDesc = isExpand ? "expand mode" :
                       (isRandomSeed ? "random seed mode" : "seed mode");
     statusBar()->showMessage(tr("Growing segment using %1 in %2").arg(jsonFileName, modeDesc), 5000);
 }

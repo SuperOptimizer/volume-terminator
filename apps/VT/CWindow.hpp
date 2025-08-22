@@ -144,7 +144,7 @@ private slots:
 private:
     bool appInitComplete{false};
     std::shared_ptr<VolumePkg> fVpkg;
-    Surface *_seg_surf;
+    Surface *_seg_surf{};
     QString fVpkgPath;
     std::string fVpkgName;
 
@@ -156,44 +156,44 @@ private:
     static constexpr int FREQUENCY = 44100;
 
     // window components
-    QMenu* fFileMenu;
-    QMenu* fEditMenu;
-    QMenu* fViewMenu;
-    QMenu* fActionsMenu;
-    QMenu* fHelpMenu;
+    QMenu* fFileMenu{};
+    QMenu* fEditMenu{};
+    QMenu* fViewMenu{};
+    QMenu* fActionsMenu{};
+    QMenu* fHelpMenu{};
     QMenu* fRecentVolpkgMenu{};
 
-    QAction* fOpenVolAct;
+    QAction* fOpenVolAct{};
     QAction* fOpenRecentVolpkg[MAX_RECENT_VOLPKG]{};
-    QAction* fSettingsAct;
-    QAction* fExitAct;
-    QAction* fKeybinds;
-    QAction* fAboutAct;
-    QAction* fResetMdiView;
-    QAction* fShowConsoleOutputAct;
-    QAction* fReportingAct;
-    QAction* fVoxelizePathsAct;
+    QAction* fSettingsAct{};
+    QAction* fExitAct{};
+    QAction* fKeybinds{};
+    QAction* fAboutAct{};
+    QAction* fResetMdiView{};
+    QAction* fShowConsoleOutputAct{};
+    QAction* fReportingAct{};
+    QAction* fVoxelizePathsAct{};
 
-    QComboBox* volSelect;
-    QCheckBox* chkFilterFocusPoints;
-   QComboBox* cmbPointSetFilter;
-   QPushButton* btnPointSetFilterAll;
-   QPushButton* btnPointSetFilterNone;
-   QComboBox* cmbPointSetFilterMode;
-   QCheckBox* chkFilterUnreviewed;
-    QCheckBox* chkFilterRevisit;
-    QCheckBox* chkFilterNoExpansion;
-    QCheckBox* chkFilterNoDefective;
-    QCheckBox* chkFilterPartialReview;
-    QCheckBox* chkFilterCurrentOnly;
-    QCheckBox* chkFilterHideUnapproved;
-    QComboBox* cmbSegmentationDir;
+    QComboBox* volSelect{};
+    QCheckBox* chkFilterFocusPoints{};
+   QComboBox* cmbPointSetFilter{};
+   QPushButton* btnPointSetFilterAll{};
+   QPushButton* btnPointSetFilterNone{};
+   QComboBox* cmbPointSetFilterMode{};
+   QCheckBox* chkFilterUnreviewed{};
+    QCheckBox* chkFilterRevisit{};
+    QCheckBox* chkFilterNoExpansion{};
+    QCheckBox* chkFilterNoDefective{};
+    QCheckBox* chkFilterPartialReview{};
+    QCheckBox* chkFilterCurrentOnly{};
+    QCheckBox* chkFilterHideUnapproved{};
+    QComboBox* cmbSegmentationDir{};
     
-    QCheckBox* _chkApproved;
-    QCheckBox* _chkDefective;
-    QCheckBox* _chkReviewed;
-    QCheckBox* _chkRevisit;
-    QuadSurface *_surf;
+    QCheckBox* _chkApproved{};
+    QCheckBox* _chkDefective{};
+    QCheckBox* _chkReviewed{};
+    QCheckBox* _chkRevisit{};
+    QuadSurface *_surf{};
     std::string _surfID;
     
   
@@ -203,20 +203,20 @@ private:
 
     VCCollection* _point_collection;
     
-    SurfaceTreeWidget *treeWidgetSurfaces;
-    OpsList *wOpsList;
-    OpsSettings *wOpsSettings;
-    QPushButton *btnReloadSurfaces;
+    SurfaceTreeWidget *treeWidgetSurfaces{};
+    OpsList *wOpsList{};
+    OpsSettings *wOpsSettings{};
+    QPushButton *btnReloadSurfaces{};
     
     //TODO abstract these into separate QWidget class?
-    QLineEdit* lblLocFocus;
-    QDoubleSpinBox* spNorm[3];
-    QPushButton* btnZoomIn;
-    QPushButton* btnZoomOut;
+    QLineEdit* lblLocFocus{};
+    QDoubleSpinBox* spNorm[3]{};
+    QPushButton* btnZoomIn{};
+    QPushButton* btnZoomOut{};
 
 
-    Ui_VCMainWindow ui;
-    QMdiArea *mdiArea;
+    Ui_VCMainWindow ui{};
+    QMdiArea *mdiArea{};
 
     bool can_change_volume_() const;
     

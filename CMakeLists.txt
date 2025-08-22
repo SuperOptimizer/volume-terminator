@@ -25,7 +25,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -O0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Og")
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3  -flto")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto ")
@@ -38,8 +38,8 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
 endif()
 
 
-option(VC_ENABLE_ASAN "Enable AddressSanitizer for memory error detection" OFF)
-option(VC_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(VC_ENABLE_ASAN "Enable AddressSanitizer for memory error detection" ON)
+option(VC_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" ON)
 option(VC_ENABLE_TSAN "Enable ThreadSanitizer for data race detection" OFF)
 option(VC_ENABLE_LSAN "Enable LeakSanitizer for memory leak detection (standalone)" OFF)
 
