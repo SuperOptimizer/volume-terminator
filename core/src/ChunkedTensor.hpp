@@ -318,38 +318,6 @@ public:
         return chunk;
     }
 
-    // T *cache_chunk_safe_alloc(const cv::Vec3i &id)
-    // {
-    //     auto s = C::CHUNK_SIZE;
-    //     CHUNKT large = xt::empty<T>({s+2*_border,s+2*_border,s+2*_border});
-    //     large = xt::full_like(large, C::FILL_V);
-    //     CHUNKT small = xt::empty<T>({s,s,s});
-    //
-    //     cv::Vec3i offset =
-    //     {id[0]*s-_border,
-    //         id[1]*s-_border,
-    //         id[2]*s-_border};
-    //
-    //     readArea3D(large, offset, _ds, _cache);
-    //
-    //     _compute_f.template compute<CHUNKT,T>(large, small);
-    //
-    //     _mutex.lock();
-    //     if (!_chunks.count(id))
-    //         _chunks[id] = small;
-    //     else {
-    //         #pragma omp atomic
-    //         chunk_compute_collisions++;
-    //         delete small;
-    //         small = _chunks[id];
-    //     }
-    //     #pragma omp atomic
-    //     chunk_compute_total++;
-    //     _mutex.unlock();
-    //
-    //     return small;
-    // }
-
     T *cache_chunk_safe(const cv::Vec3i &id)
     {
         if (_cache_dir.empty())
@@ -360,31 +328,13 @@ public:
 
     T *cache_chunk(const cv::Vec3i &id) {
         return cache_chunk_safe(id);
-        // auto s = C::CHUNK_SIZE;
-        // CHUNKT large = xt::empty<T>({s+2*_border,s+2*_border,s+2*_border});
-        // large = xt::full_like(large, C::FILL_V);
-        // CHUNKT *small = new CHUNKT();
-        // *small = xt::empty<T>({s,s,s});
-        //
-        // cv::Vec3i offset =
-        // {id[0]*s-_border,
-        //     id[1]*s-_border,
-        //     id[2]*s-_border};
-        //
-        //     readArea3D(large, offset, _ds, _cache);
-        //
-        //     _compute_f.template compute<CHUNKT,T>(large, *small);
-        //
-        //     _chunks[id] = small;
-        //
-        // return small;
     }
 
-    T *chunk(const cv::Vec3i &id) {
-        if (!_chunks.count(id))
-            return cache_chunk(id);
-        return _chunks[id];
-    }
+    //T *chunk(const cv::Vec3i &id) {
+    //    if (!_chunks.count(id))
+    //        return cache_chunk(id);
+    //    return _chunks[id];
+    //}
 
     T *chunk_safe(const cv::Vec3i &id) {
         T *chunk = nullptr;
@@ -461,7 +411,7 @@ public:
     }
 
     T& safe_at(const cv::Vec3i &p)
-    {        
+    {
         auto s = C::CHUNK_SIZE;
 
         if (_corner[0] == -1)
@@ -481,13 +431,6 @@ public:
         #pragma omp atomic
         total++;
 
-        // size_t pos_xt = &_chunk->operator()(p[0]-_corner[0],p[1]-_corner[1],p[2]-_corner[2]) - &_chunk->operator()(0,0,0);
-        // if (pos_xt != _ar.calc_off({p[0]-_corner[0],p[1]-_corner[1],p[2]-_corner[2]})) {
-        //     std::cout << pos_xt << cv::Vec3i({p[0]-_corner[0],p[1]-_corner[1],p[2]-_corner[2]}) << _ar.calc_off({p[0]-_corner[0],p[1]-_corner[1],p[2]-_corner[2]}) << std::endl;
-        //     throw std::runtime_error("fix calc_off!");
-        // }
-
-        // return _chunk->operator()(p[0]-_corner[0],p[1]-_corner[1],p[2]-_corner[2]);
         return _chunk[_ar.calc_off({p[0]-_corner[0],p[1]-_corner[1],p[2]-_corner[2]})];
     }
 

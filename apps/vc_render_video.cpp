@@ -1,7 +1,8 @@
 #include <nlohmann/json.hpp>
 
 #include "xtensor/containers/xarray.hpp"
-#include "xtensor/views/xaxis_slice_iterator.hpp"#include "xtensor/io/xio.hpp"
+#include "xtensor/views/xaxis_slice_iterator.hpp"
+#include "xtensor/io/xio.hpp"
 #include "xtensor/generators/xbuilder.hpp"
 #include "xtensor/views/xview.hpp"
 #include "z5/factory.hxx"

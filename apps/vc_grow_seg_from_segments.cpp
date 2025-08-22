@@ -1,29 +1,21 @@
 #include <nlohmann/json.hpp>
 
-#include "xtensor/containers/xarray.hpp"
-#include "xtensor/views/xaxis_slice_iterator.hpp"#include "xtensor/io/xio.hpp"
-#include "xtensor/generators/xbuilder.hpp"
+#include "xtensor/io/xio.hpp"
 #include "xtensor/views/xview.hpp"
 #include "z5/factory.hxx"
 #include "z5/filesystem/handle.hxx"
-#include "z5/filesystem/dataset.hxx"
 #include "z5/common.hxx"
 #include "z5/multiarray/xtensor_access.hxx"
 #include "z5/attributes.hxx"
 
-#include <opencv2/highgui.hpp>
 #include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
 
 #include "Slicing.hpp"
 #include "Surface.hpp"
 
-#include <unordered_map>
 #include <filesystem>
-#include <omp.h>
 
-#include "../../core/src/SurfaceHelpers.hpp"
-#include "ChunkedTensor.hpp"
+#include "SurfaceHelpers.hpp"
 
 using shape = z5::types::ShapeType;
 using namespace xt::placeholders;
@@ -96,7 +88,6 @@ int main(int argc, char *argv[])
 
     std::string name_prefix = "auto_grown_";
     std::vector<QuadSurface*> surfaces;
-
     std::filesystem::path meta_fn = src_path / "meta.json";
     std::ifstream meta_f(meta_fn);
     json meta = json::parse(meta_f);

@@ -332,28 +332,23 @@ int main(int argc, char *argv[])
     QuadSurface current;
 
     if (mode == "expansion") {
-        current.path = seg_dir;
-        current.setSurface(surf);
-        current.bbox = surf->bbox();
-
-        // Read existing overlapping data
-        std::set<std::string> current_overlapping = read_overlapping_json(current.path);
+        std::set<std::string> current_overlapping = read_overlapping_json(surf->path);
 
         // Add the source segment
         current_overlapping.insert(src->name());
 
         // Update source's overlapping data
         std::set<std::string> src_overlapping = read_overlapping_json(src->path);
-        src_overlapping.insert(current.name());
+        src_overlapping.insert(surf->name());
         write_overlapping_json(src->path, src_overlapping);
 
         // Check overlaps with existing surfaces
         for(auto &s : surfs_v)
-            if (overlap(current, *s, search_effort)) {
+            if (overlap(*surf, *s, search_effort)) {
                 current_overlapping.insert(s->name());
 
                 std::set<std::string> s_overlapping = read_overlapping_json(s->path);
-                s_overlapping.insert(current.name());
+                s_overlapping.insert(surf->name());
                 write_overlapping_json(s->path, s_overlapping);
             }
 
@@ -365,7 +360,7 @@ int main(int argc, char *argv[])
                 if (name.compare(0, name_prefix.size(), name_prefix))
                     continue;
 
-                if (name == current.name())
+                if (name == surf->name())
                     continue;
 
                 std::filesystem::path meta_fn = entry.path() / "meta.json";
@@ -381,20 +376,20 @@ int main(int argc, char *argv[])
                 if (meta.value("format","NONE") != "tifxyz")
                     continue;
 
-                QuadSurface other = QuadSurface(entry.path());
+                QuadSurface other(entry.path());
                 other.readOverlapping();
 
-                if (overlap(current, other, search_effort)) {
+                if (overlap(*surf, other, search_effort)) {
                     current_overlapping.insert(other.name());
 
                     std::set<std::string> other_overlapping = read_overlapping_json(other.path);
-                    other_overlapping.insert(current.name());
+                    other_overlapping.insert(surf->name());
                     write_overlapping_json(other.path, other_overlapping);
                 }
             }
 
         // Write final overlapping data for current
-        write_overlapping_json(current.path, current_overlapping);
+        write_overlapping_json(surf->path, current_overlapping);
     }
 
     delete surf;

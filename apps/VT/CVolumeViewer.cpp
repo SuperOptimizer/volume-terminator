@@ -923,6 +923,7 @@ struct vec3f_hash {
 
 void CVolumeViewer::renderIntersections()
 {
+    return;
     if (!volume || !volume->zarrDataset() || !_surf)
         return;
     

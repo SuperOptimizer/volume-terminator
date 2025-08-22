@@ -17,74 +17,58 @@
 
 #include <algorithm>
 
-using shape = z5::types::ShapeType;
-using namespace xt::placeholders;
-
-
-namespace z5 {
-    namespace multiarray {
-
-        template<typename T>
-        xt::xarray<T> *readChunk(const Dataset & ds,
-                            types::ShapeType chunkId)
-        {
-            if (!ds.chunkExists(chunkId)) {
-                return nullptr;
-            }
-
-            if (!ds.isZarr())
-                throw std::runtime_error("only zarr datasets supported currently!");
-            if (ds.getDtype() != z5::types::Datatype::uint8 && ds.getDtype() != z5::types::Datatype::uint16)
-                throw std::runtime_error("only uint8_t/uint16 zarrs supported currently!");
-            
-            types::ShapeType chunkShape;
-            // size_t chunkSize;
-            ds.getChunkShape(chunkId, chunkShape);
-            // get the shape of the chunk (as stored it is stored)
-            //for ZARR also edge chunks are always full size!
-            const std::size_t maxChunkSize = ds.defaultChunkSize();
-            const auto & maxChunkShape = ds.defaultChunkShape();
-            
-            // chunkSize = std::accumulate(chunkShape.begin(), chunkShape.end(), 1, std::multiplies<std::size_t>());
-            
-            xt::xarray<T> *out = new xt::xarray<T>();
-            *out = xt::empty<T>(maxChunkShape);
-            
-            
-            // read/decompress & convert data
-            if (ds.getDtype() == z5::types::Datatype::uint8) {
-                ds.readChunk(chunkId, out->data());
-            }
-            else if (ds.getDtype() == z5::types::Datatype::uint16) {
-                xt::xarray<uint16_t> tmp = xt::empty<T>(maxChunkShape);
-                ds.readChunk(chunkId, tmp.data());
-
-                uint8_t *p8 = out->data();
-                uint16_t *p16 = tmp.data();
-                for(int i=0;i<maxChunkSize;i++)
-                    p8[i] = p16[i] / 257;
-            }
-            
-            return out;
-        }
+template<typename T>
+static xt::xarray<T> *readChunk(const z5::Dataset & ds, const z5::types::ShapeType& chunkId)
+{
+    if (!ds.chunkExists(chunkId)) {
+        return nullptr;
     }
+
+    if (!ds.isZarr())
+        throw std::runtime_error("only zarr datasets supported currently!");
+    if (ds.getDtype() != z5::types::Datatype::uint8 && ds.getDtype() != z5::types::Datatype::uint16)
+        throw std::runtime_error("only uint8_t/uint16 zarrs supported currently!");
+
+    z5::types::ShapeType chunkShape;
+    // size_t chunkSize;
+    ds.getChunkShape(chunkId, chunkShape);
+    // get the shape of the chunk (as stored it is stored)
+    //for ZARR also edge chunks are always full size!
+    const auto & maxChunkShape = ds.defaultChunkShape();
+
+    // chunkSize = std::accumulate(chunkShape.begin(), chunkShape.end(), 1, std::multiplies<std::size_t>());
+
+    auto *out = new xt::xarray<T>();
+    *out = xt::empty<T>(maxChunkShape);
+
+
+    // read/decompress & convert data
+    if (ds.getDtype() == z5::types::Datatype::uint8) {
+        ds.readChunk(chunkId, out->data());
+    }
+    else if (ds.getDtype() == z5::types::Datatype::uint16) {
+        std::cout << "uint16 not supported!\n";
+        abort();
+    }
+
+    return out;
 }
 
-int ChunkCache::groupIdx(std::string name)
+int ChunkCache::groupIdx(const std::string& name)
 {
-    if (!_group_store.count(name))
+    if (!_group_store.contains(name))
         _group_store[name] = _group_store.size()+1;
     
      return _group_store[name];
 }
     
-void ChunkCache::put(cv::Vec4i idx, xt::xarray<uint8_t> *ar)
+void ChunkCache::put(const cv::Vec4i& idx, xt::xarray<uint8_t> *ar)
 {
     if (_stored >= _size) {
         using KP = std::pair<cv::Vec4i, uint64_t>;
         std::vector<KP> gen_list(_gen_store.begin(), _gen_store.end());
         std::sort(gen_list.begin(), gen_list.end(), [](KP &a, KP &b){ return a.second < b.second; });
-        for(auto it : gen_list) {
+        for(const auto& it : gen_list) {
             std::shared_ptr<xt::xarray<uint8_t>> ar = _store[it.first];
             //TODO we could remove this with lower probability so we dont store infiniteyl empty blocks but also keep more of them as they are cheap
             if (ar.get()) {
@@ -116,7 +100,7 @@ void ChunkCache::put(cv::Vec4i idx, xt::xarray<uint8_t> *ar)
 }
 
 //algorithm 2: do interpolation on basis of individual chunks
-void readArea3D(xt::xtensor<uint8_t,3,xt::layout_type::column_major> &out, const cv::Vec3i offset, z5::Dataset *ds, ChunkCache *cache)
+void readArea3D(xt::xtensor<uint8_t,3,xt::layout_type::column_major> &out, const cv::Vec3i& offset, z5::Dataset *ds, ChunkCache *cache)
 {
     //FIXME assert dims
     //FIXME based on key math we should check bounds here using volume and chunk size
@@ -156,7 +140,7 @@ void readArea3D(xt::xtensor<uint8_t,3,xt::layout_type::column_major> &out, const
                         if (!cache->has(idx)) {
                             cache->mutex.unlock();
                             // std::cout << "reading chunk " << cv::Vec3i(ix,iy,iz) << " for " << cv::Vec3i(x,y,z) << chunksize << std::endl;
-                            chunk = z5::multiarray::readChunk<uint8_t>(*ds, {size_t(iz),size_t(iy),size_t(ix)});
+                            chunk = readChunk<uint8_t>(*ds, {size_t(iz),size_t(iy),size_t(ix)});
                             cache->mutex.lock();
                             cache->put(idx, chunk);
                             chunk_ref = cache->get(idx);
@@ -195,7 +179,7 @@ void ChunkCache::reset()
     _stored = 0;
 }
 
-std::shared_ptr<xt::xarray<uint8_t>> ChunkCache::get(cv::Vec4i idx)
+std::shared_ptr<xt::xarray<uint8_t>> ChunkCache::get(const cv::Vec4i& idx)
 {
     auto res = _store.find(idx);
     if (res == _store.end())
@@ -207,14 +191,14 @@ std::shared_ptr<xt::xarray<uint8_t>> ChunkCache::get(cv::Vec4i idx)
     return res->second;
 }
 
-bool ChunkCache::has(cv::Vec4i idx)
+bool ChunkCache::has(const cv::Vec4i& idx)
 {
-    return _store.count(idx);
+    return _store.contains(idx);
 }
 
 
 // Add this helper function before readInterpolated3D
-void speculativeLoadNeighbors(z5::Dataset *ds, ChunkCache *cache, int group_idx,
+static void speculativeLoadNeighbors(z5::Dataset *ds, ChunkCache *cache, int group_idx,
                                int iz, int iy, int ix) {
     // Define the 26 neighbors in a 3x3x3 cube (excluding center)
     static const std::vector<std::array<int, 3>> neighbors = {
@@ -261,7 +245,7 @@ void speculativeLoadNeighbors(z5::Dataset *ds, ChunkCache *cache, int group_idx,
 
         if (needs_load) {
             // Load the chunk
-            auto chunk = z5::multiarray::readChunk<uint8_t>(*ds,
+            auto chunk = readChunk<uint8_t>(*ds,
                 {size_t(nz), size_t(ny), size_t(nx)});
 
             // Add to cache
@@ -294,7 +278,7 @@ static uint8_t retrieveSingleValueCached(z5::Dataset *ds, ChunkCache *cache, int
 
     if (!cache->has(idx)) {
         cache->mutex.unlock();
-        chunk = z5::multiarray::readChunk<uint8_t>(*ds,
+        chunk = readChunk<uint8_t>(*ds,
             {size_t(ix),size_t(iy),size_t(iz)});
         cache->mutex.lock();
         cache->put(idx, chunk);
@@ -396,7 +380,7 @@ loadOrGetChunk(z5::Dataset *ds, ChunkCache *cache, cv::Vec4i idx,
 
     if (!cache->has(idx)) {
         cache->mutex.unlock();
-        chunk = z5::multiarray::readChunk<uint8_t>(*ds,
+        chunk = readChunk<uint8_t>(*ds,
             {size_t(ix),size_t(iy),size_t(iz)});
         cache->mutex.lock();
         cache->put(idx, chunk);

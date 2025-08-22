@@ -1121,8 +1121,8 @@ void CWindow::LoadSurfaces(bool reload)
             auto seg = fVpkg->segmentation(to_load[i].first);
             try {
                 QuadSurface *qs = new QuadSurface(seg->path());
-                qs->ensureLoaded();
-                qs->readOverlapping();
+                //qs->ensureLoaded();
+                //qs->readOverlapping();
                 to_load[i].second = qs;
             } catch (const std::exception& e) {
                 std::cerr << "Failed to load surface " << to_load[i].first << ": " << e.what() << std::endl;
