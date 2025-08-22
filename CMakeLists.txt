@@ -15,7 +15,7 @@ add_definitions(-DCHUNK_CACHE_SIZE_GB=${CHUNK_CACHE_SIZE_GB})
 
 set(CMAKE_CXX_FLAGS " -Wall -Wextra -Weverything -march=native -std=c++23 -DWITH_BLOSC=1 -DWITH_ZLIB=1 -g3 -gdwarf-5 -funwind-tables -fasynchronous-unwind-tables -ferror-limit=1000 " )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++98-compat -Wno-shadow -Wno-exit-time-destructors -Wno-global-constructors -Wno-c++98-compat-pedantic -Wno-unused-parameter -Wno-padded -Wno-unused-const-variable -Wno-shorten-64-to-32 -Wno-float-conversion -Wno-implicit-int-float-conversion -Wno-c++11-narrowing -Wno-unsafe-buffer-usage -Wno-double-promotion -Wno-old-style-cast -Wno-sign-compare -Wno-implicit-float-conversion -Wno-missing-prototypes -Wno-sign-conversion -Wno-float-equal -Wno-unused-variable -Wno-misleading-indentation -Wno-source-uses-openmp -Wno-missing-noreturn -Wno-extra-semi -Wno-reserved-identifier -Wno-inconsistent-missing-destructor-override -Wno-newline-eof -Wno-implicit-int-conversion -Wno-reorder-ctor -Wno-unused-but-set-variable -Wno-implicit-int-conversion -Wno-suggest-destructor-override -Wno-logical-op-parentheses -Wno-missing-variable-declarations -Wno-extra-semi-stmt -Wno-c++20-compat -Wno-switch-default -Wno-suggest-override -Wno-deprecated-declarations -Wno-unused-value -Wno-weak-vtables -Wno-inconsistent-missing-override -Wno-zero-as-null-pointer-constant -Wno-covered-switch-default -Wno-switch-enum -Wno-tautological-unsigned-zero-compare -Wno-unused-exception-parameter -Wno-unused-macros -Wno-unused-template")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++98-compat -Wno-shadow -Wno-exit-time-destructors -Wno-global-constructors -Wno-c++98-compat-pedantic -Wno-padded -Wno-unused-const-variable -Wno-shorten-64-to-32  -Wno-c++11-narrowing -Wno-unsafe-buffer-usage -Wno-old-style-cast -Wno-sign-compare  -Wno-missing-prototypes  -Wno-float-equal  -Wno-misleading-indentation -Wno-source-uses-openmp -Wno-missing-noreturn -Wno-extra-semi -Wno-reserved-identifier -Wno-inconsistent-missing-destructor-override -Wno-newline-eof  -Wno-reorder-ctor  -Wno-suggest-destructor-override -Wno-logical-op-parentheses -Wno-missing-variable-declarations -Wno-extra-semi-stmt -Wno-c++20-compat -Wno-switch-default -Wno-suggest-override -Wno-deprecated-declarations -Wno-unused-value -Wno-inconsistent-missing-override -Wno-zero-as-null-pointer-constant -Wno-covered-switch-default -Wno-switch-enum -Wno-tautological-unsigned-zero-compare -Wno-unused-exception-parameter -Wno-unused-macros -Wno-unused-template")
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -g3 -gdwarf-5 -rdynamic")
 
@@ -38,8 +38,8 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
 endif()
 
 
-option(VC_ENABLE_ASAN "Enable AddressSanitizer for memory error detection" ON)
-option(VC_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" ON)
+option(VC_ENABLE_ASAN "Enable AddressSanitizer for memory error detection" OFF)
+option(VC_ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
 option(VC_ENABLE_TSAN "Enable ThreadSanitizer for data race detection" OFF)
 option(VC_ENABLE_LSAN "Enable LeakSanitizer for memory leak detection (standalone)" OFF)
 
@@ -117,13 +117,11 @@ else()
     message(STATUS "OpenMP support disabled")
 
     set(XTENSOR_USE_OPENMP 0)
-    include_directories(${CMAKE_SOURCE_DIR}/core/openmp_stub)
+    include_directories(${CMAKE_SOURCE_DIR}/src/openmp_stub)
     add_library(openmp_stub INTERFACE)
     add_library(OpenMP::OpenMP_CXX ALIAS openmp_stub)
     add_library(OpenMP::OpenMP_C ALIAS openmp_stub)
 endif()
-
-include_directories(core/src)
 
 find_package(Qt6  REQUIRED COMPONENTS Widgets Gui Core Network)
 find_package(xtensor REQUIRED)
@@ -132,18 +130,16 @@ find_package(CURL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system program_options)
 find_package(Ceres REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs highgui videoio calib3d)
+find_package(OpenCV REQUIRED COMPONENTS imgproc imgcodecs highgui videoio calib3d)
 find_package(z5 REQUIRED)
 
 add_library(vc_core
-        core/src/Volume.cpp
-        core/src/Segmentation.cpp
-        core/src/VolumePkg.cpp
-        core/src/Logging.cpp
-        core/src/Slicing.cpp
-        core/src/Surface.cpp
-        core/src/SurfaceHelpers.cpp
-        core/src/SurfaceVoxelizer.cpp
+        src/core/Volume.cpp
+        src/core/Segmentation.cpp
+        src/core/VolumePkg.cpp
+        src/core/Slicing.cpp
+        src/core/Surface.cpp
+        src/core/SurfaceVoxelizer.cpp
 )
 
 target_link_libraries(vc_core
@@ -156,52 +152,55 @@ target_link_libraries(vc_core
         Eigen3::Eigen
         Ceres::ceres
 )
+target_include_directories(vc_core PUBLIC src/core)
 
-add_library(vcui
-        core/src/surface_metrics.cpp
-        core/src/VCCollection.cpp
-)
+add_library(vc_ui src/ui/VCCollection.cpp)
+target_link_libraries(vc_ui vc_core Qt6::Core Qt6::Gui Qt6::Widgets)
+target_include_directories(vc_ui PUBLIC src/ui)
 
-target_link_libraries(vcui vc_core Qt6::Core Qt6::Gui Qt6::Widgets)
+add_library(vc_tracer src/tracer/SurfaceHelpers.cpp src/tracer/surface_metrics.cpp)
+target_link_libraries(vc_tracer vc_core vc_ui OpenMP::OpenMP_CXX Ceres::ceres)
+target_include_directories(vc_tracer PUBLIC src/tracer)
 
 add_executable(VT
-        apps/VT/VCAppMain.cpp
-        apps/VT/CWindow.cpp
-        apps/VT/CVolumeViewer.cpp
-        apps/VT/CVolumeViewerView.cpp
-        apps/VT/SettingsDialog.cpp
-        apps/VT/CSurfaceCollection.cpp
-        apps/VT/OpChain.cpp
-        apps/VT/OpsList.cpp
-        apps/VT/OpsSettings.cpp
-        apps/VT/formsetsrc.cpp
-        apps/VT/SurfaceTreeWidget.hpp
-        apps/VT/SurfaceTreeWidget.cpp
-        apps/VT/SeedingWidget.cpp
-        apps/VT/SeedingWidget.hpp
-        apps/VT/DrawingWidget.cpp
-        apps/VT/DrawingWidget.hpp
-        apps/VT/PathData.cpp
-        apps/VT/PathData.hpp
-        apps/VT/CSegmentationEditorWindow.cpp
-        apps/VT/CSegmentationEditorWindow.hpp
-        apps/VT/SegmentRenderThread.cpp
-        apps/VT/SegmentRenderThread.hpp
-        apps/VT/ProgressUtil.cpp
-        apps/VT/ProgressUtil.hpp
-        apps/VT/CommandLineToolRunner.cpp
-        apps/VT/CommandLineToolRunner.hpp
-        apps/VT/ConsoleOutputWidget.cpp
-        apps/VT/ConsoleOutputWidget.hpp
-        apps/VT/CPointCollectionWidget.cpp
-        apps/VT/COutlinedTextItem.hpp
-        apps/VT/COutlinedTextItem.cpp)
+        src/apps/VT/VCAppMain.cpp
+        src/apps/VT/CWindow.cpp
+        src/apps/VT/CVolumeViewer.cpp
+        src/apps/VT/CVolumeViewerView.cpp
+        src/apps/VT/SettingsDialog.cpp
+        src/apps/VT/CSurfaceCollection.cpp
+        src/apps/VT/OpChain.cpp
+        src/apps/VT/OpsList.cpp
+        src/apps/VT/OpsSettings.cpp
+        src/apps/VT/formsetsrc.cpp
+        src/apps/VT/SurfaceTreeWidget.hpp
+        src/apps/VT/SurfaceTreeWidget.cpp
+        src/apps/VT/SeedingWidget.cpp
+        src/apps/VT/SeedingWidget.hpp
+        src/apps/VT/DrawingWidget.cpp
+        src/apps/VT/DrawingWidget.hpp
+        src/apps/VT/PathData.cpp
+        src/apps/VT/PathData.hpp
+        src/apps/VT/CSegmentationEditorWindow.cpp
+        src/apps/VT/CSegmentationEditorWindow.hpp
+        src/apps/VT/SegmentRenderThread.cpp
+        src/apps/VT/SegmentRenderThread.hpp
+        src/apps/VT/ProgressUtil.cpp
+        src/apps/VT/ProgressUtil.hpp
+        src/apps/VT/CommandLineToolRunner.cpp
+        src/apps/VT/CommandLineToolRunner.hpp
+        src/apps/VT/ConsoleOutputWidget.cpp
+        src/apps/VT/ConsoleOutputWidget.hpp
+        src/apps/VT/CPointCollectionWidget.cpp
+        src/apps/VT/COutlinedTextItem.hpp
+        src/apps/VT/COutlinedTextItem.cpp)
 
-target_include_directories(VT PUBLIC apps/VT)
+target_include_directories(VT PUBLIC src/apps/VT)
 
 target_link_libraries(VT
         vc_core
-        vcui
+        vc_tracer
+        vc_ui
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
@@ -211,41 +210,41 @@ target_link_libraries(VT
 )
 
 
-add_executable(vc_render_video apps/vc_render_video.cpp)
+add_executable(vc_render_video src/apps/vc_render_video.cpp)
 target_link_libraries(vc_render_video vc_core)
 
-add_executable(vc_render_tifxyz apps/vc_render_tifxyz.cpp)
+add_executable(vc_render_tifxyz src/apps/vc_render_tifxyz.cpp)
 target_link_libraries(vc_render_tifxyz vc_core Boost::program_options)
 
-add_executable(vc_objrefine apps/vc_objrefine.cpp)
+add_executable(vc_objrefine src/apps/vc_objrefine.cpp)
 target_link_libraries(vc_objrefine vc_core)
 
-add_executable(vc_grow_seg_from_seed apps/vc_grow_seg_from_seed.cpp)
-target_link_libraries(vc_grow_seg_from_seed vc_core)
+add_executable(vc_grow_seg_from_seed src/apps/vc_grow_seg_from_seed.cpp)
+target_link_libraries(vc_grow_seg_from_seed vc_core vc_tracer)
 
-add_executable(vc_seg_add_overlap apps/vc_seg_add_overlap.cpp)
+add_executable(vc_seg_add_overlap src/apps/vc_seg_add_overlap.cpp)
 target_link_libraries(vc_seg_add_overlap vc_core)
 
-add_executable(vc_grow_seg_from_segments apps/vc_grow_seg_from_segments.cpp)
-target_link_libraries(vc_grow_seg_from_segments vc_core)
+add_executable(vc_grow_seg_from_segments src/apps/vc_grow_seg_from_segments.cpp)
+target_link_libraries(vc_grow_seg_from_segments vc_core vc_tracer)
 
-add_executable(vc_tifxyz2obj apps/vc_tifxyz2obj.cpp)
+add_executable(vc_tifxyz2obj src/apps/vc_tifxyz2obj.cpp)
 target_link_libraries(vc_tifxyz2obj vc_core)
 
-add_executable(vc_obj2tifxyz apps/vc_obj2tifxyz.cpp)
+add_executable(vc_obj2tifxyz src/apps/vc_obj2tifxyz.cpp)
 target_link_libraries(vc_obj2tifxyz vc_core)
 
-add_executable(vc_tifxyz_inp_mask apps/vc_tifxyz_inp_mask.cpp)
+add_executable(vc_tifxyz_inp_mask src/apps/vc_tifxyz_inp_mask.cpp)
 target_link_libraries(vc_tifxyz_inp_mask vc_core)
 
-add_executable(vc_tifxyz_winding apps/vc_tifxyz_winding.cpp)
+add_executable(vc_tifxyz_winding src/apps/vc_tifxyz_winding.cpp)
 target_link_libraries(vc_tifxyz_winding vc_core)
 
-add_executable(vc_fill_quadmesh apps/vc_fill_quadmesh.cpp)
-target_link_libraries(vc_fill_quadmesh vc_core)
+add_executable(vc_fill_quadmesh src/apps/vc_fill_quadmesh.cpp)
+target_link_libraries(vc_fill_quadmesh vc_core vc_tracer)
 
-add_executable(vc_tiffxyz_upscale_grounding apps/vc_tiffxyz_upscale_grounding.cpp)
+add_executable(vc_tiffxyz_upscale_grounding src/apps/vc_tiffxyz_upscale_grounding.cpp)
 target_link_libraries(vc_tiffxyz_upscale_grounding vc_core)
 
-add_executable(vc_calc_surface_metrics apps/vc_calc_surface_metrics.cpp)
-target_link_libraries(vc_calc_surface_metrics vc_core vcui Boost::program_options)
+add_executable(vc_calc_surface_metrics src/apps/vc_calc_surface_metrics.cpp)
+target_link_libraries(vc_calc_surface_metrics vc_core vc_ui vc_tracer Boost::program_options)

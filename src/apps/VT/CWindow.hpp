@@ -1,0 +1,242 @@
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+
+#include <opencv2/core.hpp>
+#include <QComboBox>
+#include <QMdiArea>
+
+#include "ui_VCMain.h"
+
+#include "../../ui/VCCollection.hpp"
+
+#include <QShortcut>
+
+#include "CPointCollectionWidget.hpp"
+#include "CSurfaceCollection.hpp"
+#include "CVolumeViewer.hpp"
+#include "DrawingWidget.hpp"
+#include "OpChain.hpp"
+#include "OpsList.hpp"
+#include "OpsSettings.hpp"
+#include "SeedingWidget.hpp"
+#include "../../core/Surface.hpp"
+#include "../../core/Volume.hpp"
+#include "../../core/VolumePkg.hpp"
+
+#define MAX_RECENT_VOLPKG 10
+
+// CommandLineToolRunner needs cwindow and vice versa so forward declare here and let commandlinetoolrunner.cpp include CWindow.hpp
+class CommandLineToolRunner;
+
+
+
+class CWindow : public QMainWindow
+{
+
+    Q_OBJECT
+
+public:
+    enum SaveResponse : bool { Cancelled, Continue };
+
+
+signals:
+    void sendLocChanged(int x, int y, int z);
+    void sendVolumeChanged(std::shared_ptr<Volume> vol, const std::string& volumeId);
+    void sendSliceChanged(std::string,Surface*);
+    void sendOpChainSelected(OpChain*);
+    void sendSurfacesLoaded();
+    void sendVolumeClosing(); // Signal to notify viewers before closing volume
+
+public slots:
+    void onShowStatusMessage(const QString& text, int timeout) const;
+
+    static void onLocChanged();
+    void onManualPlaneChanged() const;
+    void onVolumeClicked(const cv::Vec3f& vol_loc, const cv::Vec3f& normal, Surface *surf, Qt::MouseButton buttons, Qt::KeyboardModifiers modifiers) const;
+    void onOpChainChanged(OpChain *chain) const;
+    void onTagChanged();
+    void onSurfaceContextMenuRequested(const QPoint& pos);
+    void onRenderSegment(const std::string& segmentId);
+    void onGrowSegmentFromSegment(const std::string& segmentId);
+    void onAddOverlap(const std::string& segmentId);
+    void onConvertToObj(const std::string& segmentId);
+    void onSlimFlattenAndRender(const std::string& segmentId);
+    void onGrowSeeds(const std::string& segmentId, bool isExpand, bool isRandomSeed = false);
+    void onToggleConsoleOutput();
+    void onDeleteSegments(const std::vector<std::string>& segmentIds);
+    void onVoxelizePaths();
+   void onFocusPOIChanged(const std::string& name, POI* poi);
+    void onPointDoubleClicked(uint64_t pointId) const;
+
+public:
+    CWindow();
+    ~CWindow(void) override;
+    
+    // Helper method to get the current volume path
+    QString getCurrentVolumePath() const;
+    VCCollection* pointCollection() const { return _point_collection; }
+
+protected:
+    void keyPressEvent(QKeyEvent* event) override;
+
+private:
+    void CreateWidgets(void);
+    void CreateMenus(void);
+    void CreateActions(void);
+
+    void FillSurfaceTree(void);
+    void UpdateSurfaceTreeIcon(SurfaceTreeWidgetItem *item);
+
+    void UpdateView(void);
+    void UpdateVolpkgLabel(int filterCounter) const;
+
+    void UpdateRecentVolpkgActions(void) const;
+    void UpdateRecentVolpkgList(const QString& path) const;
+    void RemoveEntryFromRecentVolpkg(const QString& path) const;
+    
+    // Helper method for command line tools
+    bool initializeCommandLineRunner(void);
+
+    CVolumeViewer *newConnectedCVolumeViewer(const std::string& surfaceName, const QString& title, QMdiArea *mdiArea);
+    void closeEvent(QCloseEvent* event) override;
+
+    void setWidgetsEnabled(bool state) const;
+
+    bool InitializeVolumePkg(const std::string& nVpkgPath);
+
+    void OpenVolume(const QString& path);
+    void CloseVolume(void);
+    void LoadSurfaces(bool reload = false);
+    
+    // Incremental surface loading methods
+    struct SurfaceChanges {
+        std::vector<std::string> toAdd;
+        std::vector<std::string> toRemove;
+    };
+    SurfaceChanges DetectSurfaceChanges();
+    void AddSingleSegmentation(const std::string& segId);
+    void RemoveSingleSegmentation(const std::string& segId);
+    void LoadSurfacesIncremental();
+
+    void setVolume(const std::shared_ptr<Volume>& newvol);
+
+private slots:
+    void Open(void);
+    void Open(const QString& path);
+    void OpenRecent();
+    void Keybindings(void);
+    void About(void);
+    void ShowSettings();
+    void ResetSegmentationViews() const;
+    void onSurfaceSelected();
+    void onSegFilterChanged(int index);
+    void onSegmentationDirChanged(int index);
+    void onEditMaskPressed() const;
+    void onRefreshSurfaces();
+    void onGenerateReviewReport();
+    void onManualLocationChanged();
+    void onZoomIn() const;
+    void onZoomOut() const;
+    void onCopyCoordinates() const;
+
+private:
+    bool appInitComplete{false};
+    std::shared_ptr<VolumePkg> fVpkg;
+    Surface *_seg_surf{};
+    QString fVpkgPath;
+    std::string fVpkgName;
+
+    std::shared_ptr<Volume> currentVolume;
+    std::string currentVolumeId;
+    int loc[3] = {0,0,0};
+
+    static constexpr int AMPLITUDE = 28000;
+    static constexpr int FREQUENCY = 44100;
+
+    // window components
+    QMenu* fFileMenu{};
+    QMenu* fEditMenu{};
+    QMenu* fViewMenu{};
+    QMenu* fActionsMenu{};
+    QMenu* fHelpMenu{};
+    QMenu* fRecentVolpkgMenu{};
+
+    QAction* fOpenVolAct{};
+    QAction* fOpenRecentVolpkg[MAX_RECENT_VOLPKG]{};
+    QAction* fSettingsAct{};
+    QAction* fExitAct{};
+    QAction* fKeybinds{};
+    QAction* fAboutAct{};
+    QAction* fResetMdiView{};
+    QAction* fShowConsoleOutputAct{};
+    QAction* fReportingAct{};
+    QAction* fVoxelizePathsAct{};
+
+    QComboBox* volSelect{};
+    QCheckBox* chkFilterFocusPoints{};
+   QComboBox* cmbPointSetFilter{};
+   QPushButton* btnPointSetFilterAll{};
+   QPushButton* btnPointSetFilterNone{};
+   QComboBox* cmbPointSetFilterMode{};
+   QCheckBox* chkFilterUnreviewed{};
+    QCheckBox* chkFilterRevisit{};
+    QCheckBox* chkFilterNoExpansion{};
+    QCheckBox* chkFilterNoDefective{};
+    QCheckBox* chkFilterPartialReview{};
+    QCheckBox* chkFilterCurrentOnly{};
+    QCheckBox* chkFilterHideUnapproved{};
+    QComboBox* cmbSegmentationDir{};
+    
+    QCheckBox* _chkApproved{};
+    QCheckBox* _chkDefective{};
+    QCheckBox* _chkReviewed{};
+    QCheckBox* _chkRevisit{};
+    QuadSurface *_surf{};
+    std::string _surfID;
+    
+  
+    SeedingWidget* _seedingWidget;
+    DrawingWidget* _drawingWidget;
+    CPointCollectionWidget* _point_collection_widget;
+
+    VCCollection* _point_collection;
+    
+    SurfaceTreeWidget *treeWidgetSurfaces{};
+    OpsList *wOpsList{};
+    OpsSettings *wOpsSettings{};
+    QPushButton *btnReloadSurfaces{};
+    
+    //TODO abstract these into separate QWidget class?
+    QLineEdit* lblLocFocus{};
+    QDoubleSpinBox* spNorm[3]{};
+    QPushButton* btnZoomIn{};
+    QPushButton* btnZoomOut{};
+
+
+    Ui_VCMainWindow ui{};
+    QMdiArea *mdiArea{};
+
+    bool can_change_volume_() const;
+    
+    ChunkCache *chunk_cache;
+    std::vector<CVolumeViewer*> _viewers;
+    CSurfaceCollection *_surf_col;
+
+    std::unordered_map<std::string, OpChain*> _opchains;
+    std::unordered_map<std::string, QuadSurface*> _vol_qsurfs;
+    
+    // runner for command line tools 
+    CommandLineToolRunner* _cmdRunner;
+    
+    // Keyboard shortcuts
+    QShortcut* fReviewedShortcut;
+    QShortcut* fRevisitShortcut;
+    QShortcut* fDefectiveShortcut;
+    QShortcut* fDrawingModeShortcut;
+    QShortcut* fCompositeViewShortcut;
+
+
+};  // class CWindow
+
